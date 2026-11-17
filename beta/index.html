@@ -1035,16 +1035,19 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
 function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
   const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}
   /* stay within 7 points of the books' no-vig chance at the same line: bigger gaps usually mean news the averages don't know yet */
-  let pO=pt.pOver(g.l);if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){const c=Math.min(pt.pm+.07,Math.max(pt.pm-.07,pO));pO=(c-.5)*(pO-.5)<0?.5:c;g.capped=c!==pt.pOver(g.l)}
+  /* the side always follows the projection; the chance is then held near the market, so a side can show under 50% (only worth it at a long enough price) */
+  const raw=pt.pOver(g.l);let pO=raw;g.capped=false;if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){pO=Math.min(pt.pm+.07,Math.max(pt.pm-.07,raw));g.capped=pO!==raw}
   if(pt.yn){const q=x.q.find(q=>q.o!=null);if(q&&pt.mMarket!=null)pO=Math.min(pt.mMarket+.07,Math.max(pt.mMarket-.07,pO))}
-  const so=pO>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
+  const so=pt.yn?pO>=.5:raw>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
   /* best posted price for the chosen side at this line */
-  const prices=x.q.filter(q=>q.l===g.l).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
+  /* when DraftKings has a live price at this line, research prices from earlier in the day are out of date */
+  const liveAt=x.q.some(q=>q.live&&q.l===g.l&&(so?q.o:q.u)!=null);
+  const prices=x.q.filter(q=>q.l===g.l&&(!liveAt||q.live)).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
   if(g.bp!=null)g.bp=prices.reduce((b,o)=>dec(o)>dec(b)?o:b,prices[0]);
   const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
-    (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
+    (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(g.p<.5?` DraftKings leans the other way, so this side only pays off at a long enough price (${fmtAm(toAm(g.p))} or better).`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
 /* ---------- letter grades: S (best) to F ----------
    Start from the difference (edge), then drop a step for each reason the estimate is shaky:
    no posted price behind my estimate, a thin prediction market, a volatile stat, or a line far from the market. */
