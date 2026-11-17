@@ -1020,7 +1020,7 @@ function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=ST
     if(x.mates&&(P.pts||0)>=10){let b=0;x.mates.forEach(n=>{const o=projOf(n);if(o&&o.pts>=15)b+=.05*o.pts/20});b=Math.min(.1,b);if(b>0){mPlayer*=1+b;why.push(`${x.mates.join(", ")} out (+${Math.round(b*100)}%)`)}}}
   const m=mPlayer==null?mMarket:w*mPlayer+(1-w)*mMarket;
   const disagree=mPlayer!=null&&Math.abs(mPlayer-mMarket)>Math.max(2,.1*Lm)&&Math.sign(mPlayer-Lm)!==Math.sign(mMarket-Lm||-(mPlayer-Lm));
-  return{m:Math.round(m*10)/10,mPlayer:mPlayer==null?null:Math.round(mPlayer*10)/10,mMarket:Math.round(mMarket*10)/10,Lm,w,why,mkt,disagree,
+  return{pm,m:Math.round(m*10)/10,mPlayer:mPlayer==null?null:Math.round(mPlayer*10)/10,mMarket:Math.round(mMarket*10)/10,Lm,w,why,mkt,disagree,
     pOver:L=>{const raw=COUNT_ST[st]?poisOver(m,L):1-Phi((L-m)/sdFor(st,m));return Math.min(.95,Math.max(.05,.5+.85*(raw-.5)))}}}
 /* double double / triple double: Yes is stored as Over 0.5.
    Player estimate = how often he has done it this season (his game log), market estimate = DraftKings' Yes price minus about 4 points of vig. */
@@ -1033,14 +1033,17 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
 /* every board prop takes its pick, chance and tier from tonight's projection */
 function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
   const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}
-  const pO=pt.pOver(g.l),so=pO>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
+  /* stay within 7 points of the books' no-vig chance at the same line: bigger gaps usually mean news the averages don't know yet */
+  let pO=pt.pOver(g.l);if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){const c=Math.min(pt.pm+.07,Math.max(pt.pm-.07,pO));pO=(c-.5)*(pO-.5)<0?.5:c;g.capped=c!==pt.pOver(g.l)}
+  if(pt.yn){const q=x.q.find(q=>q.o!=null);if(q&&pt.mMarket!=null)pO=Math.min(pt.mMarket+.07,Math.max(pt.mMarket-.07,pO))}
+  const so=pO>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
   /* best posted price for the chosen side at this line */
   const prices=x.q.filter(q=>q.l===g.l).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
   if(g.bp!=null)g.bp=prices.reduce((b,o)=>dec(o)>dec(b)?o:b,prices[0]);
   const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
-    (pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
+    (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
 /* ---------- letter grades: S (best) to F ----------
    Start from the difference (edge), then drop a step for each reason the estimate is shaky:
    no posted price behind my estimate, a thin prediction market, a volatile stat, or a line far from the market. */
