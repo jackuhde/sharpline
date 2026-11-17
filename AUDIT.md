@@ -111,3 +111,16 @@ Known limits: the book name is read once per screenshot, so a post naming two bo
 - Phone header: the date moved into the dashboard so Scan and Settings fit.
 
 Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section and fills in as bets are settled. A true backtest still needs paid historical odds data.
+
+## Round 6 notes (Nov 17)
+
+- **Live data (free, no key):** ESPN's public feeds, read from the phone. Game lines (DraftKings moneyline, spread, total and opening numbers), game status and scores refresh every minute near game time. Injuries refresh every 5 minutes. Verified working from the live GitHub Pages site. Player props have no free live feed, so they still come from the researched board, now refreshed hourly from 10:43 AM to 8:43 PM ET.
+- **Injuries change the board:** an Out player's props are pulled from the Top List and closed. Questionable and doubtful players drop to Low confidence. A rotation teammate newly ruled out lowers confidence on that team's props and adds a note. Usage is not re-projected numerically.
+- **Stale-line protection:** every bet shows how current its market is (Live, Updated, Verify, Stale). Bets whose market is over 3 hours old leave the ranked list for "Needs verification". Started games close their editors and drop off the Top List.
+- **Automatic grading:** each tracked bet stores its exact line, side, player, stat and teams. Finals are graded from ESPN box scores: W, L, push on exact lines, void when the player did not play or the game was postponed or canceled. Anything that can't be verified stays pending. A reopened bet is never auto-graded again. Tested against the real Knicks 112, Raptors 108 OT final.
+- **Refresh:** a header button and pull-to-refresh trigger one full refresh (board, live lines, injuries, grading). Repeat taps join the refresh in progress, and a 15-second cooldown prevents hammering. The result says what updated and what failed.
+- **Scanner:** prediction markets (Kalshi, Polymarket, ProphetX and others): YES/NO prices in cents, "25+" contracts, and wager and payout amounts, with a warning when the payout doesn't match the odds.
+- **Design:** new icon (a dot above the line), orange brand accent, no glows or ambient gradients, smaller corners, shorter copy, expert check collapsed, calmer motion (view fade, row reveal, list reorder, value flashes, scanner sweep, splash).
+- **Removed:** "Add a missing player". Scans already add unlisted players, and the hourly board covers the rest.
+- **Not done (needs a decision):** accounts and synced tracking across devices need a backend. Player photos are not included: monogram avatars stay.
+- Tests: 33 math, 17 parser, 26 live and grading.
