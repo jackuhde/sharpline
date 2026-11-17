@@ -68,7 +68,7 @@ function propPanel(){const ms=marketsOf();if(!PF.key)return ms.length?"":`<div c
   return`<section class="pf-card pf-prop pf-swap">
     <div class="pf-ph"><div><div class="eyebrow">Selected prop</div><h3>${STAT_LBL[x.st]||x.st} ${yn?"":`<span class="ln">${g.l}</span>`}</h3></div><div class="pf-gr">${gradeTag(grade,"md")}${cf?confTag(cf):""}</div></div>
     <div class="pf-sides">${side(yn?"Yes":"Over "+g.l,pO,bo,evO,g.s==="o")}${yn?`<div class="pf-side"><div class="k">No</div><div class="v">–</div><div class="s">DraftKings posts Yes only</div><div class="pf-prob"><i style="width:${Math.round((1-pO)*100)}%"></i></div><div class="s2"><b>${pct(1-pO)}</b> model</div></div>`:side("Under "+g.l,1-pO,bu,evU,g.s==="u")}</div>
-    <div class="pf-model"><div><div class="k">Sharpline projection <em>model</em></div><div class="v">${projTxt}</div></div><div><div class="k">Lean</div><div class="v ${g.s==="o"?"o":"u"}">${yn?(g.s==="o"?"Yes":"No"):(g.s==="o"?"Over":"Under")}</div></div><div><div class="k">Fair price</div><div class="v">${fmtAm(toAm(g.p))}</div></div></div>
+    <div class="pf-model"><div><div class="k">Projection <em>model</em></div><div class="v">${projTxt}</div></div><div><div class="k">Lean</div><div class="v ${g.s==="o"?"o":"u"}">${yn?(g.s==="o"?"Yes":"No"):(g.s==="o"?"Over":"Under")}</div></div><div><div class="k">Fair price</div><div class="v">${fmtAm(toAm(g.p))}</div></div></div>
     <div class="pf-why">${esc(g.why)}</div>
     <div class="pf-fresh">${freshTag(f)}${lv&&lv.upd?`<span>DraftKings last moved this line ${new Date(lv.upd).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}${lv.note?` (${esc(lv.note)})`:""}</span>`:""}${LIVE.propsTs?`<span>Prices checked ${ago(LIVE.propsTs)}</span>`:""}</div>
     ${x.q.length>1?`<details class="pf-books"><summary>All posted lines (${x.q.length})</summary>${x.q.map(q=>`<div class="qrow"><span><b>${yn?"Yes":q.l}</b> · ${[q.o!=null?(yn?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${esc(q.url)}" target="_blank" rel="noopener">${esc(q.src)}</a></div>`).join("")}</details>`:""}
@@ -90,12 +90,12 @@ function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
       <text class="bv" x="${x0+bw/2}" y="${y(v)-5}">${yn?(v>=(st==="Double Double"?2:3)?"✓":"✗"):v}</text>
       <text class="bo" x="${x0+bw/2}" y="${H-7}">${r.home?"":"@"}${esc(ab2(r.opp))}</text>
       <title>${new Date(r.t).toLocaleDateString([], {month:"short",day:"numeric"})} ${r.home?"vs":"@"} ${esc(ab2(r.opp))}: ${v} ${(STAT[st]||st)}${r.res?`, ${r.res} ${r.score}`:""}</title></g>`}).join("");
-  const lineSvg=L!=null?`<line class="ln" x1="0" x2="${W}" y1="${y(L)}" y2="${y(L)}"/><text class="lt" x="${W-2}" y="${y(L)-5}">${yn?"":L}</text>`:"";
+  const lineSvg=L!=null?`<line class="ln" x1="0" x2="${W}" y1="${y(L)}" y2="${y(L)}"/>`:"";
   const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
   const sum=L!=null?`<b class="${hit/list.length>=.5?"pos":"neg"}">${yn?"Yes":"Over"} in ${hit} of ${list.length}</b> (${Math.round(hit/list.length*100)}%)`:"";
   return`<section class="pf-card">${head}
     <svg class="pf-chart ${PF.anim?"anim":""}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(STAT_LBL[st]||st)} in his last ${list.length} games">${lineSvg}${bars}</svg>
-    <div class="pf-sum">${sum}${yn?"":`${sum?" · ":""}Average <b>${r1(avg)}</b>`}${PF.range==="opp"?` · ${list.length} game${list.length>1?"s":""}, this season and last`:""}${!yn&&L!=null?`<span class="pf-leg"><i class="o"></i>Over <i class="u"></i>Under <i class="l"></i>Tonight's line</span>`:""}</div></section>`}
+    <div class="pf-sum">${sum}${yn?"":`${sum?" · ":""}Average <b>${r1(avg)}</b>`}${PF.range==="opp"?` · ${list.length} game${list.length>1?"s":""}, this season and last`:""}${!yn&&L!=null?`<span class="pf-leg"><i class="o"></i>Over <i class="u"></i>Under <i class="l"></i>Line ${L}</span>`:""}</div></section>`}
 
 function avgsHTML(rows){const opp=oppAb();const views=[["season","Season"],["l5","L5"],["l10","L10"],["l20","L20"],["home","Home"],["away","Away"],["opp","vs "+ab2(opp)]].filter(v=>v[0]!=="opp"||opp);
   const sel={season:rows.cur,l5:rows.cur.slice(0,5),l10:rows.cur.slice(0,10),l20:rows.cur.slice(0,20),home:rows.cur.filter(r=>r.home),away:rows.cur.filter(r=>!r.home),opp:rows.all.filter(r=>r.opp===opp)}[PF.view]||[];
@@ -117,7 +117,7 @@ function logHTML(rows){const st=PF.st,yn=YN[st],g=PF.key?SUG[+PF.key.slice(1)]:n
       return`<tr><td>${new Date(r.t).toLocaleDateString([], {month:"numeric",day:"numeric"})}</td><td>${r.home?"vs":"@"} ${esc(ab2(r.opp))}</td><td class="res ${r.res==="W"?"w":"l"}">${esc(r.res)} ${esc(r.score)}</td><td>${Math.round(r.min)}</td>
       <td class="${hi("pts")} ${hi("pts")?cls:""}">${r.pts??"–"}</td><td class="${hi("reb")} ${hi("reb")?cls:""}">${r.reb??"–"}</td><td class="${hi("ast")} ${hi("ast")?cls:""}">${r.ast??"–"}</td><td class="${hi("tpm")} ${hi("tpm")?cls:""}">${r.tpm??"–"}${r.tpa!=null?`<small>/${r.tpa}</small>`:""}</td><td class="${hi("stl")} ${hi("stl")?cls:""}">${r.stl??"–"}</td><td class="${hi("blk")} ${hi("blk")?cls:""}">${r.blk??"–"}</td>
       ${combo?`<td class="hot ${cls}">${yn?(v>=(st==="Double Double"?2:3)?"Yes":"No"):v??"–"}</td>`:""}</tr>`}).join("")}</tbody></table></div>
-    ${rows.cur.length>10?`<button class="pf-more" data-pflog="1">${PF.logN>10?"Show 10":"Show "+Math.min(20,rows.cur.length)}</button>`:""}</section>`}
+    ${rows.cur.length>10?`<button class="pf-more" data-pflog="1">${PF.logN>10?"Show fewer":rows.cur.length>20?"Show last 20":"Show all "+rows.cur.length}</button>`:""}</section>`}
 
 window.renderProfile=function(keep){const el=document.getElementById("prof");if(!PF.open||!el)return;const st0=el.scrollTop;
   const [ab,c1,c2]=team(PF.tm),G=SNAP[PF.gi],who=PF.id&&LIVE.ids[PF.id]||{},ms=marketsOf(),opp=oppAb();
