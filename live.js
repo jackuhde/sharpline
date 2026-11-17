@@ -22,12 +22,16 @@ function parseScoreboard(j){return(j.events||[]).map(e=>{const c=(e.competitions
       spread:{home:num(cl(ps.home).line),homeOdds:num(cl(ps.home).odds),away:num(cl(ps.away).line),awayOdds:num(cl(ps.away).odds),homeOpen:num(op(ps.home).line),awayOpen:num(op(ps.away).line)},
       total:{line:num(cl(tt.over).line)??num(o.overUnder),over:num(cl(tt.over).odds),under:num(cl(tt.under).odds),open:num(op(tt.over).line)}}}
   const tm=x=>x.team||{};
-  return{id:e.id,date:e.date,home:tm(H).displayName,away:tm(A).displayName,homeAb:tm(H).abbreviation,awayAb:tm(A).abbreviation,
+  return{id:e.id,date:e.date,homeId:tm(H).id,awayId:tm(A).id,home:tm(H).displayName,away:tm(A).displayName,homeAb:tm(H).abbreviation,awayAb:tm(A).abbreviation,
     homeColor:tm(H).color,awayColor:tm(A).color,homeScore:+H.score||0,awayScore:+A.score||0,
     state:st.state||"pre",completed:!!st.completed,statusName:st.name||"",detail:st.shortDetail||st.detail||"",odds}})}
 const ymd=d=>d.replace(/-/g,"");
 async function scoreboard(dateISO){return parseScoreboard(await getJSON(`${BASE}/scoreboard?dates=${ymd(dateISO)}`))}
 
+/* ---------- rosters: jersey numbers ---------- */
+function parseRoster(j){const out={};const list=(j.athletes||[]).flatMap(a=>a.items?a.items:[a]);
+  list.forEach(a=>{if(a.displayName&&a.jersey!=null&&a.jersey!=="")out[norm(a.displayName)]=String(a.jersey)});return out}
+async function roster(teamId){return parseRoster(await getJSON(`${BASE}/teams/${teamId}/roster`,12000))}
 /* ---------- injuries ---------- */
 /* status buckets: out (will not play), doubt, quest (questionable / game-time decision), dtd (day-to-day, usually playing) */
 function bucket(inj){const s=(inj.status||"").toLowerCase(),f=((inj.details||{}).fantasyStatus||{}).abbreviation||"",txt=(inj.shortComment||"").toLowerCase();
@@ -80,6 +84,6 @@ function grade(spec,game,bx){if(!spec||!game)return null;
     const v=keys.reduce((a,k)=>a+p[k],0);return{res:cmp(v,spec.line,spec.side),detail:`${p.name} ${v} ${spec.stat.toLowerCase()} vs ${spec.line}`}}
   return null}
 
-root.SharpLive={norm,scoreboard,injuries,box,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
+root.SharpLive={norm,scoreboard,injuries,box,roster,parseRoster,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
 })(typeof window!=="undefined"?window:globalThis);
 if(typeof module!=="undefined")module.exports=globalThis.SharpLive||window.SharpLive;
