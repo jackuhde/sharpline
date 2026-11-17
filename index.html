@@ -975,6 +975,8 @@ function jumpTo(k){document.getElementById("scanSheet").classList.remove("on");
 let PROJ=[],OUT=new Set();
 function erf(x){const t=1/(1+.3275911*Math.abs(x)),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return x>=0?y:-y}
 const Phi=z=>.5*(1+erf(z/Math.SQRT2));
+/* Poisson mean that gives chance pO of going over L (used to read count-stat markets on the same curve as the projection) */
+function poisMean(pO,L){let lo=.01,hi=40;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(poisOver(m,L)<pO)lo=m;else hi=m}return(lo+hi)/2}
 function poisOver(lam,L){let k=Math.floor(L),c=0,t=Math.exp(-lam);for(let i=0;i<=k;i++){c+=t;t*=lam/(i+1)}return 1-c}
 function projOf(name){const n=normN(name),last=n.split(" ").pop();const ex=PROJ.find(x=>normN(x.p)===n);if(ex)return ex;
   const c=PROJ.filter(x=>{const xn=normN(x.p);return xn.split(" ").pop()===last&&xn[0]===n[0]});return c.length===1?c[0]:null}
@@ -1009,11 +1011,11 @@ function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=ST
   const Lm=ls[Math.floor((ls.length-1)/2)],sdM=sdFor(st,Lm);let mMarket=Lm,mkt="book line "+Lm;
   const q2=x.q.find(q=>q.l===Lm&&q.o!=null&&q.u!=null),qc=x.q.find(q=>q.l===Lm&&q.oc!=null&&q.uc!=null);
   const pm=q2?devig(q2.o,q2.u)[0]:qc?qc.oc/(qc.oc+qc.uc):null;
-  if(pm!=null){mMarket=Lm-sdM*invPhi(1-pm);mkt=`market ${Math.round(mMarket*10)/10} (${Lm} at ${q2?fmtAm(q2.o)+"/"+fmtAm(q2.u):qc.oc+"¢/"+qc.uc+"¢"})`}
+  if(pm!=null){mMarket=COUNT_ST[st]?poisMean(pm,Lm):Lm-sdM*invPhi(1-pm);mkt=`market ${Math.round(mMarket*10)/10} (${Lm} at ${q2?fmtAm(q2.o)+"/"+fmtAm(q2.u):qc.oc+"¢/"+qc.uc+"¢"})`}
   /* player estimate */
   let mPlayer=null,w=0;
   if(P&&comp&&comp.every(c=>P[c]!=null)){mPlayer=comp.reduce((a,c)=>a+projMean(P,c),0);
-    const l10=P.l10&&comp.every(c=>P.l10[c]!=null);w=l10?.6:.5;why.push(l10?"season and last 10":"season average");if(P.min&&P.l10min)why.push("minutes trend");
+    const l10=P.l10&&comp.every(c=>P.l10[c]!=null);w=pm==null?(l10?.6:.5):(l10?.45:.35);why.push(l10?"season and last 10":"season average");if(P.min&&P.l10min)why.push("minutes trend");
     const sp=gameSpread(x.g);if(sp>7){const f=Math.max(.94,1-.006*(sp-7));mPlayer*=f;if(f<=.99)why.push(`blowout risk (${sp}-pt spread, -${Math.round((1-f)*100)}%)`)}
     if(x.mates&&(P.pts||0)>=10){let b=0;x.mates.forEach(n=>{const o=projOf(n);if(o&&o.pts>=15)b+=.05*o.pts/20});b=Math.min(.1,b);if(b>0){mPlayer*=1+b;why.push(`${x.mates.join(", ")} out (+${Math.round(b*100)}%)`)}}}
   const m=mPlayer==null?mMarket:w*mPlayer+(1-w)*mMarket;
@@ -1038,7 +1040,7 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
-    (pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")})}
+    (pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
 /* ---------- letter grades: S (best) to F ----------
    Start from the difference (edge), then drop a step for each reason the estimate is shaky:
    no posted price behind my estimate, a thin prediction market, a volatile stat, or a line far from the market. */
@@ -1053,8 +1055,17 @@ function reliability(key){const k=key[0],i=+key.slice(1);let pen=0,why=[];
   else if(k==="c"){const C=custOf(i);if(!C)return{pen:9,why:[]};if(C.fo){if(!projP(C.p,C.st,C.l))return{pen:9,why:["no outside line"]};pen++;why.push("projection only")}if(VOLATILE.includes(C.st)){pen++;why.push("volatile stat")}}
   else{const L=LINES[i];const G=SNAP[L.g];const mk=G.mk.find(m=>m.k.startsWith(L.m));if(!mk||!mk.fair){pen++;why.push("no market fair line")}}
   return{pen,why}}
+/* Scale (expected return per $1 at the price): S 8%+, A 3%+, B 1%+, C -1.5%+, D -4%+, F below.
+   Then a step down per reliability issue, and capped by confidence. S is kept rare: at most 3 per night
+   from the board, the biggest qualifying edges; the rest of those show as A. Odds you enter yourself can still earn S. */
+let S_KEYS=new Set();
 function gradeFor(key,ev,far){if(ev==null)return"F";
-  let g=ev>=.06?5:ev>=.04?4:ev>=.02?3:ev>=0?2:ev>=-.02?1:0;const r=reliability(key);g-=r.pen;if(far)g--;return GRADES[Math.max(0,g)]}
+  let g=ev>=.08?5:ev>=.03?4:ev>=.01?3:ev>=-.015?2:ev>=-.04?1:0;const r=reliability(key);g-=r.pen;if(far)g--;if(g>=5&&!S_KEYS.has(key)&&!(EDV[key]&&EDV[key].a))g=4;return GRADES[Math.max(0,g)]}
+function pickSKeys(){S_KEYS=new Set(["*"]);const c=[];
+  PROPS.forEach((x,i)=>{const g=SUG[i];if(g.bp==null)return;const ev=evOf(g.p,g.bp);if(ev<.08)return;const k="p"+i;const r=reliability(k);if(r.pen)return;
+    const cf=baseConf(k,(g.s==="o"?"Over ":"Under ")+g.l,g.p,g.bp,g.l);if(cf&&cf.lv==="High")c.push([ev,k])});
+  LINES.forEach((L,i)=>{if(L.bp==null)return;const ev=evOf(L.p,L.bp);if(ev>=.08)c.push([ev,"l"+i])});
+  c.sort((a,b)=>b[0]-a[0]);S_KEYS=new Set(c.slice(0,3).map(x=>x[1]))}
 function baseGrade(key){const k=key[0],i=+key.slice(1);
   if(k==="p"){const g=SUG[i];if(g.bp==null)return"F";return capGrade(gradeFor(key,evOf(g.p,g.bp)),baseConf(key,g.s==="o"?"Over "+g.l:"Under "+g.l,g.p,g.bp,g.l))}
   if(k==="l"){const L=LINES[i];if(L.bp==null)return"F";return capGrade(gradeFor(key,evOf(L.p,L.bp)),baseConf(key,L.pick,L.p,L.bp,parseFloat(L.pick.split(" ")[1])))}
