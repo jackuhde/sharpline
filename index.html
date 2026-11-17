@@ -807,8 +807,9 @@ function topAgrees(x){if(x.k!=="p")return true;const g=SUG[x.i];if(!g.pt)return 
 const topP=x=>x.k==="p"&&SUG[x.i].pt?SUG[x.i].p:x.p;
 function topItems(){
   const items=[];
-  TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
-    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(topP(x),price),p:topP(x),price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
+  TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;
+    const lv=topLive(x);if(lv===false)return;const bp=lv?lv.bp:x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
+    const cond=!lv&&/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(topP(x),price),p:topP(x),price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:lv?`DraftKings ${fmtAm(bp)} now · fair ${fmtAm(toAm(topP(x)))}`:x.cond,why:x.why})});
   /* the strongest live-priced props (A or S at DraftKings' current price), best one per player */
   const have=new Set(items.map(x=>x.base)),bestBy={};
   PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||have.has(k)||SAVED[k]||OUT.has(normN(x.p)))return;const ev=evOf(g.p,g.bp);if(ev<.03)return;
@@ -824,7 +825,10 @@ function topItems(){
 function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
   const best={lbl,p:x.p,o:price,L:parseFloat(w[1]),push:0};return confFor(base,best,threeNums(base,best,m,true),false)}catch(e){return null}}
 /* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
-function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:topP(x),head:x.head,cond:x.cond,why:x.why})});return out}
+/* a researched spot on a prop DraftKings now posts: same line -> use the live price; line moved -> the live row replaces it */
+function topLive(x){if(x.k!=="p")return null;const P=PROPS[x.i],g=SUG[x.i];if(!P||!P.lp)return null;const L=parseFloat(x.pick.split(" ")[1]);
+  if(L!==g.l)return false;return g.bp!=null?{bp:g.bp}:false}
+function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;if(topLive(x)!=null)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:topP(x),head:x.head,cond:x.cond,why:x.why})});return out}
 function saveFind(key){const b=recBest[key];
   if(!b){toast("Enter both odds first");return}
   if(b.assumed){toast("Enter the odds first");return}
@@ -1077,6 +1081,7 @@ function gradeFor(key,ev,far){if(ev==null)return"F";
   let g=ev>=.08?5:ev>=.03?4:ev>=.01?3:ev>=-.015?2:ev>=-.04?1:0;const r=reliability(key);g-=r.pen;if(far)g--;if(g>=5&&!S_KEYS.has(key)&&!(EDV[key]&&EDV[key].a))g=4;return GRADES[Math.max(0,g)]}
 function pickSKeys(){S_KEYS=new Set(["*"]);const c=[];
   PROPS.forEach((x,i)=>{const g=SUG[i];if(g.bp==null)return;const ev=evOf(g.p,g.bp);if(ev<.08)return;const k="p"+i;const r=reliability(k);if(r.pen)return;
+    if(g.p<.5||g.capped)return;/* S needs Sharpline and the market on the same side, without leaning on the cap */
     const cf=baseConf(k,(g.s==="o"?"Over ":"Under ")+g.l,g.p,g.bp,g.l);if(cf&&cf.lv==="High")c.push([ev,k])});
   LINES.forEach((L,i)=>{if(L.bp==null)return;const ev=evOf(L.p,L.bp);if(ev>=.08)c.push([ev,"l"+i])});
   c.sort((a,b)=>b[0]-a[0]);S_KEYS=new Set(c.slice(0,3).map(x=>x[1]))}
