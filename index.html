@@ -375,6 +375,13 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
 .toast.on{transform:translate(-50%,0)}
 
 
+/* collapsible games */
+.gtog{width:100%;text-align:left;cursor:pointer;border-radius:10px;padding-right:4px}
+.gtog .gcount{font:800 11px Archivo;color:var(--mute);background:var(--s2);border-radius:6px;padding:3px 7px;margin-left:6px}
+.gtog .chev{width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);margin:0 8px 3px 10px;transition:transform .2s}
+.gtog.col .chev{transform:rotate(-45deg);margin-bottom:0}
+.gbody.col{display:none}
+.gbody:not(.col){animation:detIn .2s ease-out}
 /* compact prop rows: one line each until tapped */
 #propList .row:not(.open) .ed{display:none}
 #propList .row{padding:9px 12px;gap:10px;grid-template-columns:40px 1fr auto}
@@ -1167,7 +1174,7 @@ function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=p
         <button class="go" data-rset="${C.id}" style="margin-top:8px;width:100%;padding:10px;border-radius:10px;background:var(--acc);color:#fff;font:900 13px Archivo">Compare ${BOOK} to this line</button></div>`:`<div class="why">Fair line from ${C.bk}: Over ${fmtAm(C.o)} / Under ${fmtAm(C.u)} at ${C.l}. With the vig removed that's Over ${pct(pO)}. Enter ${poss(BOOK)} number above to look for a gap.</div>`}
       <div class="need"><span>Fair: Over <b>${fmtAm(toAm(pO))}</b> / Under <b>${fmtAm(toAm(1-pO))}</b></span><span style="display:flex;gap:8px">${addBtn(key)}<button class="addbtn" data-cdel="${C.id}">Remove</button></span></div></div></div>`}
 /* "Most books posting" is a stand-in for popularity: no free source publishes real betting volume */
-let PSORT=LS0("sl_psort2","proj");
+let PSORT=LS0("sl_psort2","proj"),GCOL=LS0("sl_gcol",[]);
 /* projected stat for tonight: Sharpline's projection when there are averages, otherwise the book line */
 const projVal=it=>{const pr=projP(it.name,it.st,it.line);return pr?pr.m:it.line};
 const edgeOf=key=>{const b=recBest[key];if(b&&!b.assumed)return b.ev;if(key[0]==="p"){const g=SUG[+key.slice(1)];return g.bp!=null?evOf(g.p,g.bp):-1}return-1};
@@ -1189,11 +1196,13 @@ function renderProps(){
   let html="";
   SNAP.forEach((G,gi)=>{if(propGame!=="all"&&propGame!=gi)return;
     const gItems=items.filter(x=>x.g===gi&&(propStat==="all"||x.st===propStat));if(!gItems.length)return;
-    html+=`<div class="gh">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${tipT(G)}</span></div>`;
-    if(propStat==="all"){const rows=gItems.slice().sort(propSorter);html+=`<div class="list">${rows.map(r=>r.html()).join("")}</div>`;return}
+    const col=GCOL.includes(gi);
+    html+=`<button class="gh gtog ${col?"col":""}" data-gtog="${gi}" aria-expanded="${!col}">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${tipT(G)}</span><span class="gcount">${gItems.length}</span><i class="chev"></i></button><div class="gbody ${col?"col":""}">`;
+    if(propStat==="all"){const rows=gItems.slice().sort(propSorter);html+=`<div class="list">${rows.map(r=>r.html()).join("")}</div></div>`;return}
     const sts=[...new Set(gItems.map(x=>x.st))].sort((a,b)=>statRank(a)-statRank(b));
     sts.forEach(st=>{const rows=gItems.filter(x=>x.st===st).sort(propSorter);
       html+=`<div class="sh"><span>${STAT_LBL[st]||st}</span><i></i><em>${rows.length}</em></div><div class="list">${rows.map(r=>r.html()).join("")}</div>`});
+    html+=`</div>`;
   });
   document.getElementById("propList").innerHTML=html||`<div class="empty"><b>Nothing here</b>No ${propStat==="all"?"":(STAT_LBL[propStat]||propStat).toLowerCase()+" "}lines found for this game yet. Scan a screenshot to grade a line that isn't listed.</div>`;
   document.querySelectorAll("#propList [data-edbox]").forEach(b=>updRec(b.dataset.edbox));
@@ -1242,6 +1251,8 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
   if(d.cdel!=null){delCustom(+d.cdel);toast("Removed");return}
   if(d.csgn){csg[d.csgn]=csg[d.csgn]==="-"?"+":"-";t.textContent=csg[d.csgn]==="-"?"−":"+";t.className="sgn "+(csg[d.csgn]==="-"?"m":"p");return}
   if(d.unsave){delete SAVED[d.unsave];delete EDV[d.unsave];LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);renderAll();toast("Removed");return}
+  if(d.gtog!=null){const g=+d.gtog,k=GCOL.indexOf(g);if(k>=0)GCOL.splice(k,1);else GCOL.push(g);LS.set("sl_gcol",GCOL);
+    t.classList.toggle("col",k<0);t.setAttribute("aria-expanded",k>=0);const b=t.nextElementSibling;if(b)b.classList.toggle("col",k<0);return}
   if(d.refresh){refreshAll({manual:true});return}
   if(d.settings){renderSettings();document.getElementById("setSheet").classList.add("on");return}
   if(d.setsave){saveSettings();return}
