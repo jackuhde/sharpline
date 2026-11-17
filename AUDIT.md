@@ -1,6 +1,6 @@
 # Sharpline Audit and Implementation Plan
 
-Audit date: Nov 17, 2026. Baseline saved as git tag `v1-baseline` (commit a93da70). To restore: `git checkout v1-baseline -- .`
+Audit date: Nov 17, 2026. Baseline saved as commit a93da70 on GitHub. To restore the original app: `git checkout a93da70 -- .` then commit.
 
 ## 1. What Sharpline is today
 
