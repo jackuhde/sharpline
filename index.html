@@ -671,8 +671,8 @@ function recHTML(key){const gi0=key[0]==="l"?LINES[+key.slice(1)].g:key[0]==="p"
   const detail=`${sides[0].lbl} ${pct(sides[0].p)} (needs ${fmtAm(fairAmPush(sides[0].p,push))}) · ${sides[1].lbl} ${pct(sides[1].p)} (needs ${fmtAm(fairAmPush(sides[1].p,push))})`;
   const notes=[];if(oneSide!=null)notes.push("only one side given, so only that side is graded");else if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);if(disagree)notes.push(`books disagree (${disagree[0]} to ${disagree[1]}), so the less favorable line is used`);
   const gap=lineGap(key,best,m,Lshow,sgd("L")),why=explain(key,best,gap,real);
-  const grade=fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key);
   const T3=threeNums(key,best,m,real),conf=confFor(key,best,T3,far,disagree);
+  const grade=capGrade(fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key),conf);
   recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade,conf};
   return`<div class="rec-in"><div class="rgl">${gradeTag(grade,"lg")}<div><div class="lw">Take</div><div class="ls">${best.lbl}</div>${gap&&gap.d!==0?`<div class="gp ${gap.d>0?"up":"dn"}">${gap.d>0?"▲":"▼"} ${Math.abs(gap.d)} pt${Math.abs(gap.d)===1?"":"s"} ${gap.d>0?"better":"worse"} than market (${gap.ref})</div>`:""}</div></div>
     <div class="cf"><b>${!real?"–":fo?pct(best.p):evs(best)}</b><span>${fo?"its own no-vig":"difference"}</span></div></div>
@@ -697,7 +697,8 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
       else if(q1){pO=q1.o!=null?imp(q1.o)-.02:1-(imp(q1.u)-.02);l0=q1.l;out.mktSrc=q1.src+" one side only";out.mk1=1}}
     else{const C=custOf(i);if(!C.fo){pO=devig(C.o,C.u)[0];l0=C.l;out.mktSrc=C.bk+" "+fmtAm(C.o)+"/"+fmtAm(C.u)}}
     if(pO!=null){const po=shiftP(pO,l0,L,sdFor(st,l0));out.mkt=adj(isOver(best.lbl)?po:1-po)}
-    const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}
+    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,po=pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
+    else{const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}}
     if(k==="c")out.basis=custOf(i).fo?"projection only (no other book)":"market price you entered";
     else{const priced=PROPS[i].q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null);out.basis=out.mk1===2?"market price":out.mk1===1?"one-sided or thin market price":priced?"market price":SUG[i].proj!=null?"blend: 70% book line, 30% projection":"book line only (50/50)"}
     return out}
@@ -715,7 +716,8 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
 /* Confidence = how much to trust the estimate, separate from how big the edge is. */
 function confFor(key,best,T3,far,disagree){let sc=0;const why=[];if(disagree){sc--;why.push("books disagree on the line")}const k=key[0],i=+key.slice(1);
   if(T3.mkt!=null&&T3.mk1===1){sc+=1;why.push("thin or one-sided price")}else if(T3.mkt!=null){sc+=k==="l"?3:2;why.push("market price available")}else why.push("no market price");
-  if(T3.proj!=null){const d=Math.abs(T3.proj-best.p);if(d<=.07){sc++;why.push("projection agrees")}else if(d>.12){sc--;why.push("projection disagrees")}}
+  if(T3.pt){if(T3.pt.disagree){sc--;why.push(`player averages (${T3.pt.mPlayer}) and market (${T3.pt.mMarket}) disagree`)}else if(T3.pt.mPlayer!=null){sc++;why.push("player averages and market agree")}}
+  else if(T3.proj!=null){const d=Math.abs(T3.proj-best.p);if(d<=.07){sc++;why.push("projection agrees")}else if(d>.12){sc--;why.push("projection disagrees")}}
   const st=k==="p"?PROPS[i].st:k==="c"?(custOf(i)||{}).st:null;if(VOLATILE.includes(st)){sc--;why.push("volatile stat")}
   if(far){sc--;why.push("far from posted line")}
   if(STALE){sc--;why.push("lines may be old")}
@@ -795,10 +797,13 @@ function delCustom(id){CUST=CUST.filter(c=>c.id!==id);LS.set("sl_cust",CUST);del
 const SAVED=LS0("sl_saved",{});
 function nameOf(key){const k=key[0],i=+key.slice(1);if(k==="c"){const C=custOf(i);return{name:C.p,g:C.g,icon:()=>avatar(C.p,C.tm),stat:C.st}}if(k==="p")return{name:PROPS[i].p,g:PROPS[i].g,icon:()=>avatar(PROPS[i].p,PROPS[i].tm),stat:PROPS[i].st};
   const L=LINES[i],G=SNAP[L.g];return{name:mu(G)+" · "+L.m,g:L.g,icon:()=>logo(G.home),stat:L.m}}
+/* a researched spot only stands if tonight's projection picks the same side at the same line */
+function topAgrees(x){if(x.k!=="p")return true;const g=SUG[x.i];if(!g.pt)return true;const w=x.pick.split(" "),side=/^Over/.test(w[0])?"o":"u";return g.s===side&&+w[1]===g.l}
+const topP=x=>x.k==="p"&&SUG[x.i].pt?SUG[x.i].p:x.p;
 function topItems(){
   const items=[];
-  TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
-    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(x.p,price),p:x.p,price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
+  TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
+    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(topP(x),price),p:topP(x),price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
   Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,conf:S.conf,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl,cond:`Your price: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
   topItems.verify=[];items.forEach(x=>{x.fresh=freshOf(x.base)});
   items.forEach(x=>{if(x.ev>0&&!x.assumed&&(x.fresh.lv==="stale"||(x.base[0]==="p"&&PROPS[+x.base.slice(1)].live&&PROPS[+x.base.slice(1)].live.lv==="out")))topItems.verify.push(x)});
@@ -807,7 +812,7 @@ function topItems(){
 function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
   const best={lbl,p:x.p,o:price,L:parseFloat(w[1]),push:0};return confFor(base,best,threeNums(base,best,m,true),false)}catch(e){return null}}
 /* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
-function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:x.p,head:x.head,cond:x.cond,why:x.why})});return out}
+function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:topP(x),head:x.head,cond:x.cond,why:x.why})});return out}
 function saveFind(key){const b=recBest[key];
   if(!b){toast("Enter both odds first");return}
   if(b.assumed){toast("Enter the odds first");return}
@@ -980,16 +985,50 @@ function projP(name,st,L){const P=projOf(name);if(!P||L==null)return null;if(OUT
   const m=comp.reduce((a,c)=>a+Q[c],0);let raw;
   if(st==="3-Pointers")raw=poisOver(m,L);else{const sd=comp.length===1?sdOf[comp[0]](m):Math.sqrt(comp.reduce((a,c)=>a+Math.pow(sdOf[c](Q[c]),2),0))*1.15;raw=1-Phi((L-m)/sd)}
   return{pO:Math.min(.95,Math.max(.05,.5+.6*(raw-.5))),m:Math.round(m*10)/10,raw,P,basis}}
-/* blend my projection into board props that only have a line (no price): book line = 70%, my projection = 30% */
-function blendProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(x.q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null))return;
-  const pr=projP(x.p,x.st,g.l);if(!pr)return;const pO=.5+.3*(pr.pO-.5),so=pO>=.5;
-  g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pr.m;
-  g.why=`Book line ${g.l}, my projection ${pr.m} (${pr.basis}). Blending 70% book and 30% projection gives ${so?"Over":"Under"} about ${pct(g.p)}. ${g.why.replace(/^Line only[^.]*\.\s*/,"")}`.trim()});}
-
+/* ================= tonight's projection =================
+   One number: what Sharpline expects the player to put up tonight. Every pick, percentage and grade on a prop comes from it.
+   1. Player estimate: season average, blended 65/35 with the last 10 games and scaled by the minutes trend when the data has them.
+   2. Blowout risk: big spreads cut starters' fourth-quarter minutes (about 0.6% per point of spread past 7, at most 6%).
+   3. Fresh absences: a teammate who averages 15+ and was just ruled out frees shots and touches (+5% per 20 points he averaged, at most +10%).
+   4. Market: the books' line, moved by their prices when both sides are posted, is a second estimate of the same thing.
+   The two are averaged (60% player when last-10 data exists, 50% on season averages alone, 0% when there are no averages). */
+const STAT_COMP={"Points":["pts"],"Rebounds":["reb"],"Assists":["ast"],"3-Pointers":["tpm"],"Pts+Reb+Ast":["pts","reb","ast"],"Pts+Reb":["pts","reb"],"Pts+Ast":["pts","ast"],"Reb+Ast":["reb","ast"]};
+function gameSpread(gi){const e=LIVE.ev&&LIVE.ev[gi];if(e&&e.odds&&e.odds.spread&&e.odds.spread.home!=null)return Math.abs(e.odds.spread.home);
+  const G=SNAP[gi],mk=G&&G.mk.find(m=>m.k.startsWith("Spread"));return mk?Math.abs(parseFloat(mk.k.split(" ").pop())):0}
+function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=STAT_COMP[st],P=projOf(x.p),why=[];
+  if(OUT.has(normN(x.p)))return null;
+  /* market estimate */
+  const ls=x.q.filter(q=>typeof q.l==="number").map(q=>q.l).sort((a,b)=>a-b);if(!ls.length)return null;
+  const Lm=ls[Math.floor((ls.length-1)/2)],sdM=sdFor(st,Lm);let mMarket=Lm,mkt="book line "+Lm;
+  const q2=x.q.find(q=>q.l===Lm&&q.o!=null&&q.u!=null),qc=x.q.find(q=>q.l===Lm&&q.oc!=null&&q.uc!=null);
+  const pm=q2?devig(q2.o,q2.u)[0]:qc?qc.oc/(qc.oc+qc.uc):null;
+  if(pm!=null){mMarket=Lm-sdM*invPhi(1-pm);mkt=`market ${Math.round(mMarket*10)/10} (${Lm} at ${q2?fmtAm(q2.o)+"/"+fmtAm(q2.u):qc.oc+"¢/"+qc.uc+"¢"})`}
+  /* player estimate */
+  let mPlayer=null,w=0;
+  if(P&&comp&&comp.every(c=>P[c]!=null)){mPlayer=comp.reduce((a,c)=>a+projMean(P,c),0);
+    const l10=P.l10&&comp.every(c=>P.l10[c]!=null);w=l10?.6:.5;why.push(l10?"season and last 10":"season average");if(P.min&&P.l10min)why.push("minutes trend");
+    const sp=gameSpread(x.g);if(sp>7){const f=Math.max(.94,1-.006*(sp-7));mPlayer*=f;if(f<=.99)why.push(`blowout risk (${sp}-pt spread, -${Math.round((1-f)*100)}%)`)}
+    if(x.mates&&(P.pts||0)>=10){let b=0;x.mates.forEach(n=>{const o=projOf(n);if(o&&o.pts>=15)b+=.05*o.pts/20});b=Math.min(.1,b);if(b>0){mPlayer*=1+b;why.push(`${x.mates.join(", ")} out (+${Math.round(b*100)}%)`)}}}
+  const m=mPlayer==null?mMarket:w*mPlayer+(1-w)*mMarket;
+  const disagree=mPlayer!=null&&Math.abs(mPlayer-mMarket)>Math.max(2,.1*Lm)&&Math.sign(mPlayer-Lm)!==Math.sign(mMarket-Lm||-(mPlayer-Lm));
+  return{m:Math.round(m*10)/10,mPlayer:mPlayer==null?null:Math.round(mPlayer*10)/10,mMarket:Math.round(mMarket*10)/10,Lm,w,why,mkt,disagree,
+    pOver:L=>{const raw=st==="3-Pointers"?poisOver(m,L):1-Phi((L-m)/sdFor(st,m));return Math.min(.95,Math.max(.05,.5+.85*(raw-.5)))}}}
+/* every board prop takes its pick, chance and tier from tonight's projection */
+function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
+  const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}
+  const pO=pt.pOver(g.l),so=pO>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
+  /* best posted price for the chosen side at this line */
+  const prices=x.q.filter(q=>q.l===g.l).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
+  if(g.bp!=null)g.bp=prices.reduce((b,o)=>dec(o)>dec(b)?o:b,prices[0]);
+  const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
+  g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
+    (pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")})}
 /* ---------- letter grades: S (best) to F ----------
    Start from the difference (edge), then drop a step for each reason the estimate is shaky:
    no posted price behind my estimate, a thin prediction market, a volatile stat, or a line far from the market. */
 const GRADES=["F","D","C","B","A","S"];
+/* a grade can't outrank its confidence: Low tops out at C, Medium at B, only High can be A or S */
+const capGrade=(g,c)=>{if(!c||!c.lv)return g;const cap=c.lv==="Low"?2:c.lv==="Medium"?3:5;return GRADES[Math.min(GRADES.indexOf(g),cap)]};
 const VOLATILE=["Steals","Blocks","Turnovers"];
 function reliability(key){const k=key[0],i=+key.slice(1);let pen=0,why=[];
   if(k==="p"){const x=PROPS[i];const priced=x.q.some(q=>q.o!=null||q.u!=null);const thin=x.q.some(q=>q.oc!=null||q.uc!=null);
@@ -1001,9 +1040,10 @@ function reliability(key){const k=key[0],i=+key.slice(1);let pen=0,why=[];
 function gradeFor(key,ev,far){if(ev==null)return"F";
   let g=ev>=.06?5:ev>=.04?4:ev>=.02?3:ev>=0?2:ev>=-.02?1:0;const r=reliability(key);g-=r.pen;if(far)g--;return GRADES[Math.max(0,g)]}
 function baseGrade(key){const k=key[0],i=+key.slice(1);
-  if(k==="p"){const g=SUG[i];return g.bp!=null?gradeFor(key,evOf(g.p,g.bp)):"F"}
-  if(k==="l"){const L=LINES[i];return L.bp!=null?gradeFor(key,evOf(L.p,L.bp)):"F"}
+  if(k==="p"){const g=SUG[i];if(g.bp==null)return"F";return capGrade(gradeFor(key,evOf(g.p,g.bp)),baseConf(key,g.s==="o"?"Over "+g.l:"Under "+g.l,g.p,g.bp,g.l))}
+  if(k==="l"){const L=LINES[i];if(L.bp==null)return"F";return capGrade(gradeFor(key,evOf(L.p,L.bp)),baseConf(key,L.pick,L.p,L.bp,parseFloat(L.pick.split(" ")[1])))}
   return"F"}
+function baseConf(key,lbl,p,o,L){try{const best={lbl,p,o,L,push:0};return confFor(key,best,threeNums(key,best,model(key),true),false)}catch(e){return null}}
 function gradeNow(key){const E=EDV[key];if(E&&E.a&&E.b){recHTML(key);const b=recBest[key];if(b&&b.grade)return b.grade}return baseGrade(key)}
 const gradeTag=(g,sz)=>`<span class="grade g-${g}${sz?" "+sz:""}">${g}</span>`;
 
@@ -1126,7 +1166,7 @@ function renderTop(){
   document.getElementById("topList").innerHTML=items.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];
     const d=x.src==="built"?(TOP[x.n].k==="p"?SUG[TOP[x.n].i]:LINES[TOP[x.n].i]):null;
     return`<div class="top" data-key="${x.key}"><div class="rank">${n+1}</div>${freshTag(x.fresh)}
-      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} ${confTag(x.conf)} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your find</span>':""}</div>
+      <div class="kind">${gradeTag(capGrade(gradeFor(x.base,x.ev,false),x.conf),"md")} ${confTag(x.conf)} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your find</span>':""}</div>
       <div class="face">${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
       <div style="margin-top:10px"><span class="pick ${x.src==="saved"?"o":"n"}">${x.cond}</span></div>
       <div class="stats"><div class="st"><div class="k">Difference</div><div class="v" style="color:var(--over)">+${(x.ev*100).toFixed(1)}%</div></div>
@@ -1155,7 +1195,7 @@ const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-P
 const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}">${avatar(x.p,x.tm,"av")}
-    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st} · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${(pr=>pr?` · <b class="pj">proj ${pr.m}</b>`:"")(projP(x.p,x.st,g.l))}</div></div>
+    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st} · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}</div></div>
     <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}</span>
       <span class="est"><b>${pct(g.p)}</b> est ${gradeTag(gradeNow(key))}</span></div>
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} Prop lines are researched about every hour; game lines update live.</div>
@@ -1176,7 +1216,7 @@ function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=p
 /* "Most books posting" is a stand-in for popularity: no free source publishes real betting volume */
 let PSORT=LS0("sl_psort2","proj"),GCOL=LS0("sl_gcol",[]);
 /* projected stat for tonight: Sharpline's projection when there are averages, otherwise the book line */
-const projVal=it=>{const pr=projP(it.name,it.st,it.line);return pr?pr.m:it.line};
+const projVal=it=>{if(it.key&&it.key[0]==="p"){const g=SUG[+it.key.slice(1)];return g.proj!=null?g.proj:it.line}const pr=projP(it.name,it.st,it.line);return pr?pr.m:it.line};
 const edgeOf=key=>{const b=recBest[key];if(b&&!b.assumed)return b.ev;if(key[0]==="p"){const g=SUG[+key.slice(1)];return g.bp!=null?evOf(g.p,g.bp):-1}return-1};
 const propSorter=(a,b)=>PSORT==="proj"?(projVal(b)-projVal(a)||a.name.localeCompare(b.name)):PSORT==="books"?(b.books-a.books||b.line-a.line):PSORT==="edge"?(edgeOf(b.key)-edgeOf(a.key)):PSORT==="name"?a.name.localeCompare(b.name):(b.line-a.line||a.name.localeCompare(b.name));
 function allPropItems(){
@@ -1367,7 +1407,7 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
     await Promise.all([pB,pO,pI]);
     try{const cache=LS0("sl_jersey",{d:"",m:{}});if(cache.d!==DATA_DATE||!Object.keys(cache.m).length){const ids=[...new Set(Object.values(LIVE.ev).flatMap(e=>[e.homeId,e.awayId]).filter(Boolean))];
       if(ids.length){const maps=await Promise.all(ids.map(id=>SharpLive.roster(id).catch(()=>({}))));const m=Object.assign({},...maps);if(Object.keys(m).length){JERSEY=m;LS.set("sl_jersey",{d:DATA_DATE,m})}}}}catch(e){console.warn("roster",e)}
-    applyLiveOdds();applyInjuries();
+    applyLiveOdds();applyInjuries();applyProjections();
     try{res.graded=await gradePending()}catch(e){}
     LIVE.okOdds=res.odds!=="fail";LIVE.okInj=res.inj!=="fail";LIVE.boardOk=res.board!=="fail";LIVE.last=Date.now();
     renderAll();flashChanges(before);renderLiveBar();return res})();
@@ -1403,7 +1443,7 @@ function applyData(d){
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
   if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];
     LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_date",d.date)}
-  DATA_DATE=d.date;blendProjections();staleCheck(d);
+  DATA_DATE=d.date;applyProjections();staleCheck(d);
   const dt=new Date(d.date+"T12:00:00");
   document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
 }

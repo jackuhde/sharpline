@@ -124,3 +124,9 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - **Removed:** "Add a missing player". Scans already add unlisted players, and the hourly board covers the rest.
 - **Not done (needs a decision):** accounts and synced tracking across devices need a backend. Player photos are not included: monogram avatars stay.
 - Tests: 33 math, 17 parser, 26 live and grading.
+
+## Projection and grade consistency (Nov 17)
+
+- **One projection per prop:** "proj" is what Sharpline expects tonight: the player estimate (season and last-10 averages, minutes trend, blowout risk from the spread, newly ruled-out teammates) averaged with the market's estimate (book line, moved by two-sided prices). 60/40 player-to-market with last-10 data, 50/50 on season averages, market only with no averages. The pick, percentage and tier all come from this number. Research text is kept only as a labeled note.
+- **Top List follows the projection:** a researched spot whose side or line disagrees with tonight's projection is dropped.
+- **Grade capped by confidence:** Low confidence tops out at C, Medium at B, and only High confidence can be A or S. This holds on every row, editor result and Top List card.
