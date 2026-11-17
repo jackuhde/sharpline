@@ -30,10 +30,10 @@ Severity: High = can show a wrong edge. Medium = misleading or missing. Low = po
 | A8 | Projection model | Season averages only. No minutes, recent form, injuries to teammates, opponent defense, pace, rest. The fixed SD formulas and the 40% shrink toward 50% are reasonable guards but not calibrated. | Medium | Partly fixed in Phase 2: last 10 games, minutes trend, out players (once the data task supplies them). Opponent, pace and rest still to come. |
 | A9 | Line shifts | Moving the line uses a flat per-point rate (Points 4.5% per point). Fine near the posted line, rough far away (already flagged in the app). | Medium | Fixed in Phase 2 (bell-curve shifts by market) |
 | A10 | Grades | One letter mixes edge size and data quality. You can't tell "big edge, shaky data" from "small edge, solid data". | Medium | Fixed in Phase 2 (grade kept, Confidence added) |
-| A11 | Parlay | Multiplies leg chances as if independent. Same-game legs only get a warning. | Medium | Phase 3 (rough correlation adjustment for known pairs, clearly labeled) |
-| A12 | Scanner | Built around Fliff-style layouts. Doesn't read decimal or fractional odds, sentence-style tips ("Brunson over 26.5 pts -115"), or bet slips with multiple legs as a parlay. | Medium | Phase 3 |
-| A13 | Bet tracking | Does not exist. Nothing is kept after the day resets. | Medium | Phase 3 |
-| A14 | Model validation | No record of past estimates vs results, so accuracy can't be measured. | Medium | Phase 3 starts the log; Phase 4 reports on it |
+| A11 | Parlay | Multiplies leg chances as if independent. Same-game legs only get a warning. | Medium | Removed at your request (Parlay tab replaced by Bet Tracker) |
+| A12 | Scanner | Built around Fliff-style layouts. Doesn't read decimal or fractional odds, sentence-style tips ("Brunson over 26.5 pts -115"), or bet slips with multiple legs as a parlay. | Medium | Fixed in Phase 3 |
+| A13 | Bet tracking | Does not exist. Nothing is kept after the day resets. | Medium | Fixed in Phase 3 |
+| A14 | Model validation | No record of past estimates vs results, so accuracy can't be measured. | Medium | Started in Phase 3: the Tracker logs the estimate on every bet and scores it once settled |
 | A15 | Expert check | Only a formula (weight = picks / (picks + 2000)). No tracked expert records. | Low | Phase 4, only with verifiable records |
 | A16 | Fonts | Loaded from Google Fonts, so the first load needs a connection. | Low | Phase 5 |
 
@@ -92,3 +92,13 @@ Responsible use applies throughout: no "lock" language, "Pass" and "No edge" are
 - Line moves use a bell curve per market (spread SD 12.5, total SD 18, player stats scale with the line). Push chances on whole numbers come from the same curve.
 - Projections blend season and last-10 averages 65/35 and scale for recent minutes (capped at 15%) when `data.json` has those fields. Players listed in a game's `out` list get no projection.
 - Tests: 33 passing (`node tests/math.test.js`).
+
+## Phase 3 notes (done)
+
+- **Parlay tab removed** (your call). Its spot is now **Tracker**. "+ Parlay" buttons are now "+ Track".
+- **Bet Tracker**: logs pick, odds, book, stake, Sharpline's estimate, edge, grade and confidence at the moment you track it. Settle as Won, Lost, Push or Void. Shows record, net, ROI, win rate vs break-even, results by market, and an accuracy check (Brier score vs the book's own price and a coin flip, plus expected vs actual by estimate range). Kept across days, on the phone only. CSV export. Flat default stake, never raised after losses.
+- **Universal scanner**: reads any sportsbook, bet slips and plain-text tips ("Brunson over 26.5 pts -115", "o26.5"). Converts decimal and fractional odds (and flags them for checking). Detects the book name and parlay slips (each leg graded alone). Grades the exact line and price in the screenshot, and shows what the board has now beside it. One-sided tips are graded on the side given. Unknown players need season averages or both prices.
+- **Books disagree**: when sources post different lines for a prop, Sharpline now uses the line least favorable to the bet and lowers confidence. This removed a false S grade (Barnes Over 19.5) caught in testing.
+- Tests: 33 math + 10 parser tests passing, plus browser checks of tracking, settling, reload persistence and a real OCR read of a tipster image.
+
+Known limits: the book name is read once per screenshot, so a post naming two books labels every line with the first one found. No team model for game lines yet.

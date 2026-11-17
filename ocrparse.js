@@ -1,9 +1,19 @@
-/* Turns recognized screenshot text into bet rows. Works on Fliff-style layouts:
-   player name, stat label, then "Over 25.5 -115  Under 25.5 -105" (also O/U, More/Less). */
+/* Turns recognized screenshot text into bet rows. Works on sportsbook layouts (player, stat, then
+   "Over 25.5 -115  Under 25.5 -105", also O/U, o25.5, More/Less), bet slips, and plain-text tips
+   ("Brunson over 26.5 pts -115"). Decimal (1.91) and fractional (10/11) odds are converted to American. */
 (function(root){
 const STAT_RE=[[/pts\s*\+\s*reb\s*\+\s*ast|points\s*\+\s*rebounds\s*\+\s*assists|\bpra\b/i,"Pts+Reb+Ast"],[/pts\s*\+\s*reb|points\s*\+\s*rebounds/i,"Pts+Reb"],[/pts\s*\+\s*ast|points\s*\+\s*assists/i,"Pts+Ast"],[/reb\s*\+\s*ast|rebounds\s*\+\s*assists/i,"Reb+Ast"],[/three|3[\s-]*p(t|oint)|3pm|made 3|3s made/i,"3-Pointers"],[/rebound|\breb(s)?\b/i,"Rebounds"],[/assist|\bast(s)?\b/i,"Assists"],[/point|\bpts\b/i,"Points"],[/steal/i,"Steals"],[/block/i,"Blocks"],[/turnover/i,"Turnovers"]];
 const norm=x=>(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();
-function fixText(t){return(t||"").replace(/[–—−]/g,"-").replace(/(?<=[+-]\d{0,3})[lI|!]/g,"1").replace(/(?<=\d)[oO](?=\d)/g,"0").replace(/(?<=\d)[,](?=5\b)/g,".").replace(/\bEVEN\b|\bEVN\b/gi,"+100")}
+const BOOKS=[["draftkings","DraftKings"],["fanduel","FanDuel"],["betmgm","BetMGM"],["caesars","Caesars"],["fanatics","Fanatics"],["espn ?bet","ESPN BET"],["bet ?365","bet365"],["hard ?rock","Hard Rock"],["bally","Bally Bet"],["fliff","Fliff"],["prizepicks","PrizePicks"],["underdog","Underdog"],["novig","Novig"],["kalshi","Kalshi"],["polymarket","Polymarket"],["betrivers","BetRivers"],["bovada","Bovada"],["pinnacle","Pinnacle"]];
+function detectBook(all){const t=(all||"").toLowerCase();for(const[re,n]of BOOKS)if(new RegExp("\\b"+re).test(t))return n;return null}
+const isSlip=all=>/\bparlay\b|\b\d+[- ]?leg\b|\bsgp\b|same game|\bbet slip\b|\bto win\b|\bpayout\b/i.test(all||"");
+const decToAm=d=>d>=2?Math.round((d-1)*100):-Math.round(100/(d-1));
+/* rewrite decimal and fractional odds as American so the rest of the parser sees one format */
+function normOdds(t){
+  t=t.replace(/(^|[\s(@])([1-9]\d?\.\d{2})(?=$|[\s)])/g,(m,a,d)=>{const v=parseFloat(d);if(v<1.01||v>51)return m;const am=decToAm(v);return a+(am>0?"+":"")+am+"⁽ᵈ⁾"});
+  t=t.replace(/(^|[\s(@])(\d{1,3})\/(\d{1,3})(?=$|[\s)])/g,(m,a,n,dn)=>{n=+n;dn=+dn;if(![1,2,3,4,5,6,7,8,9,10,11,13,15,20].includes(dn)||!n)return m;const am=decToAm(1+n/dn);return a+(am>0?"+":"")+am+"⁽ᶠ⁾"});
+  return t}
+function fixText(t){return normOdds((t||"").replace(/\b([oOuU])(\d{1,3}\.5)\b/g,"$1 $2")).replace(/[–—−]/g,"-").replace(/(?<=[+-]\d{0,3})[lI|!]/g,"1").replace(/(?<=\d)[oO](?=\d)/g,"0").replace(/(?<=\d)[,](?=5\b)/g,".").replace(/\bEVEN\b|\bEVN\b/gi,"+100")}
 function findName(t,names){const n=norm(t);if(!n||/\d/.test(t)&&!/^[^\d]*$/.test(t.replace(/\d+(\.\d)?\s*(pm|am)?/gi,"")))return null;
   const toks=n.split(" ");if(toks.length>5)return null;
   let best=null;names.forEach(x=>{const xn=norm(x.p),parts=xn.split(" "),last=parts[parts.length-1];
@@ -15,12 +25,15 @@ function findTeam(t,teams){const n=" "+norm(t)+" ",up=" "+t.toUpperCase().replac
   for(const T of teams){if(n.includes(" "+norm(T.full)+" ")||n.includes(" "+T.nick+" ")||up.includes(" "+T.ab+" "))return T}return null}
 function looksLikeName(t){return/^[A-Z][A-Za-z.'’-]+(\s+[A-Z][A-Za-z.'’-]+){1,2}(\s+(Jr|Sr|II|III|IV)\.?)?$/.test(t.trim())}
 function parse(lines,ctx){const rows=[],names=ctx.names,teams=ctx.teams;let player=null,stat=null,team=null,pend=null,hint=null;
-  const flush=()=>{if(pend&&player&&stat&&pend.line!=null&&(pend.over!=null||pend.under!=null))rows.push({k:"P",player:player.p,ab:player.ab||"?",hint,stat,line:pend.line,over:pend.over??null,under:pend.under??null,raw:pend.raw.trim()});pend=null};
+  const flush=()=>{if(pend&&player&&stat&&pend.line!=null&&(pend.over!=null||pend.under!=null))rows.push({k:"P",player:player.p,ab:player.ab||"?",hint,stat,line:pend.line,over:pend.over??null,under:pend.under??null,raw:pend.raw.trim(),conv:/⁽/.test(pend.raw)});pend=null};
   lines.forEach(L=>{const t=fixText(L.t).trim();if(!t)return;
     const mu=t.toUpperCase().match(/\b([A-Z]{2,3})\s*(?:@|VS\.?|AT)\s*([A-Z]{2,3})\b/);if(mu&&!/[+-]\d{3}|\d+\.5/.test(t)){hint=[mu[1],mu[2]];return}
     const nm=findName(t,names),st=findStat(t),tm=findTeam(t,teams);
     const hasNums=/[+-]\d{3}|\d+\.5/.test(t);
     if(nm&&!hasNums){flush();player=nm;team=null;stat=st||null;return}
+    if(hasNums&&/\b(over|under|o|u|more|less)\b/i.test(t)){/* one-line tip: "Jalen Brunson over 26.5 pts -115" */
+      let who=nm;if(!who){const lead=t.split(/\b(?:over|under|o|u|more|less)\b/i)[0].replace(/[^A-Za-z.'’ -]/g," ").trim();const w=lead.split(/\s+/).filter(x=>/^[A-Z]/.test(x)).slice(-3).join(" ");if(looksLikeName(w))who={p:w,ab:null}}
+      if(who&&(st||stat)){flush();player=who;stat=st||stat;team=null}}
     if(!nm&&!st&&!tm&&!hasNums&&looksLikeName(t)){flush();player={p:t,ab:null};team=null;stat=null;return}
     if(st&&!hasNums){flush();stat=st;return}
     if(tm&&!nm){flush();player=null;stat=null;team=tm}
@@ -41,6 +54,8 @@ function parse(lines,ctx){const rows=[],names=ctx.names,teams=ctx.teams;let play
       if(spread!=null)rows.push({k:"G",ab:team.ab,mk:"spread",line:spread,odds:sOdds,side:"-",raw:t});
       if(tot!=null)rows.push({k:"G",ab:team.ab,mk:"total",line:tot,odds:tOdds,side:tSide||"over",raw:t});
       if(ml!=null)rows.push({k:"G",ab:team.ab,mk:"moneyline",line:null,odds:ml,side:"-",raw:t});}
-  });flush();return rows}
-root.SharpOCR={parse,fixText,findName};
+  });flush();
+  const all=lines.map(l=>l.t).join("\n"),book=detectBook(all),slip=isSlip(all);
+  rows.forEach(r=>{r.book=book;r.slip=slip;if(r.raw&&/⁽/.test(r.raw))r.conv=true;if(r.raw)r.raw=r.raw.replace(/⁽.⁾/g,"")});return rows}
+root.SharpOCR={parse,fixText,findName,detectBook,normOdds};
 })(typeof window!=="undefined"?window:module.exports);

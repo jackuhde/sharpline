@@ -129,7 +129,26 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .mrow .r .big{font:900 16px Archivo}
 .mrow .r .sm{font:700 11px Archivo;color:var(--mute)}
 
-/* parlay */
+/* tracker */
+.bn{display:block;font:700 11px Archivo;color:var(--acc2);margin-top:3px}
+.tsum .hint{font:600 12.5px/1.5 Archivo;color:var(--mute)}
+.tsum{background:var(--s1);border:1px solid var(--line2);border-radius:18px;padding:14px}
+.tsum .stats+.stats{margin-top:8px}
+.tk-h{margin:22px 4px 8px}
+.tb{padding:12px 14px;border-top:1px solid var(--line)}.tb:first-child{border-top:0}
+.tb-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.tb .nm{font:800 14px Archivo}.tb .sub{font:700 11.5px Archivo;color:var(--mute);margin-top:3px}
+.tb-in{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin-top:10px}
+.tb-in label,.tsum label{display:block;font:800 10px Archivo;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.tb-in input,.tsum input{width:100%;background:var(--s3);border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:9px 10px;font:800 14px Archivo}
+.tb-res{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.tb-res button{padding:9px 0;border-radius:10px;background:var(--s3);color:var(--ink);font:800 12.5px Archivo;border:1px solid var(--line2)}
+.tb-res .w{color:var(--over);border-color:rgba(46,230,166,.35)}.tb-res .l{color:var(--under);border-color:rgba(255,90,110,.35)}
+.rc{font:900 10px Archivo;padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:middle}
+.r-W{background:rgba(46,230,166,.15);color:var(--over)}.r-L{background:rgba(255,90,110,.15);color:var(--under)}.r-P,.r-V{background:var(--s3);color:var(--mute)}
+.tk-t .tr{display:grid;grid-template-columns:1.6fr .8fr 1fr .8fr;gap:6px;padding:10px 14px;border-top:1px solid var(--line);font:700 12.5px Archivo}
+.tk-t .tr:first-child{border-top:0}.tk-t .th{color:var(--mute);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+/* shared */
 .empty{text-align:center;padding:50px 20px;color:var(--mute);font-weight:600;background:var(--s1);border:1px dashed var(--line2);border-radius:22px}
 .empty b{display:block;color:var(--ink);font:900 20px Archivo;margin-bottom:6px}
 .leg{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
@@ -380,7 +399,7 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
  <path class="tip" d="M364 150 L428 138 L418 202 Z" fill="#7fe9ff" stroke="#7fe9ff" stroke-width="10" stroke-linejoin="round"/>
 </svg>
 </div><div class="brand">Sharp<span>line</span></div>
-  <div class="when" id="when"><b>Loading…</b>&nbsp;</div><button class="scanbtn" data-scan="1"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.5"/></svg>Scan Fliff</button>
+  <div class="when" id="when"><b>Loading…</b>&nbsp;</div><button class="scanbtn" data-scan="1"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.5"/></svg>Scan a bet</button>
 </div></header>
 
 <div class="wrap">
@@ -411,20 +430,20 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
     <div id="lineList"></div>
   </section>
 
-  <section class="view" id="v-parlay">
-    <div class="ph"><div class="eyebrow">Parlay check</div><h1>What Odds Do You Need?</h1>
-      <p>Add props or lines with the + buttons. I'll show the minimum parlay payout that makes the ticket worth it, then paste Fliff's offer to check it.</p></div>
-    <div id="parlayBox"></div>
+  <section class="view" id="v-track">
+    <div class="ph"><div class="eyebrow">Your record</div><h1>Bet Tracker</h1>
+      <p>Tap "+ Track" on any bet you place, then settle it after the game. You'll see your real results and how accurate Sharpline's estimates are. Saved on this phone only.</p></div>
+    <div id="trackBox"></div>
   </section>
   <p class="foot">Estimates are mine, built from published odds, and lines move. Check every price in Fliff before betting. Bet only what you can afford to lose.</p>
 </div>
 
 <div class="sheet" id="scanSheet"><div class="sheet-bg" data-scanclose="1"></div><div class="sheet-in">
-  <div class="sheet-h"><div><div class="eyebrow">Upload</div><h2>Scan Fliff screenshots</h2></div><button class="x" data-scanclose="1">×</button></div>
-  <p class="sheet-p">Screenshot Fliff's prop or game-line screens and upload them. Sharpline reads them right on your phone (free, nothing is uploaded), then shows every line so you can fix any misreads before grading.</p>
-  <label class="drop" id="drop"><input type="file" id="scanFiles" accept="image/*" multiple hidden>
+  <div class="sheet-h"><div><div class="eyebrow">Upload</div><h2>Scan any bet</h2></div><button class="x" data-scanclose="1">×</button></div>
+  <p class="sheet-p">Upload screenshots from any sportsbook, a bet slip, or a tip someone posted (X, Instagram, Discord, group chats). Sharpline reads them on your phone, so nothing is uploaded. Then it shows every line it found so you can fix misreads before grading. It grades the exact line and odds in the screenshot and shows what the board has now.</p>
+  <label class="drop" id="drop"><input type="file" id="scanFiles" accept="image/png,image/jpeg,image/webp,image/*" multiple hidden>
     <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-    <b>Tap to choose screenshots</b><span>Up to 8 at a time · PNG or JPG</span></label>
+    <b>Tap to choose screenshots</b><span>Up to 8 at a time · PNG, JPG or WebP</span></label>
   <div class="thumbs" id="thumbs"></div>
   <button class="go2" id="scanGo" data-scango="1" disabled>Read screenshots</button>
   <div class="scanstat" id="scanStat"></div>
@@ -434,7 +453,7 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
   <button data-v="top" class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z"/></svg>Top List</button>
   <button data-v="props"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Props</button>
   <button data-v="lines"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"/></svg>Lines</button>
-  <button data-v="parlay"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Parlay<span class="badge" id="badge" style="display:none">0</span></button>
+  <button data-v="track"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg>Tracker<span class="badge" id="badge" style="display:none">0</span></button>
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js"></script>
@@ -525,27 +544,28 @@ function recHTML(key){const m=model(key),v=EDV[key]||{},num=x=>x===""||x==null||
   const sgd=f=>{const n=num(v[f]);return n==null?null:(sgnOf(key,f)==="-"?-1:1)*Math.abs(n)};
   let a=sgd("a"),b=sgd("b");const assumed=[];
   if(a==null||(a>-100&&a<100)){a=-110;assumed.push("a")}if(b==null||(b>-100&&b<100)){b=-110;assumed.push("b")}
-  let sides,far=false,Lshow;
-  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const pO=clampP(shiftP(m.pO,m.l,L,m.sd));sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:1-pO,o:b,c:"u"}]}
+  let sides,far=false,Lshow,disagree=null;const oneSide=assumed.length===1?(assumed[0]==="a"?1:0):null;
+  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const anc=anchorsOf(key,m),pOs=anc.map(a=>clampP(shiftP(m.pO,a,L,m.sd)));const pO=Math.min(...pOs),pOu=Math.max(...pOs);
+    if(anc.length>1)disagree=[Math.min(...anc),Math.max(...anc)];sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:1-pOu,o:b,c:"u"}]}
   else if(m.type==="sp"){const L=sgd("L")??m.lnA;far=Math.abs(L-m.lnA)>3;const pA=clampP(shiftP(m.pA,-m.lnA,-L,m.sd));sides=[{lbl:m.A+" "+fmtPt(L),p:pA,o:a,c:"n"},{lbl:m.B+" "+fmtPt(-L),p:1-pA,o:b,c:"n"}]}
-  else{if(assumed.length){recCls[key]="na";recBest[key]=null;return`<span style="color:var(--mute)">Enter both teams' odds to compare.</span><small>My estimate: ${m.A} ${pct(m.pA)} · ${m.B} ${pct(1-m.pA)}</small>`}
+  else{if(assumed.length===2){recCls[key]="na";recBest[key]=null;return`<span style="color:var(--mute)">Enter both teams' odds to compare.</span><small>My estimate: ${m.A} ${pct(m.pA)} · ${m.B} ${pct(1-m.pA)}</small>`}
     sides=[{lbl:m.A+" ML",p:m.pA,o:a,c:"n"},{lbl:m.B+" ML",p:1-m.pA,o:b,c:"n"}]}
   let push=0;if(m.type!=="ml"){const Lp=m.type==="ou"?Lshow:(sgd("L")??m.lnA);if(Number.isInteger(Lp)){push=Math.min(.15,m.type==="ou"?pushAt(m.pO,m.l,Lp,m.sd):pushAt(m.pA,-m.lnA,-Lp,m.sd));sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
-  sides.forEach(x=>{x.push=push;x.ev=evPush(x.p,push,x.o)});const best=sides[0].ev>=sides[1].ev?sides[0]:sides[1];
+  sides.forEach(x=>{x.push=push;x.ev=evPush(x.p,push,x.o)});const best=oneSide!=null?sides[oneSide]:(sides[0].ev>=sides[1].ev?sides[0]:sides[1]);
   const evs=x=>(x.ev>=0?"+":"")+(x.ev*100).toFixed(1)+"%";
-  const real=!assumed.length;
+  const real=!assumed.length||oneSide!=null;
   const fo=key[0]==="c"&&(custOf(+key.slice(1))||{}).fo&&!m.proj;
   const tier=!real?"na":fo?"nr":best.ev>=.02?"g":best.ev>=-.01?"y":"r";
-  const word={g:"Strong value · bet it",y:best.ev>=0?"Thin edge · small stake or skip":"About fair · no real edge",r:"Overpriced · pass",na:"Enter Fliff's odds to grade this",nr:"Fliff only · add another book's line to compare"}[tier];
+  const word={g:"Strong value · bet it",y:best.ev>=0?"Thin edge · small stake or skip":"About fair · no real edge",r:"Overpriced · pass",na:"Enter Fliff's odds to grade this",nr:"Screenshot only · add another book's line to compare"}[tier];
   const pos=Math.max(3,Math.min(97,50+best.ev*500));
   const detail=`${sides[0].lbl} ${pct(sides[0].p)} (needs ${fmtAm(fairAmPush(sides[0].p,push))}) · ${sides[1].lbl} ${pct(sides[1].p)} (needs ${fmtAm(fairAmPush(sides[1].p,push))})`;
-  const notes=[];if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);
+  const notes=[];if(oneSide!=null)notes.push("only one side given, so only that side is graded");else if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);if(disagree)notes.push(`books disagree (${disagree[0]} to ${disagree[1]}), so the less favorable line is used`);
   const gap=lineGap(key,best,m,Lshow,sgd("L")),why=explain(key,best,gap,real);
   const grade=fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key);
-  const T3=threeNums(key,best,m,real),conf=confFor(key,best,T3,far);
+  const T3=threeNums(key,best,m,real),conf=confFor(key,best,T3,far,disagree);
   recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade,conf};
   return`<div class="rec-in"><div class="rgl">${gradeTag(grade,"lg")}<div><div class="lw">Take</div><div class="ls">${best.lbl}</div>${gap&&gap.d!==0?`<div class="gp ${gap.d>0?"up":"dn"}">${gap.d>0?"▲":"▼"} ${Math.abs(gap.d)} pt${Math.abs(gap.d)===1?"":"s"} ${gap.d>0?"better":"worse"} than market (${gap.ref})</div>`:""}</div></div>
-    <div class="cf"><b>${!real?"–":fo?pct(best.p):evs(best)}</b><span>${fo?"Fliff no-vig":"difference"}</span></div></div>
+    <div class="cf"><b>${!real?"–":fo?pct(best.p):evs(best)}</b><span>${fo?"its own no-vig":"difference"}</span></div></div>
     <div class="gauge"><i style="left:${pos}%"></i></div>
     <div class="tw">${word}</div>
     <div class="ex">${why}</div>
@@ -583,7 +603,7 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
     return out}
   return out}
 /* Confidence = how much to trust the estimate, separate from how big the edge is. */
-function confFor(key,best,T3,far){let sc=0;const why=[];const k=key[0],i=+key.slice(1);
+function confFor(key,best,T3,far,disagree){let sc=0;const why=[];if(disagree){sc--;why.push("books disagree on the line")}const k=key[0],i=+key.slice(1);
   if(T3.mkt!=null&&T3.mk1===1){sc+=1;why.push("thin or one-sided price")}else if(T3.mkt!=null){sc+=k==="l"?3:2;why.push("market price available")}else why.push("no market price");
   if(T3.proj!=null){const d=Math.abs(T3.proj-best.p);if(d<=.07){sc++;why.push("projection agrees")}else if(d>.12){sc--;why.push("projection disagrees")}}
   const st=k==="p"?PROPS[i].st:k==="c"?(custOf(i)||{}).st:null;if(VOLATILE.includes(st)){sc--;why.push("volatile stat")}
@@ -596,23 +616,25 @@ function t3HTML(T,best,conf){const cell=(lbl,v,sub)=>`<div class="n3"><div class
   return`<div class="three3">${cell("Market fair",T.mkt,T.mkt==null?"no price":T.mktSrc)}${cell("Sharpline proj",T.proj,T.proj==null?(T.projSrc||"no averages"):T.projSrc)}${cell("Book implied",T.book,T.book==null?"enter odds":"incl. vig")}</div>
   <div class="cfrow">${confTag(conf)}<span>Edge uses ${T.basis}. ${(w=>w.charAt(0).toUpperCase()+w.slice(1))(conf.why.join(", "))}.</span></div>`}
 /* market reference line, and how many points Fliff's line beats it by for the chosen side */
-function refLine(key,m){const k=key[0],i=+key.slice(1);
-  if(k==="p"){const n=PROPS[i].q.find(q=>typeof q.l==="number");return n?n.l:SUG[i].l}
+/* every line a source has posted for this prop (plus my suggestion's line) */
+function anchorsOf(key,m){if(key[0]!=="p")return[m.l];const ls=PROPS[+key.slice(1)].q.filter(q=>typeof q.l==="number").map(q=>q.l);return[...new Set([m.l,...ls])]}
+function refLine(key,m,best){const k=key[0],i=+key.slice(1);
+  if(k==="p"){const ls=anchorsOf(key,m);if(best)return best.lbl.startsWith("Over")?Math.min(...ls):Math.max(...ls);const n=PROPS[i].q.find(q=>typeof q.l==="number");return n?n.l:SUG[i].l}
   if(k==="c")return custOf(i).l;if(m.type==="ou")return m.l;if(m.type==="sp")return m.lnA;return null}
-function lineGap(key,best,m,L,Ls){const ref=refLine(key,m);if(ref==null)return null;
+function lineGap(key,best,m,L,Ls){const ref=refLine(key,m,best);if(ref==null)return null;
   if(m.type==="ou"){if(L==null)return null;const d=best.lbl.startsWith("Over")?ref-L:L-ref;return{d:Math.round(d*10)/10,ref}}
   if(m.type==="sp"){const LA=Ls??m.lnA;const isA=best.lbl.startsWith(m.A);const d=isA?LA-ref:ref-LA;return{d:Math.round(d*10)/10,ref:(isA?fmtPt(ref):fmtPt(-ref))}}
   return null}
 function firstSentence(t){const m=(t||"").match(/^.*?\.(?=\s|$)/);return m?m[0]:""}
 function explain(key,best,gap,real){const k=key[0],i=+key.slice(1),bits=[];
-  if(gap&&gap.d>0)bits.push(`Fliff is ${gap.d} point${gap.d===1?"":"s"} off the market (${gap.ref}), and that gap is in your favor.`);
-  else if(gap&&gap.d<0)bits.push(`Fliff's number is ${-gap.d} worse than the market (${gap.ref}).`);
-  if(real)bits.push(best.ev>0?`Fair price is ${fmtAm(toAm(best.p))} and Fliff pays ${fmtAm(best.o)}.`:`Fair price is ${fmtAm(toAm(best.p))}, but Fliff only pays ${fmtAm(best.o)}.`);
+  if(gap&&gap.d>0)bits.push(`This line is ${gap.d} point${gap.d===1?"":"s"} better than the market (${gap.ref}).`);
+  else if(gap&&gap.d<0)bits.push(`This line is ${-gap.d} point${-gap.d===1?"":"s"} worse than the market (${gap.ref}).`);
+  if(real)bits.push(best.ev>0?`Fair price is ${fmtAm(fairAmPush(best.p,best.push||0))} and this bet pays ${fmtAm(best.o)}.`:`Fair price is ${fmtAm(fairAmPush(best.p,best.push||0))}, but this bet only pays ${fmtAm(best.o)}.`);
   let ctx="";if(k==="p"){const g=SUG[i];if((g.s==="o")===best.lbl.startsWith("Over"))ctx=firstSentence(g.why)}
   else if(k==="l"){const L=LINES[i];if(best.lbl.split(" ")[0]===L.pick.split(" ")[0])ctx=firstSentence(L.why)}
   else if(k==="c"){const C=custOf(i),pr=C.fo?projP(C.p,C.st,C.l):null;ctx=C.fo?(pr?`No book has posted this, so this is my own line: ${pr.P.p} averages ${pr.m} ${(STAT_LBL[C.st]||C.st).toLowerCase()} this season (${pr.P.src}). Graded one step lower because it is projection-only.`:""):`Reference: ${C.bk} at ${C.l}.`}
   if(ctx&&!/^Line only/.test(ctx))bits.push(ctx);
-  return bits.join(" ")||"Enter Fliff's line and odds to see the difference."}
+  return bits.join(" ")||"Enter the line and odds to see the difference."}
 const recCls={},recBest={};
 function updRec(key){const el=document.getElementById("rec-"+key);if(!el)return;el.innerHTML=recHTML(key);el.className="rec t-"+(recCls[key]||"na");
   const row=el.closest(".row,.mrow");if(row){const gt=row.querySelector(".est .grade,.mk .grade");const g=(recBest[key]&&recBest[key].grade)||baseGrade(key);if(gt){gt.className="grade g-"+g;gt.textContent=g}}
@@ -625,7 +647,7 @@ function syncFind(key){const b=recBest[key],was=!!SAVED[key];
   else delete SAVED[key];
   LS.set("sl_saved",SAVED);return!!SAVED[key]&&!was}
 const syncT={};
-function syncLater(key){clearTimeout(syncT[key]);syncT[key]=setTimeout(()=>{const added=syncFind(key);renderTop();renderParlay();
+function syncLater(key){clearTimeout(syncT[key]);syncT[key]=setTimeout(()=>{const added=syncFind(key);renderTop();renderTrack();
   if(added){const r=topItems().findIndex(x=>x.base===key);if(r>=0)toast(`Added to Top List at #${r+1}`)}},900)}
 
 /* ---------- custom players (added by you) ----------
@@ -654,7 +676,7 @@ function addCustom(){const v=id=>document.getElementById(id).value.trim();
   const o=csg.ro==="-"?-ro:ro,u=csg.ru==="-"?-ru:ru,id=CUST.reduce((m,c)=>Math.max(m,c.id),-1)+1;
   CUST.push({id,g,tm,p:pn,st,l,o,u,bk});LS.set("sl_cust",CUST);propGame=g;renderAll();toast(pn+" added");
   setTimeout(()=>{const r=document.querySelector(`[data-edbox="c${id}"]`);if(r)r.scrollIntoView({block:"center",behavior:"smooth"})},100)}
-function delCustom(id){CUST=CUST.filter(c=>c.id!==id);LS.set("sl_cust",CUST);delete SAVED["c"+id];LS.set("sl_saved",SAVED);parlay=parlay.filter(l=>l.key!=="c"+id&&l.key!=="fc"+id);save();renderAll()}
+function delCustom(id){CUST=CUST.filter(c=>c.id!==id);LS.set("sl_cust",CUST);delete SAVED["c"+id];LS.set("sl_saved",SAVED);renderAll()}
 
 /* ---------- saved Fliff finds + top list ---------- */
 const SAVED=LS0("sl_saved",{});
@@ -676,7 +698,7 @@ function saveFind(key){const b=recBest[key];
   SAVED[key]={key,lbl:b.lbl,p:b.p,o:b.o,ev:b.ev,ts:Date.now()};LS.set("sl_saved",SAVED);
   const rank=topItems().findIndex(x=>x.base===key);
   toast(b.ev<=0?"Saved. No edge at those odds, so it stays off the Top List":rank>=0?`Saved. #${rank+1} on your Top List`:"Saved, but it's outside the top 10 edges");
-  renderTop();updRec(key);renderParlay()}
+  renderTop();updRec(key);renderTrack()}
 
 /* ---------- screenshot scanner ----------
    Each image goes to Claude through the page's `sample` capability, which returns the lines as JSON.
@@ -704,15 +726,15 @@ function parseRows(text){const rows=[];(text||"").split(/\r?\n/).forEach(ln=>{co
   if(f[0]==="P"&&f.length>=7)rows.push({k:"P",player:f[1],ab:(f[2]||"").toUpperCase(),stat:normStat(f[3]),line:numOr(f[4]),over:numOr(f[5]),under:numOr(f[6])});
   else if(f[0]==="G"&&f.length>=5)rows.push({k:"G",ab:teamAbbr(f[1])||(f[1]||"").toUpperCase(),mk:(f[2]||"").toLowerCase(),line:numOr(f[3]),odds:numOr(f[4]),side:(f[5]||"").toLowerCase()})});
   return rows}
-/* a player we don't have on the board becomes a "Fliff only" row so it still gets shown and graded */
+/* a player we don't have on the board becomes a "Screenshot only" row so it still gets shown and graded */
 function ensureCustom(r){const pj=projOf(r.player);const ab=ABS.includes(r.ab)?r.ab:(pj?pj.ab:null);let gi=ab?gameOfAbbr(ab):-1;
   const ex=CUST.find(c=>normN(c.p)===normN(r.player)&&c.st===r.stat);if(ex)return ex;
   if(gi<0)return null;const id=CUST.reduce((m,c)=>Math.max(m,c.id),-1)+1;
-  const C={id,g:gi,tm:fullOfAbbr(ab),p:r.player,st:r.stat,l:r.line,o:r.over,u:r.under,bk:"Fliff only",fo:true};CUST.push(C);LS.set("sl_cust",CUST);return C}
+  const C={id,g:gi,tm:fullOfAbbr(ab),p:r.player,st:r.stat,l:r.line,o:r.over,u:r.under,bk:"Screenshot only",fo:true};CUST.push(C);LS.set("sl_cust",CUST);return C}
 function buildEntries(rows){const ents=[],miss=[],gmap={};
   rows.forEach(r=>{
     if(r.k==="P"){if(r.line==null)return;let m=findProp(r.player,r.stat),key;
-      if(m)key=m.key;else{if(r.over==null||r.under==null||Math.abs(r.over)<100||Math.abs(r.under)<100){miss.push(`${r.player} ${STAT_LBL[r.stat]||r.stat} ${r.line}`);return}
+      if(m)key=m.key;else{const two=r.over!=null&&r.under!=null&&Math.abs(r.over)>=100&&Math.abs(r.under)>=100;if(!two&&!projP(r.player,r.stat,r.line)){miss.push(`${r.player} ${STAT_LBL[r.stat]||r.stat} ${r.line} (one side only and no averages)`);return}
         const C=ensureCustom(r);if(!C){miss.push(`${r.player} ${STAT_LBL[r.stat]||r.stat} ${r.line} (team unclear)`);return}key="c"+C.id}
       ents.push({key,v:{L:r.line,a:r.over,b:r.under},src:r});return}
     const gi=gameOfAbbr(r.ab);if(gi<0){miss.push(`${r.ab} ${r.mk}`);return}
@@ -722,7 +744,7 @@ function buildEntries(rows){const ents=[],miss=[],gmap={};
     if(mk==="Total"){if(r.line==null)return;gk=key+"|"+Math.abs(r.line);part.L=Math.abs(r.line);if(r.side.startsWith("u"))part.b=r.odds;else part.a=r.odds}
     else if(mk==="Spread"){if(r.line==null)return;const lA=r.ab===M.A?r.line:-r.line;gk=key+"|"+Math.abs(r.line);part.L=lA;part.Lsign=lA<0?"-":"+";if(r.ab===M.A)part.a=r.odds;else part.b=r.odds}
     else{gk=key;if(r.ab===M.A)part.a=r.odds;else part.b=r.odds}
-    const G=gmap[gk]=gmap[gk]||{key,v:{}};Object.assign(G.v,Object.fromEntries(Object.entries(part).filter(([,x])=>x!=null)))});
+    const G=gmap[gk]=gmap[gk]||{key,v:{},src:r};Object.assign(G.v,Object.fromEntries(Object.entries(part).filter(([,x])=>x!=null)))});
   Object.values(gmap).forEach(G=>ents.push(G));
   const seen=new Set();return{ents:ents.filter(e=>{const id=e.key+JSON.stringify(e.v);if(seen.has(id))return false;seen.add(id);return true}),miss}}
 async function shrink(file){try{const bm=await createImageBitmap(file),sc=Math.min(1,2000/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
@@ -764,6 +786,7 @@ async function runScan(){const st=document.getElementById("scanStat"),go=documen
   const seen=new Set();reviewRows=rows.filter(r=>{const id=JSON.stringify([r.k,r.player,r.stat,r.ab,r.mk,r.line,r.over,r.under,r.odds,r.side]);if(seen.has(id))return false;seen.add(id);return true}).map(r=>({...r,on:true}));
   st.innerHTML=reviewRows.length?`Read ${reviewRows.length} line${reviewRows.length===1?"":"s"}${fails?` · ${fails} screenshot${fails>1?"s":""} had nothing readable`:""}. Check them, fix anything wrong, then grade.`:`<span style="color:var(--under)">I couldn't find any lines. Try a sharper, full-screen screenshot of the props list.</span>`;
   renderReview();go.disabled=false}
+const srcNote=r=>{const bits=[r.book?"From "+r.book:"Source not named"];if(r.conv)bits.push("odds converted from decimal or fractional, please check");if(r.slip)bits.push("from a parlay slip: each leg is graded on its own");return`<div class="rvn" style="color:var(--mute)">${bits.join(" · ")}</div>`};
 const STAT_OPTS=["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast","Pts+Reb","Pts+Ast","Reb+Ast","Steals","Blocks","Turnovers"];
 const fmtO=v=>v==null||isNaN(v)?"":(v>0?"+":"")+v;
 function renderReview(){const box=document.getElementById("scanRes");if(!reviewRows.length){box.innerHTML="";return}
@@ -775,29 +798,36 @@ function renderReview(){const box=document.getElementById("scanRes");if(!reviewR
       <div class="rvm"><div class="rvt"><input class="nm2" data-rvf="player" value="${(r.player||"").replace(/"/g,"&quot;")}">${known?"":`<select data-rvf="ab">${teamOpts(r.ab)}</select>`}</div>
         <div class="rvg"><select data-rvf="stat">${STAT_OPTS.map(o=>`<option ${o===r.stat?"selected":""}>${o}</option>`).join("")}</select>
         <input data-rvf="line" inputmode="decimal" value="${r.line??""}" placeholder="Line"><input data-rvf="over" value="${fmtO(r.over)}" placeholder="Over"><input data-rvf="under" value="${fmtO(r.under)}" placeholder="Under"></div>
-        ${known?"":`<div class="rvn">Not on my board${r.hint?` · screenshot shows ${r.hint.join(" @ ")}`:""}. Pick the team so I can grade it.</div>`}</div></div>`
+        ${srcNote(r)}${known?"":`<div class="rvn">Not on my board${r.hint?` · screenshot shows ${r.hint.join(" @ ")}`:""}. Pick the team so I can grade it.</div>`}</div></div>`
     :`<div class="rvr ${r.on?"":"off"}" data-rv="${i}"><label class="ck"><input type="checkbox" data-rvf="on" ${r.on?"checked":""}></label>
-      <div class="rvm"><div class="rvt"><b>${r.ab}</b> · ${r.mk}${r.mk==="total"?" "+r.side:""}</div><div class="rvg">${r.mk!=="moneyline"?`<input data-rvf="line" value="${r.line??""}" placeholder="Line">`:""}<input data-rvf="odds" value="${fmtO(r.odds)}" placeholder="Odds"></div></div></div>`}).join("")}</div>
+      <div class="rvm"><div class="rvt"><b>${r.ab}</b> · ${r.mk}${r.mk==="total"?" "+r.side:""}</div>${srcNote(r)}<div class="rvg">${r.mk!=="moneyline"?`<input data-rvf="line" value="${r.line??""}" placeholder="Line">`:""}<input data-rvf="odds" value="${fmtO(r.odds)}" placeholder="Odds"></div></div></div>`}).join("")}</div>
     <p class="sheet-p" style="margin:8px 0 0">Odds take a minus sign: type it with the regular keyboard, or flip it later on the line itself.</p>
     <button class="go2" data-grade="1">Grade ${reviewRows.filter(r=>r.on).length} line${reviewRows.filter(r=>r.on).length===1?"":"s"}</button>`}
 function gradeReview(){const num=v=>{const n=parseFloat(String(v).replace(/[^\d.+-]/g,""));return isNaN(n)?null:n};
   const rows=reviewRows.filter(r=>r.on).map(r=>r.k==="P"?{...r,stat:normStat(r.stat),line:num(r.line),over:num(r.over),under:num(r.under),ab:(r.ab&&r.ab!=="?")?r.ab:((projOf(r.player)||{}).ab||"?")}:{...r,line:num(r.line),odds:num(r.odds)});
   const {ents,miss}=buildEntries(rows);const results=ents.map(evalEntry);
   const bestPer={};results.forEach(r=>{const ev=r.best?r.best.ev:-9;if(!bestPer[r.key]||ev>bestPer[r.key].ev)bestPer[r.key]={ev,r}});
-  Object.values(bestPer).forEach(({r})=>{EDV[r.key]=r.E});LS.set("sl_edv",EDV);
-  renderAll();let added=0;Object.keys(bestPer).forEach(k=>{recHTML(k);if(syncFind(k))added++});renderTop();renderParlay();
+  Object.values(bestPer).forEach(({r})=>{EDV[r.key]=r.E;SCANNED.add(r.key)});LS.set("sl_edv",EDV);
+  renderAll();let added=0;Object.keys(bestPer).forEach(k=>{recHTML(k);if(syncFind(k))added++});renderTop();renderTrack();
   reviewRows=[];showScanResults(results,miss,0,added,rows.length,0)}
 
 function showScanResults(results,miss,fails,added,nrows,trunc){const st=document.getElementById("scanStat");
   const rows=results.filter(r=>r.best);const ord={g:0,y:1,r:2,nr:3,na:4};rows.sort((a,b)=>ord[a.tier]-ord[b.tier]||b.best.ev-a.best.ev);
   const col={g:"var(--over)",y:"var(--gold)",r:"var(--under)",nr:"var(--acc2)",na:"var(--dim)"};const c=x=>rows.filter(r=>r.tier===x).length;
   st.innerHTML=`Read ${nrows} line${nrows===1?"":"s"} → ${rows.length} bet${rows.length===1?"":"s"} graded (both sides of a game line count as one)${fails?` · ${fails} screenshot${fails>1?"s":""} unreadable`:""}${added?` · <span style="color:var(--over)">${added} added to your Top List</span>`:""}`;
-  document.getElementById("scanRes").innerHTML=(rows.length?`<div class="reshead"><span style="color:var(--over)">● ${c("g")} bet</span><span style="color:var(--gold)">● ${c("y")} thin</span><span style="color:var(--under)">● ${c("r")} pass</span>${c("nr")?`<span style="color:var(--acc2)">● ${c("nr")} Fliff only</span>`:""}${c("na")?`<span>● ${c("na")} missing odds</span>`:""}</div>
+  document.getElementById("scanRes").innerHTML=(rows.length?`<div class="reshead"><span style="color:var(--over)">● ${c("g")} bet</span><span style="color:var(--gold)">● ${c("y")} thin</span><span style="color:var(--under)">● ${c("r")} pass</span>${c("nr")?`<span style="color:var(--acc2)">● ${c("nr")} Screenshot only</span>`:""}${c("na")?`<span>● ${c("na")} missing odds</span>`:""}</div>
     <div class="list">${rows.map(r=>{const N=nameOf(r.key),b=r.best,big=r.tier==="na"?"–":r.tier==="nr"?pct(b.p):((b.ev>=0?"+":"")+(b.ev*100).toFixed(1)+"%");
-      return`<div class="sr" data-jump="${r.key}">${gradeTag(b.grade||"F")}<div class="m"><b>${r.key[0]!=="l"?N.name+" · ":""}${b.lbl}</b><span>${r.key[0]==="l"?N.name+" · ":(STAT_LBL[N.stat]||N.stat)+" · "}${r.tier==="na"?"odds not read":"Fliff "+fmtAm(b.o)+(b.gap&&b.gap.d?` · ${b.gap.d>0?"+":""}${b.gap.d} pt vs market`:"")}</span>${r.tier==="g"||(r.key[0]==="c"&&(custOf(+r.key.slice(1))||{}).fo&&r.tier!=="nr")?`<span class="exs">${b.why}</span>`:r.tier==="nr"?`<span class="exs" style="color:var(--mute)">Not on my board, so there's no outside line to compare. Fliff's own prices lean ${b.lbl}. Tap to add another book's line.</span>`:""}</div><div class="c" style="color:${col[r.tier]}">${big}<small>${r.tier==="nr"?"Fliff no-vig":"difference"}</small></div></div>`}).join("")}</div>`:"")+
+      return`<div class="sr" data-jump="${r.key}">${gradeTag(b.grade||"F")}<div class="m"><b>${r.key[0]!=="l"?N.name+" · ":""}${b.lbl}</b><span>${r.key[0]==="l"?N.name+" · ":(STAT_LBL[N.stat]||N.stat)+" · "}${r.tier==="na"?"odds not read":((r.src&&r.src.book)||"Screenshot")+" "+fmtAm(b.o)+(b.gap&&b.gap.d?` · ${b.gap.d>0?"+":""}${b.gap.d} pt vs market`:"")}</span>${r.tier==="g"||(r.key[0]==="c"&&(custOf(+r.key.slice(1))||{}).fo&&r.tier!=="nr")?`<span class="exs">${b.why}</span>`:r.tier==="nr"?`<span class="exs" style="color:var(--mute)">Not on my board, so there's no outside line to compare. The screenshot's own prices lean ${b.lbl}. Tap to add another book's line.</span>`:""}<span class="bn">Board now: ${boardNow(r.key)}</span></div><div class="c" style="color:${col[r.tier]}">${big}<small>${r.tier==="nr"?"its own no-vig":"difference"}</small></div></div>`}).join("")}</div>`:"")+
     (trunc?`<div class="warn">One screenshot had more lines than I could read in one pass. Crop it into two shorter screenshots to catch the rest.</div>`:"")+
     (miss.length?`<div class="warn" style="color:var(--mute);border-color:var(--line2);background:var(--bg)"><b style="color:var(--ink)">Couldn't grade (${miss.length}):</b> ${miss.slice(0,15).join(", ")}${miss.length>15?"…":""}. Usually a missing price or a player I couldn't place on a team.</div>`:"")+
     (rows.length?`<p class="sheet-p" style="margin-top:10px">Green lines are already on your Top List. Tap any line to jump to it.</p>`:"");}
+/* what the board has for this bet right now, so a screenshot's price can be compared with the current market */
+function boardNow(key){const k=key[0],i=+key.slice(1);
+  if(k==="p"){const q=PROPS[i].q.filter(q=>typeof q.l==="number");if(!q.length)return"no line";const a=q[0];
+    return`${a.l}${a.o!=null||a.u!=null?` (O ${fmtAm(a.o)} / U ${fmtAm(a.u)})`:""} ${a.src}${q.length>1&&q.some(x=>x.l!==a.l)?`, other books ${[...new Set(q.map(x=>x.l))].join(" / ")}`:""}`}
+  if(k==="c"){const C=custOf(i);return!C||C.fo?"not on the board":`${C.l} at ${C.bk}`}
+  const L=LINES[i],G=SNAP[L.g],mk=G.mk.find(x=>x.k.startsWith(L.m));if(!mk||!mk.q.length)return"no price";const q=mk.q.find(x=>x.a!=null||x.b!=null)||mk.q[0];
+  return`${mk.k==="Moneyline"?"ML":mk.k} · ${mk.a} ${fmtAm(q.a)}${q.pa?" ("+q.pa+")":""} / ${mk.b} ${fmtAm(q.b)}${q.pb?" ("+q.pb+")":""} ${q.bk}`}
 function jumpTo(k){document.getElementById("scanSheet").classList.remove("on");
   if(k[0]==="l"){go("lines")}else{const N=nameOf(k);propGame=N.g;propStat=N.stat;go("props");renderProps()}
   setTimeout(()=>{const el=document.querySelector(`[data-edbox="${k}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})},150)}
@@ -856,15 +886,74 @@ const sideCls=s=>s==="o"?"o":s==="u"?"u":"n";
 const barCol=(s,t)=>t==="pass"?"var(--dim)":s==="o"?"var(--over)":s==="u"?"var(--under)":"var(--acc2)";
 function propPick(i){const x=PROPS[i],g=SUG[i];return`${g.s==="o"?"Over":"Under"} ${g.l} ${STAT[x.st]||x.st}`}
 function legOf(key){const[k,i]=[key[0],+key.slice(1)];
-  if(k==="c"){const C=custOf(i);if(!C)return null;const pO=devig(C.o,C.u)[0],s=pO>=.5;return{key,name:C.p,pick:`${s?"Over":"Under"} ${C.l} ${STAT[C.st]||C.st}`,p:s?pO:1-pO,g:C.g,icon:avatar(C.p,C.tm)}}
+  if(k==="c"){const C=custOf(i);if(!C)return null;const pO=model(key).pO,s=pO>=.5;return{key,name:C.p,pick:`${s?"Over":"Under"} ${C.l} ${STAT[C.st]||C.st}`,p:s?pO:1-pO,g:C.g,icon:avatar(C.p,C.tm)}}
   if(k==="t"){const T=TOP[i],base=legOf(T.k+T.i);return{...base,key,pick:T.pick,p:T.p}}
   if(k==="f"){const S=SAVED[key.slice(1)];if(!S)return null;const base=legOf(S.key);return{...base,key,pick:S.lbl+" @ "+fmtAm(S.o),p:S.p}}
   if(k==="p"){const x=PROPS[i],g=SUG[i];return{key,name:x.p,pick:propPick(i),p:g.p,g:x.g,icon:avatar(x.p,x.tm)}}
   const L=LINES[i],G=SNAP[L.g];return{key,name:mu(G)+" · "+L.m,pick:L.pick,p:L.p,g:L.g,icon:logo(L.pick.startsWith(team(G.home)[0])?G.home:G.away)}}
 const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let parlay=LS.get("sl_parlay_v2",[]).filter(l=>/^(f?[plc]|t)\d+$/.test(l.key));
-const inP=key=>parlay.some(l=>l.key===key);
-function addBtn(key){return`<button class="addbtn ${inP(key)?"in":""}" data-add="${key}">${inP(key)?"✓ In parlay":"+ Parlay"}</button>`}
+/* ---------- bet tracker (kept across days, on this phone only) ---------- */
+try{localStorage.removeItem("sl_parlay_v2");localStorage.removeItem("sl_fo")}catch(e){}
+let BETS=LS.get("sl_bets",[]),UNIT=LS.get("sl_unit",10);const SCANNED=new Set();
+const saveBets=()=>LS.set("sl_bets",BETS);
+const baseOf=key=>key[0]==="t"?(TOP[+key.slice(1)].k+TOP[+key.slice(1)].i):key[0]==="f"?key.slice(1):key;
+const tracked=key=>{const b=baseOf(key);return BETS.some(x=>x.key===b&&x.date===DATA_DATE)};
+function addBtn(key){const on=tracked(key);return`<button class="addbtn ${on?"in":""}" data-track="${key}">${on?"✓ Tracked":"+ Track"}</button>`}
+function trackBet(key){const base=baseOf(key);if(tracked(key)){go("track");return}
+  const N=nameOf(base),G=SNAP[N.g],b=recBest[base],stat=base[0]!=="l"?" "+(STAT[N.stat]||N.stat):"";
+  let rec;
+  if(b&&!b.assumed)rec={pick:b.lbl+stat,odds:b.o,p:b.p,push:b.push||0,ev:b.ev,grade:b.grade,conf:b.conf&&b.conf.lv,src:SCANNED.has(base)?"screenshot":"your odds"};
+  else{const lg=legOf(key);if(!lg){toast("Can't track this one");return}
+    const bp=key[0]==="t"?(TOP[+key.slice(1)].bp??(base[0]==="p"?SUG[+base.slice(1)].bp:LINES[+base.slice(1)].bp)):base[0]==="p"?SUG[+base.slice(1)].bp:base[0]==="l"?LINES[+base.slice(1)].bp:null;
+    rec={pick:lg.pick,odds:bp??null,p:lg.p,push:0,ev:bp!=null?evOf(lg.p,bp):null,grade:bp!=null?gradeFor(base,evOf(lg.p,bp),false):null,conf:null,src:"board"}}
+  BETS.unshift({id:Date.now(),date:DATA_DATE,key:base,name:N.name,game:mu(G),tip:G.tip,mkt:N.stat,book:"Fliff",stake:UNIT,res:null,...rec});
+  saveBets();renderAll();toast(rec.odds==null?"Tracked. Add the odds you got in the Tracker":"Tracked")}
+const profitOf=b=>b.odds==null?0:b.res==="W"?b.stake*(dec(b.odds)-1):b.res==="L"?-b.stake:0;
+const money=x=>(x<0?"−$":"$")+Math.abs(x).toFixed(2);
+function trackStats(list){const g=list.filter(b=>b.res&&b.res!=="V"&&b.odds!=null);
+  const W=g.filter(b=>b.res==="W").length,L=g.filter(b=>b.res==="L").length,P=g.filter(b=>b.res==="P").length;
+  const staked=g.reduce((a,b)=>a+(+b.stake||0),0),net=g.reduce((a,b)=>a+profitOf(b),0);
+  const be=g.length?g.reduce((a,b)=>a+imp(b.odds),0)/g.length:null;
+  return{n:g.length,W,L,P,staked,net,roi:staked?net/staked:null,wr:W+L?W/(W+L):null,be,avgO:g.length?decToAm(g.reduce((a,b)=>a+dec(b.odds),0)/g.length):null}}
+function calib(list){const g=list.filter(b=>(b.res==="W"||b.res==="L")&&b.p!=null);if(!g.length)return null;
+  const y=b=>b.res==="W"?1:0,brier=g.reduce((a,b)=>a+Math.pow(b.p-y(b),2),0)/g.length;
+  const gb=g.filter(b=>b.odds!=null),bookB=gb.length?gb.reduce((a,b)=>a+Math.pow(imp(b.odds)-y(b),2),0)/gb.length:null;
+  const bins=[[0,.52,"Under 52%"],[.52,.56,"52 to 56%"],[.56,.6,"56 to 60%"],[.6,1.01,"60% and up"]].map(([lo,hi,lb])=>{const x=g.filter(b=>b.p>=lo&&b.p<hi);
+    return{lb,n:x.length,est:x.length?x.reduce((a,b)=>a+b.p,0)/x.length:null,act:x.length?x.filter(b=>b.res==="W").length/x.length:null}});
+  return{n:g.length,brier,bookB,bins}}
+function oddsBox(b){const sg=b.odds!=null&&b.odds<0?"-":"+";return`<div class="sg"><button type="button" class="sgn ${sg==="-"?"m":"p"}" data-tsgn="${b.id}">${sg==="-"?"−":"+"}</button><input type="number" inputmode="decimal" data-todds="${b.id}" value="${b.odds!=null?Math.abs(b.odds):""}" placeholder="110"></div>`}
+function renderTrack(){const box=document.getElementById("trackBox");if(!box)return;
+  const pend=BETS.filter(b=>!b.res),done=BETS.filter(b=>b.res);
+  const bd=document.getElementById("badge");bd.style.display=pend.length?"":"none";bd.textContent=pend.length;
+  if(!BETS.length){box.innerHTML=`<div class="empty"><b>No bets tracked yet</b>Tap "+ Track" on any prop, game line or Top List pick you place. Results build up here over time.</div>${unitHTML()}`;return}
+  const S=trackStats(BETS),C=calib(BETS);
+  const cell=(k,v,c)=>`<div class="st"><div class="k">${k}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div></div>`;
+  const byM={};done.forEach(b=>{const m=["Moneyline","Spread","Total"].includes(b.mkt)?b.mkt:"Props · "+(STAT[b.mkt]||b.mkt);(byM[m]=byM[m]||[]).push(b)});
+  box.innerHTML=`
+  <div class="tsum">
+    <div class="stats">${cell("Record",`${S.W}-${S.L}${S.P?"-"+S.P:""}`)}${cell("Net",S.n?money(S.net):"–",S.net>0?"var(--over)":S.net<0?"var(--under)":"")}${cell("ROI",S.roi==null?"–":(S.roi>=0?"+":"")+(S.roi*100).toFixed(1)+"%",S.roi>0?"var(--over)":S.roi<0?"var(--under)":"")}</div>
+    <div class="stats">${cell("Win rate",S.wr==null?"–":pct1(S.wr))}${cell("Break-even",S.be==null?"–":pct1(S.be))}${cell("Staked",S.n?money(S.staked):"–")}</div>
+    <div class="hint" style="margin-top:10px">Win rate alone doesn't mean profit. At your average odds (${S.avgO==null?"–":fmtAm(S.avgO)}) you need to win ${S.be==null?"about 52%":pct1(S.be)} just to break even. ROI is what counts, and it takes 100+ bets before it says much.</div>
+  </div>
+  ${pend.length?`<div class="eyebrow tk-h">Open bets · ${pend.length}</div><div class="list">${pend.map(b=>`<div class="tb" data-tid="${b.id}">
+     <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":b.name+" · "}${b.pick}</div><div class="sub">${b.game} · ${b.mkt} · ${b.src}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
+     <div class="tb-in"><div><label>Odds you got</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
+     <div class="tb-res"><button data-res="${b.id}|W" class="w">Won</button><button data-res="${b.id}|L" class="l">Lost</button><button data-res="${b.id}|P">Push</button><button data-res="${b.id}|V">Void</button></div></div>`).join("")}</div>`:""}
+  ${Object.keys(byM).length?`<div class="eyebrow tk-h">By market</div><div class="list tk-t">${Object.entries(byM).map(([m,l])=>{const x=trackStats(l);return`<div class="tr"><span>${m}</span><span>${x.W}-${x.L}${x.P?"-"+x.P:""}</span><span style="color:${x.net>0?"var(--over)":x.net<0?"var(--under)":"var(--mute)"}">${x.n?money(x.net):"–"}</span><span>${x.roi==null?"–":(x.roi>=0?"+":"")+(x.roi*100).toFixed(0)+"%"}</span></div>`}).join("")}</div>`:""}
+  ${C?`<div class="eyebrow tk-h">Is Sharpline accurate?</div><div class="tsum">
+     <div class="hint" style="margin:0 0 8px">Compares Sharpline's estimate when you tracked each bet with what actually happened. Lower score is better. ${C.n<50?`<b style="color:var(--gold)">Only ${C.n} settled bet${C.n===1?"":"s"}, too few to judge yet. Aim for 50+.</b>`:""}</div>
+     <div class="stats">${cell("Sharpline score",C.brier.toFixed(3))}${cell("Book price score",C.bookB==null?"–":C.bookB.toFixed(3))}${cell("Coin flip",".250")}</div>
+     <div class="list tk-t" style="margin-top:10px"><div class="tr th"><span>Estimate</span><span>Bets</span><span>Expected</span><span>Actual</span></div>${C.bins.filter(x=>x.n).map(x=>`<div class="tr"><span>${x.lb}</span><span>${x.n}</span><span>${pct(x.est)}</span><span>${pct(x.act)}</span></div>`).join("")}</div>
+     <div class="hint" style="margin-top:8px">If "Actual" keeps landing well below "Expected", Sharpline is overconfident and its edges should be trusted less.</div></div>`:""}
+  ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":b.name+" · "}${b.pick} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
+     <div class="sub">${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
+  ${unitHTML()}
+  <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`}
+const unitHTML=()=>`<div class="tsum" style="margin-top:14px"><div class="f two"><div><label>Default stake for new bets ($)</label><input type="number" inputmode="decimal" data-unit="1" value="${UNIT}"></div><div class="hint" style="align-self:end">Flat stakes. Sharpline never raises your stake after a loss.</div></div></div>`;
+function exportCSV(){const cols=["date","name","game","mkt","pick","odds","book","stake","res","profit","p","ev","grade","conf","src"];
+  const esc=v=>{v=v==null?"":String(v);return/[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v};
+  const csv=[cols.join(",")].concat(BETS.map(b=>cols.map(c=>esc(c==="profit"?(b.res?profitOf(b).toFixed(2):""):c==="p"||c==="ev"?(b[c]==null?"":b[c].toFixed(3)):b[c])).join(","))).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="sharpline-bets.csv";a.click()}
 function tierTag(t){return`<span class="tier ${t}">${t==="strong"?"★ Strong":t==="lean"?"Lean":"Pass"}</span>`}
 
 /* ---------- top list ---------- */
@@ -904,7 +993,7 @@ function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
       <div class="need"><span>Bet only at <b>${fmtAm(toAm(g.p))}</b> or better on Fliff</span>${addBtn(key)}</div></div></div>`}
 function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=pr?pr.pO:devig(C.o,C.u)[0],so=pO>=.5,pp=so?pO:1-pO;
   return`<div class="row" data-row="${key}">${avatar(C.p,C.tm,"av")}
-    <div><div class="nm">${C.p}<span class="cbadge">${C.fo?(projP(C.p,C.st,C.l)?"My line":"Fliff only"):"Added"}</span></div><div class="sub">${team(C.tm)[0]} · ${STAT_LBL[C.st]||C.st} · ${C.l}${C.fo?"":" at "+C.bk}</div></div>
+    <div><div class="nm">${C.p}<span class="cbadge">${C.fo?(projP(C.p,C.st,C.l)?"My line":"Screenshot only"):"Added"}</span></div><div class="sub">${team(C.tm)[0]} · ${STAT_LBL[C.st]||C.st} · ${C.l}${C.fo?"":" at "+C.bk}</div></div>
     <div class="r"><span class="pick ${so?"o":"u"} pass">${so?"▲ Over":"▼ Under"} ${C.l}</span><span class="est"><b>${pct(pp)}</b> ${C.fo?(projP(C.p,C.st,C.l)?"proj":"Fliff"):"fair"} ${gradeTag(gradeNow(key))}</span></div>
     ${edHTML(key)}
     <div class="det">${C.fo?`<div class="why">${pr?`This came from your screenshot. No book line was published, so I built one: ${pr.P.p} averages ${pr.m} ${(STAT_LBL[C.st]||C.st).toLowerCase()} (${pr.P.src}), which makes Over ${C.l} about ${pct(pr.pO)}. Add a sportsbook line below to make it sharper.`:"This came from your screenshot, but I don't have an outside line or season average for it. Enter another sportsbook's line and odds to check Fliff against it."}</div>
@@ -953,34 +1042,10 @@ function renderLines(){
   document.querySelectorAll("#lineList [data-edbox]").forEach(b=>updRec(b.dataset.edbox));
 }
 
-/* ---------- parlay ---------- */
-function renderParlay(){
-  const box=document.getElementById("parlayBox");
-  const b=document.getElementById("badge");b.style.display=parlay.length?"":"none";b.textContent=parlay.length;
-  if(!parlay.length){box.innerHTML=`<div class="empty"><b>No legs yet</b>Tap "+ Parlay" on any prop or line, or start with tonight's Top 5.<div class="addall" style="justify-content:center;margin-top:16px"><button class="addbtn" data-addtop="1">+ Add top 3</button></div></div>`;return}
-  parlay=parlay.filter(l=>legOf(l.key));const legs=parlay.map(l=>({...legOf(l.key),p:l.p}));
-  const P=legs.reduce((a,l)=>a*l.p,1),fairD=1/P,need5=1.05/P;
-  const games={};legs.forEach(l=>games[l.g]=(games[l.g]||0)+1);const sg=Object.values(games).some(c=>c>1);
-  box.innerHTML=`<div class="list">${legs.map((l,j)=>`<div class="leg">${l.icon}<div><div class="nm">${l.pick}</div><div class="sub">${l.name} · ${tipT(SNAP[l.g])}</div></div>
-     <div class="pin"><input type="number" min="1" max="99" value="${(l.p*100).toFixed(0)}" data-lp="${j}" title="Est. hit %">%<button class="x" data-rm="${j}">×</button></div></div>`).join("")}</div>
-   <div class="slipsum"><div class="eyebrow">${legs.length}-leg parlay · hits about ${pct1(P)} of the time</div>
-     <div style="display:flex;align-items:flex-end;gap:12px;margin-top:10px;flex-wrap:wrap"><div class="big2">${fmtAm(decToAm(fairD))}</div><div style="font:800 13px Archivo;color:var(--mute);padding-bottom:6px">break-even odds<br>(${fairD.toFixed(2)}x payout)</div></div>
-     <div class="sumgrid"><div class="st"><div class="k">Take it at</div><div class="v" style="color:var(--over)">${fmtAm(decToAm(need5))}+</div><div style="font:700 11px Archivo;color:var(--mute)">5% cushion over fair</div></div>
-       <div class="st"><div class="k">$10 must pay back</div><div class="v">$${(10*need5).toFixed(0)}+</div><div style="font:700 11px Archivo;color:var(--mute)">total return, incl. stake</div></div></div>
-     ${sg?`<div class="warn">Some legs are from the same game, so their results are linked. Fliff may price same-game parlays lower, and the true hit rate can differ from this estimate.</div>`:""}
-     ${legs.some(l=>{const k=l.key[0],i=+l.key.slice(1);return k!=="t"&&k!=="f"&&k!=="c"&&(k==="p"?SUG[i]:LINES[i]).t==="pass"})?`<div class="warn">Pass legs add risk without adding edge. A parlay is only +EV if most of its legs are +EV on their own.</div>`:""}
-     <div class="fin"><input type="number" id="fliffOdds" placeholder="Fliff's parlay odds, e.g. +600"></div><div class="verdict" id="verdict"></div>
-     <div class="addall"><button class="addbtn" data-clear="1">Clear parlay</button></div></div>`;
-  const fo=document.getElementById("fliffOdds");fo.value=LS.get("sl_fo","");fo.oninput=()=>{LS.set("sl_fo",fo.value);verdict(P)};verdict(P);
-}
-function verdict(P){const v=+document.getElementById("fliffOdds").value,el=document.getElementById("verdict");
-  if(!v||(v>-100&&v<100)){el.innerHTML=`<span style="color:var(--mute)">Paste Fliff's offer to check it.</span>`;return}
-  const e=P*dec(v)-1;el.innerHTML=e>=0.05?`<span style="color:var(--over)">✓ Worth it: about ${(e*100).toFixed(1)}% expected return</span>`:e>=0?`<span style="color:var(--gold)">Thin edge (${(e*100).toFixed(1)}%). Small stake only.</span>`:`<span style="color:var(--under)">✗ Pass: you'd lose about ${(-e*100).toFixed(1)}% per dollar on average</span>`}
+
 
 /* ---------- events ---------- */
-function save(){LS.set("sl_parlay_v2",parlay)}
-function toggle(key){const j=parlay.findIndex(l=>l.key===key);
-  if(j>=0){parlay.splice(j,1);toast("Removed from parlay")}else{parlay.push({key,p:legOf(key).p});toast("Added to parlay")}save();renderAll()}
+
 function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));window.scrollTo({top:0})}
 document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.closest("[data-grade]"))return;if(e.target.closest(".ed input")||e.target.closest(".addp input,.addp select")||e.target.closest(".det input"))return;
@@ -1001,16 +1066,20 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
     Object.assign(C,{l,o:sg("o")*o,u:sg("u")*u,bk:g("rb")||"another book",fo:false});LS.set("sl_cust",CUST);LS.set("sl_edv",EDV);renderAll();recHTML("c"+id);syncFind("c"+id);renderTop();toast("Compared against "+C.bk);return}
   if(d.cdel!=null){delCustom(+d.cdel);toast("Removed");return}
   if(d.csgn){csg[d.csgn]=csg[d.csgn]==="-"?"+":"-";t.textContent=csg[d.csgn]==="-"?"−":"+";t.className="sgn "+(csg[d.csgn]==="-"?"m":"p");return}
-  if(d.unsave){delete SAVED[d.unsave];delete EDV[d.unsave];LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);parlay=parlay.filter(l=>l.key!=="f"+d.unsave);save();renderAll();toast("Removed");return}
-  if(d.add){e.stopPropagation();toggle(d.add);return}
+  if(d.unsave){delete SAVED[d.unsave];delete EDV[d.unsave];LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);renderAll();toast("Removed");return}
+  if(d.track){e.stopPropagation();trackBet(d.track);return}
+  if(d.res){const[id,r]=d.res.split("|"),b=BETS.find(x=>x.id==id);if(b){if(b.odds==null&&r!=="V"){toast("Enter the odds you got first");return}b.res=r;saveBets();renderTrack();toast("Settled")}return}
+  if(d.tdel){BETS=BETS.filter(x=>x.id!=d.tdel);saveBets();renderAll();return}
+  if(d.treopen){const b=BETS.find(x=>x.id==d.treopen);if(b){b.res=null;saveBets();renderTrack()}return}
+  if(d.tsgn){const b=BETS.find(x=>x.id==d.tsgn);if(b){if(b.odds==null){b._s=(b._s||"+")==="+"?"-":"+";t.textContent=b._s==="-"?"−":"+";t.className="sgn "+(b._s==="-"?"m":"p");return}b.odds=-b.odds;saveBets();renderTrack()}return}
+  if(d.csv){exportCSV();return}
   if(d.pg){propGame=d.pg==="all"?"all":+d.pg;propStat="all";renderProps();window.scrollTo({top:document.getElementById("propChips").offsetTop-70});return}
   if(d.ps){propStat=d.ps;renderProps();window.scrollTo({top:document.getElementById("propChips").offsetTop-70});return}
-  if(d.rm!=null){parlay.splice(+d.rm,1);save();renderAll();return}
-  if(d.clear){parlay=[];save();renderAll();return}
-  if(d.addtop){topItems().slice(0,3).forEach(x=>{if(!inP(x.key))parlay.push({key:x.key,p:x.p})});save();renderAll();toast("Top 3 added");return}
   if(d.row!=null&&!e.target.closest(".det")&&!e.target.closest(".ed"))t.classList.toggle("open");
 });
-document.addEventListener("change",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf){const R=reviewRows[+rv.dataset.rv];if(e.target.type==="checkbox"){R.on=e.target.checked;rv.classList.toggle("off",!R.on);const g=document.querySelector("[data-grade]");const n=reviewRows.filter(r=>r.on).length;if(g)g.textContent=`Grade ${n} line${n===1?"":"s"}`}else R[e.target.dataset.rvf]=e.target.value;return}if(e.target.id==="cg"){const af=document.getElementById("addForm");const keep={cp:document.getElementById("cp").value};af.innerHTML=addFormHTML();document.getElementById("cp").value=keep.cp;return}const d=e.target.dataset;if(d.lp!=null){const v=Math.min(99,Math.max(1,+e.target.value||50));parlay[+d.lp].p=v/100;save();renderParlay()}});
+document.addEventListener("change",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf){const R=reviewRows[+rv.dataset.rv];if(e.target.type==="checkbox"){R.on=e.target.checked;rv.classList.toggle("off",!R.on);const g=document.querySelector("[data-grade]");const n=reviewRows.filter(r=>r.on).length;if(g)g.textContent=`Grade ${n} line${n===1?"":"s"}`}else R[e.target.dataset.rvf]=e.target.value;return}if(e.target.id==="cg"){const af=document.getElementById("addForm");const keep={cp:document.getElementById("cp").value};af.innerHTML=addFormHTML();document.getElementById("cp").value=keep.cp;return}const d=e.target.dataset;if(d.todds){const b=BETS.find(x=>x.id==d.todds),v=Math.abs(+e.target.value);if(b){if(v>=100){const neg=b.odds!=null?b.odds<0:b._s==="-";b.odds=neg?-v:v;b.ev=b.p!=null?evPush(b.p,b.push||0,b.odds):null}else b.odds=null;saveBets();renderTrack()}}
+  if(d.tstake){const b=BETS.find(x=>x.id==d.tstake),v=+e.target.value;if(b&&v>0){b.stake=v;saveBets();renderTrack()}}
+  if(d.unit){const v=+e.target.value;if(v>0){UNIT=v;LS.set("sl_unit",UNIT);toast("Default stake $"+v)}}});
 document.addEventListener("input",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf&&e.target.type!=="checkbox"){reviewRows[+rv.dataset.rv][e.target.dataset.rvf]=e.target.value;return}const d=e.target.dataset;if(d.ed){(EDV[d.ed]=EDV[d.ed]||{})[d.f]=e.target.value;LS.set("sl_edv",EDV);updRec(d.ed);syncLater(d.ed)}});
 document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanFiles=[...e.target.files].slice(0,8);
   document.getElementById("thumbs").innerHTML=scanFiles.map(f=>`<div><img src="${URL.createObjectURL(f)}" alt=""></div>`).join("");
@@ -1018,7 +1087,7 @@ document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanF
   document.getElementById("scanStat").textContent="";document.getElementById("scanRes").innerHTML=""});
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1400)}
 function renderAll(){const open=[...document.querySelectorAll(".row.open")].map(r=>r.dataset.row);
-  renderTop();renderProps();renderLines();renderParlay();document.querySelectorAll("[data-edbox]").forEach(b=>updRec(b.dataset.edbox));open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")})}
+  renderTop();renderProps();renderLines();renderTrack();document.querySelectorAll("[data-edbox]").forEach(b=>updRec(b.dataset.edbox));open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")})}
 /* ---------- data loading + live updates ---------- */
 const POLL_MS=3*60*1000;
 function applyData(d){
@@ -1027,8 +1096,8 @@ function applyData(d){
   OUT=new Set((d.games||[]).flatMap(g=>(g.out||[]).map(normN)));
   SNAP_TIME=d.asof||"";DATA_VERSION=d.version||"";
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
-  if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];parlay=[];
-    LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_parlay_v2",parlay);LS.set("sl_date",d.date)}
+  if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];
+    LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_date",d.date)}
   DATA_DATE=d.date;blendProjections();staleCheck(d);
   const dt=new Date(d.date+"T12:00:00");
   document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
