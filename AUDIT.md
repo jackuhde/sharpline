@@ -130,3 +130,11 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - **One projection per prop:** "proj" is what Sharpline expects tonight: the player estimate (season and last-10 averages, minutes trend, blowout risk from the spread, newly ruled-out teammates) averaged with the market's estimate (book line, moved by two-sided prices). 60/40 player-to-market with last-10 data, 50/50 on season averages, market only with no averages. The pick, percentage and tier all come from this number. Research text is kept only as a labeled note.
 - **Top List follows the projection:** a researched spot whose side or line disagrees with tonight's projection is dropped.
 - **Grade capped by confidence:** Low confidence tops out at C, Medium at B, and only High confidence can be A or S. This holds on every row, editor result and Top List card.
+
+## Live props for every player, live averages, grade scale (Nov 17)
+- Props: DraftKings player props for every posted player come from ESPN's free core feed (`propBets`), read from the phone every ~8 minutes. Pairs are Over then Under; verified against DraftKings' own milestone prices (Barnes Pts+Ast Over 25.5 = "26+" at -128). Markets: points, rebounds, assists, threes, steals, blocks, PRA, P+R, P+A, R+A, double double, triple double. Steals+blocks, first basket and quarter props are not in the feed.
+- Researched board props are kept and merged; when DraftKings has a live price at the same line, older research prices are not used for grading.
+- Averages: season and last-10 (points, rebounds, assists, threes, steals, blocks, minutes, double-double rate) computed from each player's ESPN game log, cached per day.
+- Stable keys: entered odds, saved finds and tracked bets follow the player when props are added (remapKeys).
+- Projection: market read on the same curve as the projection (Poisson for count stats), player weight 45% with last-10 data (35% season only) when a two-sided price exists; chance held within 7 points of DraftKings' no-vig chance; side follows the projection.
+- Grades: S 8%+ (max 3 per night, needs agreement with the market and no cap), A 3%+, B 1%+, C -1.5%+, D -4%+, F below; then reliability steps and the confidence cap. Tonight: 582 props, about 1 S, 37 A, 37 B.
