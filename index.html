@@ -219,6 +219,14 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .rec .lw{font:900 9.5px Archivo;letter-spacing:1.4px;text-transform:uppercase;opacity:.8}
 .rec .ls{font:900 16px/1.15 Archivo;letter-spacing:-.2px}
 .rec .cf{text-align:right;flex:none}
+.three3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 6px}
+.n3{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:7px 8px;min-width:0}
+.n3 .k{font:800 9.5px Archivo;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.n3 .v{font:900 16px Archivo;color:var(--ink);margin-top:2px}
+.n3 .s{font:600 10px/1.3 Archivo;color:var(--mute);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfrow{display:flex;gap:8px;align-items:flex-start;font:600 11px/1.4 Archivo;color:var(--mute);margin-bottom:2px}
+.conf{flex:none;font:900 10px Archivo;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid}
+.conf.c-High{color:var(--over);border-color:rgba(46,230,166,.45)}.conf.c-Medium{color:var(--gold);border-color:rgba(255,200,80,.45)}.conf.c-Low{color:var(--under);border-color:rgba(255,90,110,.45)}
 .rec .cf b{display:block;font:900 26px/1 Archivo;letter-spacing:-1px}
 .rec .cf span{font:800 9px Archivo;letter-spacing:1.2px;text-transform:uppercase;opacity:.75}
 .gauge{position:relative;height:6px;border-radius:9px;margin:10px 0 7px;background:linear-gradient(90deg,var(--under) 0%,var(--under) 30%,var(--gold) 50%,var(--over) 70%,var(--over) 100%);opacity:.9}
@@ -477,16 +485,28 @@ let TOP=[];
    per-point rate (rough NBA averages). Far from the original line the estimate gets rougher. */
 const PER_STAT={"Points":.045,"Rebounds":.07,"Assists":.08,"3-Pointers":.12,"Pts+Reb":.035,"Pts+Reb+Ast":.03,"Pts+Ast":.035,"Reb+Ast":.05,"Steals":.15,"Blocks":.15,"Turnovers":.12};
 const clampP=p=>Math.min(.97,Math.max(.03,p));
+/* Spread of outcomes (standard deviation) by market. Used to move a probability from one line to another
+   along a bell curve instead of a flat rate per point. NBA game margin SD about 12.5, game total about 18. */
+function sdFor(st,l){l=Math.max(.5,+l||0);switch(st){
+  case"Points":return Math.max(3,.32*l+2.2);case"Rebounds":return Math.max(1.6,.35*l+1.2);case"Assists":return Math.max(1.3,.38*l+1);
+  case"3-Pointers":case"Steals":case"Blocks":case"Turnovers":return 1.1*Math.sqrt(l)+.3;
+  case"Pts+Reb+Ast":return .26*l+3.2;case"Pts+Reb":case"Pts+Ast":return .27*l+2.8;case"Reb+Ast":return .3*l+1.8;
+  case"Spread":return 12.5;case"Total":return 18;default:return .3*l+2}}
+function invPhi(p){p=Math.min(.9999,Math.max(.0001,p));let lo=-8,hi=8;for(let i=0;i<70;i++){const m=(lo+hi)/2;if(Phi(m)<p)lo=m;else hi=m}return(lo+hi)/2}
+/* chance of going over L, given chance pO of going over l0 */
+function shiftP(pO,l0,L,sd){if(L===l0)return pO;const mu=l0-sd*invPhi(1-pO);return 1-Phi((L-mu)/sd)}
+/* chance of landing exactly on a whole-number line */
+const pushAt=(pO,l0,L,sd)=>Math.max(0,shiftP(pO,l0,L-.5,sd)-shiftP(pO,l0,L+.5,sd));
 const EDV=LS0("sl_edv",{});
 function LS0(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function model(key){const k=key[0],i=+key.slice(1);
-  if(k==="c"){const C=custOf(i);const pr=C.fo?projP(C.p,C.st,C.l):null;return{type:"ou",l:C.l,pO:pr?pr.pO:devig(C.o,C.u)[0],per:PER_STAT[C.st]||(C.st==="Pts+Reb+Ast"?.03:.05),A:"Over",B:"Under",proj:pr}}
-  if(k==="p"){const g=SUG[i];return{type:"ou",l:g.l,pO:g.s==="o"?g.p:1-g.p,per:PER_STAT[PROPS[i].st]||.05,A:"Over",B:"Under"}}
+  if(k==="c"){const C=custOf(i);const pr=C.fo?projP(C.p,C.st,C.l):null;return{type:"ou",l:C.l,pO:pr?pr.pO:devig(C.o,C.u)[0],per:PER_STAT[C.st]||(C.st==="Pts+Reb+Ast"?.03:.05),sd:sdFor(C.st,C.l),st:C.st,A:"Over",B:"Under",proj:pr}}
+  if(k==="p"){const g=SUG[i];return{type:"ou",l:g.l,pO:g.s==="o"?g.p:1-g.p,per:PER_STAT[PROPS[i].st]||.05,sd:sdFor(PROPS[i].st,g.l),st:PROPS[i].st,A:"Over",B:"Under"}}
   const L=LINES[i],G=SNAP[L.g],ab=[team(G.away)[0],team(G.home)[0]];
-  if(L.m==="Total"){const ln=parseFloat(L.pick.split(" ")[1]);return{type:"ou",l:ln,pO:L.pick.startsWith("Over")?L.p:1-L.p,per:.024,A:"Over",B:"Under"}}
+  if(L.m==="Total"){const ln=parseFloat(L.pick.split(" ")[1]);return{type:"ou",l:ln,pO:L.pick.startsWith("Over")?L.p:1-L.p,per:.024,sd:sdFor("Total"),st:"Total",A:"Over",B:"Under"}}
   const A=L.pick.split(" ")[0],B=ab.find(x=>x!==A);
   if(L.m==="Moneyline")return{type:"ml",pA:L.p,A,B};
-  return{type:"sp",lnA:parseFloat(L.pick.split(" ")[1]),pA:L.p,per:.031,A,B}}
+  return{type:"sp",lnA:parseFloat(L.pick.split(" ")[1]),pA:L.p,per:.031,sd:sdFor("Spread"),A,B}}
 function defSign(key,f){const m=model(key);
   if(f==="L")return m.type==="sp"&&m.lnA<0?"-":"+";
   if(m.type==="ml")return(f==="a"?m.pA:1-m.pA)>=.5?"-":"+";
@@ -506,11 +526,11 @@ function recHTML(key){const m=model(key),v=EDV[key]||{},num=x=>x===""||x==null||
   let a=sgd("a"),b=sgd("b");const assumed=[];
   if(a==null||(a>-100&&a<100)){a=-110;assumed.push("a")}if(b==null||(b>-100&&b<100)){b=-110;assumed.push("b")}
   let sides,far=false,Lshow;
-  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const pO=clampP(m.pO-(L-m.l)*m.per);sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:1-pO,o:b,c:"u"}]}
-  else if(m.type==="sp"){const L=sgd("L")??m.lnA;far=Math.abs(L-m.lnA)>3;const pA=clampP(m.pA+(L-m.lnA)*m.per);sides=[{lbl:m.A+" "+fmtPt(L),p:pA,o:a,c:"n"},{lbl:m.B+" "+fmtPt(-L),p:1-pA,o:b,c:"n"}]}
+  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const pO=clampP(shiftP(m.pO,m.l,L,m.sd));sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:1-pO,o:b,c:"u"}]}
+  else if(m.type==="sp"){const L=sgd("L")??m.lnA;far=Math.abs(L-m.lnA)>3;const pA=clampP(shiftP(m.pA,-m.lnA,-L,m.sd));sides=[{lbl:m.A+" "+fmtPt(L),p:pA,o:a,c:"n"},{lbl:m.B+" "+fmtPt(-L),p:1-pA,o:b,c:"n"}]}
   else{if(assumed.length){recCls[key]="na";recBest[key]=null;return`<span style="color:var(--mute)">Enter both teams' odds to compare.</span><small>My estimate: ${m.A} ${pct(m.pA)} · ${m.B} ${pct(1-m.pA)}</small>`}
     sides=[{lbl:m.A+" ML",p:m.pA,o:a,c:"n"},{lbl:m.B+" ML",p:1-m.pA,o:b,c:"n"}]}
-  let push=0;if(m.type!=="ml"){const Lp=m.type==="ou"?Lshow:(sgd("L")??m.lnA);if(Number.isInteger(Lp)){push=Math.min(.12,m.per);sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
+  let push=0;if(m.type!=="ml"){const Lp=m.type==="ou"?Lshow:(sgd("L")??m.lnA);if(Number.isInteger(Lp)){push=Math.min(.15,m.type==="ou"?pushAt(m.pO,m.l,Lp,m.sd):pushAt(m.pA,-m.lnA,-Lp,m.sd));sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
   sides.forEach(x=>{x.push=push;x.ev=evPush(x.p,push,x.o)});const best=sides[0].ev>=sides[1].ev?sides[0]:sides[1];
   const evs=x=>(x.ev>=0?"+":"")+(x.ev*100).toFixed(1)+"%";
   const real=!assumed.length;
@@ -522,13 +542,59 @@ function recHTML(key){const m=model(key),v=EDV[key]||{},num=x=>x===""||x==null||
   const notes=[];if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);
   const gap=lineGap(key,best,m,Lshow,sgd("L")),why=explain(key,best,gap,real);
   const grade=fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key);
-  recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade};
+  const T3=threeNums(key,best,m,real),conf=confFor(key,best,T3,far);
+  recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade,conf};
   return`<div class="rec-in"><div class="rgl">${gradeTag(grade,"lg")}<div><div class="lw">Take</div><div class="ls">${best.lbl}</div>${gap&&gap.d!==0?`<div class="gp ${gap.d>0?"up":"dn"}">${gap.d>0?"▲":"▼"} ${Math.abs(gap.d)} pt${Math.abs(gap.d)===1?"":"s"} ${gap.d>0?"better":"worse"} than market (${gap.ref})</div>`:""}</div></div>
     <div class="cf"><b>${!real?"–":fo?pct(best.p):evs(best)}</b><span>${fo?"Fliff no-vig":"difference"}</span></div></div>
     <div class="gauge"><i style="left:${pos}%"></i></div>
     <div class="tw">${word}</div>
     <div class="ex">${why}</div>
+    ${t3HTML(T3,best,conf)}
     <small>${pct(best.p)} to hit · ${detail}${notes.length?" · "+notes.join(" · "):""}</small>`}
+/* ---------- three separate numbers for the side I'd take ----------
+   Market fair: book or prediction-market prices with the vig removed, moved to this line along the bell curve.
+   Sharpline projection: from player averages only, never from book prices (so it is an independent check).
+   Book implied: what the odds you entered charge, vig included.
+   "Used" says which of these drives the edge, so nothing is double counted. */
+const isOver=lbl=>/^Over/.test(lbl);
+function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null,proj:null,book:real?imp(best.o):null,basis:"",mktSrc:"",projSrc:""};
+  const adj=p=>p==null?null:Math.max(.01,p-(best.push||0)/2);
+  if(m.type==="ou"&&(k==="p"||k==="c")){const st=k==="p"?PROPS[i].st:custOf(i).st,name=k==="p"?PROPS[i].p:custOf(i).p,L=best.L??+best.lbl.split(" ")[1];
+    let pO=null,l0=null;
+    if(k==="p"){const q=PROPS[i].q.find(q=>typeof q.l==="number"&&q.o!=null&&q.u!=null)||null,qc=PROPS[i].q.find(q=>typeof q.l==="number"&&q.oc!=null&&q.uc!=null)||null;
+      const q1=PROPS[i].q.find(q=>typeof q.l==="number"&&(q.o!=null||q.u!=null))||null;
+      if(q){pO=devig(q.o,q.u)[0];l0=q.l;out.mktSrc=q.src+" "+fmtAm(q.o)+"/"+fmtAm(q.u);out.mk1=2}else if(qc){pO=qc.oc/(qc.oc+qc.uc);l0=qc.l;out.mktSrc=qc.src+" "+qc.oc+"¢/"+qc.uc+"¢";out.mk1=1}
+      else if(q1){pO=q1.o!=null?imp(q1.o)-.02:1-(imp(q1.u)-.02);l0=q1.l;out.mktSrc=q1.src+" one side only";out.mk1=1}}
+    else{const C=custOf(i);if(!C.fo){pO=devig(C.o,C.u)[0];l0=C.l;out.mktSrc=C.bk+" "+fmtAm(C.o)+"/"+fmtAm(C.u)}}
+    if(pO!=null){const po=shiftP(pO,l0,L,sdFor(st,l0));out.mkt=adj(isOver(best.lbl)?po:1-po)}
+    const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}
+    if(k==="c")out.basis=custOf(i).fo?"projection only (no other book)":"market price you entered";
+    else{const priced=PROPS[i].q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null);out.basis=out.mk1===2?"market price":out.mk1===1?"one-sided or thin market price":priced?"market price":SUG[i].proj!=null?"blend: 70% book line, 30% projection":"book line only (50/50)"}
+    return out}
+  if(k==="l"){const Ln=LINES[i],G=SNAP[Ln.g],mk=G.mk.find(x=>x.k.startsWith(Ln.m));out.basis="market price";out.projSrc="no team model yet";
+    if(!mk)return out;let fp=null;
+    if(mk.fair){fp=mk.fair.p?mk.fair.p:mk.fair.dv?devig(mk.fair.dv[0],mk.fair.dv[1]):null;out.mktSrc=mk.fair.src}
+    if(!fp){const q=mk.q.find(q=>q.a!=null&&q.b!=null&&!q.pa&&!q.pb);if(q){fp=devig(q.a,q.b);out.mktSrc=q.bk+" no-vig"}}
+    if(!fp){out.basis="board estimate (no two-sided price posted)";return out}const away=team(G.away)[0],parts=best.lbl.split(" ");
+    if(m.type==="ml")out.mkt=parts[0]===away?fp[0]:fp[1];
+    else if(m.type==="sp"){const aLn=parseFloat(mk.a.split(" ").pop()),Lx=parseFloat(parts[1]);
+      out.mkt=adj(parts[0]===away?shiftP(fp[0],-aLn,-Lx,sdFor("Spread")):shiftP(fp[1],aLn,-Lx,sdFor("Spread")))}
+    else{const l0=parseFloat(mk.k.split(" ").pop()),L=parseFloat(parts[1]),po=shiftP(fp[0],l0,L,sdFor("Total"));out.mkt=adj(isOver(best.lbl)?po:1-po)}
+    return out}
+  return out}
+/* Confidence = how much to trust the estimate, separate from how big the edge is. */
+function confFor(key,best,T3,far){let sc=0;const why=[];const k=key[0],i=+key.slice(1);
+  if(T3.mkt!=null&&T3.mk1===1){sc+=1;why.push("thin or one-sided price")}else if(T3.mkt!=null){sc+=k==="l"?3:2;why.push("market price available")}else why.push("no market price");
+  if(T3.proj!=null){const d=Math.abs(T3.proj-best.p);if(d<=.07){sc++;why.push("projection agrees")}else if(d>.12){sc--;why.push("projection disagrees")}}
+  const st=k==="p"?PROPS[i].st:k==="c"?(custOf(i)||{}).st:null;if(VOLATILE.includes(st)){sc--;why.push("volatile stat")}
+  if(far){sc--;why.push("far from posted line")}
+  if(STALE){sc--;why.push("lines may be old")}
+  const fl=k==="p"?(PROPS[i].flag||""):"";if(/ruled out|questionable|doubtful/i.test(fl)){sc=Math.min(sc,0);why.push("injury status")}
+  return{lv:sc>=3?"High":sc>=2?"Medium":"Low",why}}
+const confTag=c=>c?`<span class="conf c-${c.lv}">${c.lv} confidence</span>`:"";
+function t3HTML(T,best,conf){const cell=(lbl,v,sub)=>`<div class="n3"><div class="k">${lbl}</div><div class="v">${v==null?"–":pct(v)}</div><div class="s">${sub||""}</div></div>`;
+  return`<div class="three3">${cell("Market fair",T.mkt,T.mkt==null?"no price":T.mktSrc)}${cell("Sharpline proj",T.proj,T.proj==null?(T.projSrc||"no averages"):T.projSrc)}${cell("Book implied",T.book,T.book==null?"enter odds":"incl. vig")}</div>
+  <div class="cfrow">${confTag(conf)}<span>Edge uses ${T.basis}. ${(w=>w.charAt(0).toUpperCase()+w.slice(1))(conf.why.join(", "))}.</span></div>`}
 /* market reference line, and how many points Fliff's line beats it by for the chosen side */
 function refLine(key,m){const k=key[0],i=+key.slice(1);
   if(k==="p"){const n=PROPS[i].q.find(q=>typeof q.l==="number");return n?n.l:SUG[i].l}
@@ -555,7 +621,7 @@ function updRec(key){const el=document.getElementById("rec-"+key);if(!el)return;
   if(sv)sv.remove()}
 /* auto-add: anything graded green goes to the Top List; if it stops being green it comes off */
 function syncFind(key){const b=recBest[key],was=!!SAVED[key];
-  if(b&&!b.assumed&&b.ev>=.02){SAVED[key]={key,lbl:b.lbl,p:b.p,o:b.o,ev:b.ev,gap:b.gap,why:b.why,ts:Date.now()}}
+  if(b&&!b.assumed&&b.ev>=.02){SAVED[key]={key,lbl:b.lbl,p:b.p,o:b.o,ev:b.ev,gap:b.gap,why:b.why,conf:b.conf,ts:Date.now()}}
   else delete SAVED[key];
   LS.set("sl_saved",SAVED);return!!SAVED[key]&&!was}
 const syncT={};
@@ -597,9 +663,11 @@ function nameOf(key){const k=key[0],i=+key.slice(1);if(k==="c"){const C=custOf(i
 function topItems(){
   const items=[];
   TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
-    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(x.p,price),p:x.p,price,assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
-  Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl,cond:`Fliff: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
+    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(x.p,price),p:x.p,price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
+  Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,conf:S.conf,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl,cond:`Fliff: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
   return items.filter(x=>x.ev>0&&!x.assumed).sort((a,b)=>b.ev-a.ev).slice(0,10)}
+function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
+  const best={lbl,p:x.p,o:price,L:parseFloat(w[1]),push:0};return confFor(base,best,threeNums(base,best,m,true),false)}catch(e){return null}}
 /* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
 function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:x.p,head:x.head,cond:x.cond,why:x.why})});return out}
 function saveFind(key){const b=recBest[key];
@@ -738,24 +806,29 @@ function jumpTo(k){document.getElementById("scanSheet").classList.remove("on");
    Used to build my own fair line when a sportsbook hasn't posted one.
    Fair chance comes from a normal model (Poisson for threes), then gets pulled 40% toward 50/50 because
    averages don't know about tonight's minutes or role. Books stay the stronger signal whenever they exist. */
-let PROJ=[];
+let PROJ=[],OUT=new Set();
 function erf(x){const t=1/(1+.3275911*Math.abs(x)),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return x>=0?y:-y}
 const Phi=z=>.5*(1+erf(z/Math.SQRT2));
 function poisOver(lam,L){let k=Math.floor(L),c=0,t=Math.exp(-lam);for(let i=0;i<=k;i++){c+=t;t*=lam/(i+1)}return 1-c}
 function projOf(name){const n=normN(name),last=n.split(" ").pop();const ex=PROJ.find(x=>normN(x.p)===n);if(ex)return ex;
   const c=PROJ.filter(x=>{const xn=normN(x.p);return xn.split(" ").pop()===last&&xn[0]===n[0]});return c.length===1?c[0]:null}
-function projP(name,st,L){const P=projOf(name);if(!P||L==null)return null;
+/* Projection mean per stat: season average, blended 65/35 with the last 10 games when the data has them,
+   and scaled by the recent minutes trend (capped at plus or minus 15%). Never uses book prices. */
+function projMean(P,c){const s=P[c];if(s==null)return null;const r=P.l10&&P.l10[c];let m=r!=null?.65*s+.35*r:s;
+  if(P.min&&P.l10min){const f=Math.min(1.15,Math.max(.85,P.l10min/P.min));m=r!=null?.65*s*f+.35*r:s*f}return m}
+function projP(name,st,L){const P=projOf(name);if(!P||L==null)return null;if(OUT.has(normN(P.p)))return null;
   const comp={"Points":["pts"],"Rebounds":["reb"],"Assists":["ast"],"3-Pointers":["tpm"],"Pts+Reb+Ast":["pts","reb","ast"],"Pts+Reb":["pts","reb"],"Pts+Ast":["pts","ast"],"Reb+Ast":["reb","ast"]}[st];
-  if(!comp||comp.some(c=>P[c]==null))return null;
+  if(!comp||comp.some(c=>P[c]==null))return null;const Q={};comp.forEach(c=>Q[c]=projMean(P,c));
+  const basis=[P.l10&&comp.every(c=>P.l10[c]!=null)?"season + last 10":"season",P.min&&P.l10min?"minutes trend":""].filter(Boolean).join(", ");
   const sdOf={pts:m=>Math.max(3,.32*m+2.2),reb:m=>Math.max(1.6,.35*m+1.2),ast:m=>Math.max(1.3,.38*m+1)};
-  const m=comp.reduce((a,c)=>a+P[c],0);let raw;
-  if(st==="3-Pointers")raw=poisOver(m,L);else{const sd=comp.length===1?sdOf[comp[0]](m):Math.sqrt(comp.reduce((a,c)=>a+Math.pow(sdOf[c](P[c]),2),0))*1.15;raw=1-Phi((L-m)/sd)}
-  return{pO:Math.min(.95,Math.max(.05,.5+.6*(raw-.5))),m:Math.round(m*10)/10,raw,P}}
+  const m=comp.reduce((a,c)=>a+Q[c],0);let raw;
+  if(st==="3-Pointers")raw=poisOver(m,L);else{const sd=comp.length===1?sdOf[comp[0]](m):Math.sqrt(comp.reduce((a,c)=>a+Math.pow(sdOf[c](Q[c]),2),0))*1.15;raw=1-Phi((L-m)/sd)}
+  return{pO:Math.min(.95,Math.max(.05,.5+.6*(raw-.5))),m:Math.round(m*10)/10,raw,P,basis}}
 /* blend my projection into board props that only have a line (no price): book line = 70%, my projection = 30% */
 function blendProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(x.q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null))return;
   const pr=projP(x.p,x.st,g.l);if(!pr)return;const pO=.5+.3*(pr.pO-.5),so=pO>=.5;
   g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pr.m;
-  g.why=`Book line ${g.l}, my projection ${pr.m} (season average). Blending 70% book and 30% projection gives ${so?"Over":"Under"} about ${pct(g.p)}. ${g.why.replace(/^Line only[^.]*\.\s*/,"")}`.trim()});}
+  g.why=`Book line ${g.l}, my projection ${pr.m} (${pr.basis}). Blending 70% book and 30% projection gives ${so?"Over":"Under"} about ${pct(g.p)}. ${g.why.replace(/^Line only[^.]*\.\s*/,"")}`.trim()});}
 
 /* ---------- letter grades: S (best) to F ----------
    Start from the difference (edge), then drop a step for each reason the estimate is shaky:
@@ -800,7 +873,7 @@ function renderTop(){
   document.getElementById("topList").innerHTML=items.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];
     const d=x.src==="built"?(TOP[x.n].k==="p"?SUG[TOP[x.n].i]:LINES[TOP[x.n].i]):null;
     return`<div class="top"><div class="rank">${n+1}</div>
-      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your Fliff find</span>':""}</div>
+      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} ${confTag(x.conf)} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your Fliff find</span>':""}</div>
       <div class="face">${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
       <div style="margin-top:10px"><span class="pick ${x.src==="saved"?"o":"n"}">${x.cond}</span></div>
       <div class="stats"><div class="st"><div class="k">Difference</div><div class="v" style="color:var(--over)">+${(x.ev*100).toFixed(1)}%</div></div>
@@ -950,7 +1023,8 @@ function renderAll(){const open=[...document.querySelectorAll(".row.open")].map(
 const POLL_MS=3*60*1000;
 function applyData(d){
   SNAP=(d.games||[]).slice().sort((x,y)=>new Date(x.tip)-new Date(y.tip));PROPS=d.props||[];SUG=(d.sug||[]).map(x=>({...x}));LINES=d.lines||[];TOP=d.top||[];
-  PROJ=(d.proj||[]).map(r=>({p:r[0],ab:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],src:(d.projSrc||{})[r[6]]||"season averages"}));
+  PROJ=(d.proj||[]).map(r=>({p:r[0],ab:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],src:(d.projSrc||{})[r[6]]||"season averages",l10:{pts:r[7],reb:r[8],ast:r[9],tpm:r[10]},min:r[11],l10min:r[12]}));
+  OUT=new Set((d.games||[]).flatMap(g=>(g.out||[]).map(normN)));
   SNAP_TIME=d.asof||"";DATA_VERSION=d.version||"";
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
   if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];parlay=[];
@@ -959,11 +1033,12 @@ function applyData(d){
   const dt=new Date(d.date+"T12:00:00");
   document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
 }
-function staleCheck(d){const el=document.getElementById("stale");if(!el)return;const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
+let STALE=false;
+function staleCheck(d){const el=document.getElementById("stale");const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
   const age=d.version?(Date.now()-new Date(d.version))/36e5:99;let msg="";
   if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted around 10:45 AM ET.`;
   else if(age>5)msg=`Lines were last checked ${Math.round(age)} hours ago. Prices may have moved, so confirm before betting.`;
-  el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
+  STALE=!!msg;if(el)el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
 async function fetchData(){const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 const SPLASH_MIN=1900,bootStart=Date.now();
 function hideSplash(){const el=document.getElementById("splash");if(!el)return;setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),600)},Math.max(0,SPLASH_MIN-(Date.now()-bootStart)))}

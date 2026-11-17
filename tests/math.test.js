@@ -5,9 +5,9 @@ const grab=re=>{const m=src.match(re);if(!m)throw new Error("not found: "+re);re
 const code=[
  /const dec=a=>[^\n]*/, /const imp=a=>[^\n]*/, /const toAm=p=>[^\n]*/, /const decToAm=d=>[^\n]*/,
  /const evOf=[^\n]*/, /const evPush=[^\n]*/, /const fairAmPush=[^\n]*/,
- /function devig\(a,b\)\{[^\n]*/, /function erf\(x\)\{[^\n]*/, /const Phi=[^\n]*/, /function poisOver\(lam,L\)\{[^\n]*/
+ /function devig\(a,b\)\{[^\n]*/, /function sdFor\(st,l\)\{[\s\S]*?default:return[^\n]*/, /function invPhi\(p\)\{[^\n]*/, /function shiftP\([^\n]*/, /const pushAt=[^\n]*/, /function erf\(x\)\{[^\n]*/, /const Phi=[^\n]*/, /function poisOver\(lam,L\)\{[^\n]*/
 ].map(grab).join("\n");
-const M=new Function(code+";return{dec,imp,toAm,decToAm,evOf,evPush,fairAmPush,devig,Phi,poisOver}")();
+const M=new Function(code+";return{dec,imp,toAm,decToAm,evOf,evPush,fairAmPush,devig,Phi,poisOver,sdFor,invPhi,shiftP,pushAt}")();
 let pass=0,fail=0;const near=(a,b,t=1e-3)=>Math.abs(a-b)<=t;
 function t(name,ok){ok?pass++:(fail++,console.log("FAIL",name))}
 // American odds -> implied probability
@@ -32,4 +32,12 @@ t("Phi 0",near(M.Phi(0),.5));t("Phi 1.96",near(M.Phi(1.96),.975,2e-3));
 t("poisson over 2.5 lam 3",near(M.poisOver(3,2.5),1-Math.exp(-3)*(1+3+4.5),1e-6));
 // parlay math (independent legs): two 52.4% legs at fair need about +264
 const P=.524*.524;t("parlay fair",Math.abs(M.decToAm(1/P)-264)<=2);
+// bell-curve line moves
+t("invPhi .975",near(M.invPhi(.975),1.96,5e-3));t("invPhi round trip",near(M.Phi(M.invPhi(.3)),.3,1e-4));
+t("shift same line",M.shiftP(.55,25.5,25.5,10)===.55);
+t("shift up lowers over",M.shiftP(.5,25.5,27.5,10.4)<.5);t("shift symmetric",near(M.shiftP(.5,25.5,27.5,10)+M.shiftP(.5,25.5,23.5,10),1,1e-6));
+t("total 3pt slope near 2.4%/pt",near((.5-M.shiftP(.5,220.5,223.5,M.sdFor("Total")))/3,.022,.003));
+t("spread slope near 3%/pt",near((.5-M.shiftP(.5,0,1,M.sdFor("Spread"))),.032,.003));
+t("push on 7 about 3%",near(M.pushAt(.5,6.5,7,M.sdFor("Spread")),.032,.004));
+t("push sane for points",M.pushAt(.5,24.5,25,M.sdFor("Points",25))>.02&&M.pushAt(.5,24.5,25,M.sdFor("Points",25))<.06);
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

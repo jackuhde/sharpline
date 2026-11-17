@@ -25,11 +25,11 @@ Severity: High = can show a wrong edge. Medium = misleading or missing. Low = po
 | A3 | EV math | Whole-number lines (spread 7, total 220, 25 points) ignored pushes, which overstated EV on both sides. | High | Fixed in Phase 1 |
 | A4 | Freshness | No warning when the board is from yesterday or hours old. | High | Fixed in Phase 1 |
 | A5 | Testing | No tests on any calculation. | High | Fixed in Phase 1 (24 tests) |
-| A6 | Labels | "My estimate" mixes two different things: a de-vigged market price and a season-average projection. They are not shown separately. | High | Phase 2 |
-| A7 | Circularity | For props with only a line, the estimate is 70% book line plus 30% projection, then compared back to books. It is not independent confirmation. | Medium | Phase 2 (label it, show both numbers) |
-| A8 | Projection model | Season averages only. No minutes, recent form, injuries to teammates, opponent defense, pace, rest. The fixed SD formulas and the 40% shrink toward 50% are reasonable guards but not calibrated. | Medium | Phase 2 (within free-data limits, see 4) |
-| A9 | Line shifts | Moving the line uses a flat per-point rate (Points 4.5% per point). Fine near the posted line, rough far away (already flagged in the app). | Medium | Phase 2 (switch to the distribution) |
-| A10 | Grades | One letter mixes edge size and data quality. You can't tell "big edge, shaky data" from "small edge, solid data". | Medium | Phase 2 (show Edge and Confidence separately) |
+| A6 | Labels | "My estimate" mixes two different things: a de-vigged market price and a season-average projection. They are not shown separately. | High | Fixed in Phase 2 |
+| A7 | Circularity | For props with only a line, the estimate is 70% book line plus 30% projection, then compared back to books. It is not independent confirmation. | Medium | Fixed in Phase 2 (basis shown on every bet) |
+| A8 | Projection model | Season averages only. No minutes, recent form, injuries to teammates, opponent defense, pace, rest. The fixed SD formulas and the 40% shrink toward 50% are reasonable guards but not calibrated. | Medium | Partly fixed in Phase 2: last 10 games, minutes trend, out players (once the data task supplies them). Opponent, pace and rest still to come. |
+| A9 | Line shifts | Moving the line uses a flat per-point rate (Points 4.5% per point). Fine near the posted line, rough far away (already flagged in the app). | Medium | Fixed in Phase 2 (bell-curve shifts by market) |
+| A10 | Grades | One letter mixes edge size and data quality. You can't tell "big edge, shaky data" from "small edge, solid data". | Medium | Fixed in Phase 2 (grade kept, Confidence added) |
 | A11 | Parlay | Multiplies leg chances as if independent. Same-game legs only get a warning. | Medium | Phase 3 (rough correlation adjustment for known pairs, clearly labeled) |
 | A12 | Scanner | Built around Fliff-style layouts. Doesn't read decimal or fractional odds, sentence-style tips ("Brunson over 26.5 pts -115"), or bet slips with multiple legs as a parlay. | Medium | Phase 3 |
 | A13 | Bet tracking | Does not exist. Nothing is kept after the day resets. | Medium | Phase 3 |
@@ -84,3 +84,11 @@ These rules hold for every phase.
 | 5. Polish | UX | Dashboard header, settings (min edge, bankroll units, books), self-hosted fonts, layout refinements. |
 
 Responsible use applies throughout: no "lock" language, "Pass" and "No edge" are normal results, stakes are never raised after losses, and every estimate shows its source.
+
+## Phase 2 notes (done)
+
+- Every bet shows three numbers for the side Sharpline would take: **Market fair** (book or prediction-market prices with the vig removed), **Sharpline proj** (player averages only, never book prices), and **Book implied** (the odds you entered, vig included). A line under them says which one drives the edge.
+- **Confidence** (High, Medium, Low) is separate from the grade. It goes up with a two-sided market price and projection agreement, and down for one-sided prices, volatile stats, lines far from the market, old data and injury tags. The S to F grade is unchanged.
+- Line moves use a bell curve per market (spread SD 12.5, total SD 18, player stats scale with the line). Push chances on whole numbers come from the same curve.
+- Projections blend season and last-10 averages 65/35 and scale for recent minutes (capped at 15%) when `data.json` has those fields. Players listed in a game's `out` list get no projection.
+- Tests: 33 passing (`node tests/math.test.js`).
