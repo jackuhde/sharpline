@@ -375,6 +375,13 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
 .toast.on{transform:translate(-50%,0)}
 
 
+/* compact prop rows: one line each until tapped */
+#propList .row:not(.open) .ed{display:none}
+#propList .row{padding:9px 12px;gap:10px;grid-template-columns:40px 1fr auto}
+#propList .av.jav{width:40px;height:40px}
+#propList .row .nm{font-size:14px}#propList .row .sub{font-size:11.5px}
+#propList .row .r{gap:4px}#propList .row .pick{padding:4px 8px;font-size:11px}
+.pj{color:var(--ink);font-weight:800}
 /* jersey cards */
 .jav{display:inline-block;flex:none;position:relative;border-radius:12px;transition:transform .25s cubic-bezier(.2,.7,.2,1)}
 .jav svg{display:block;width:100%;height:100%;border-radius:12px}
@@ -1085,7 +1092,7 @@ function renderDash(){const el=document.getElementById("dash");if(!el)return;
     ${tile("Your record",S.n?`${S.W}-${S.L}${S.P?"-"+S.P:""}`:"No bets yet",S.n?`ROI ${(S.roi>=0?"+":"")+(S.roi*100).toFixed(1)}% · ${open} open`:open?`${open} open`:"Track bets to see results","track")}
     ${tile("Injury news",outs.length?`${outs.length} update${outs.length===1?"":"s"}`:"None listed",LIVE.injTs?`ESPN report · ${ago(LIVE.injTs)}`:"From the morning research")}
   </div>
-  ${outs.length||moves.length?`<details class="dd" ${outs.length&&LIVE.injTs?"open":""}><summary>Injuries and line moves</summary>${outs.map(([g,n])=>`<div class="dl"><b>${g}</b> ${n}</div>`).join("")}${moves.map(([g,n])=>`<div class="dl"><b>${g}</b> ${n}</div>`).join("")}</details>`:""}`;renderLiveBar()}
+  ${outs.length||moves.length?`<details class="dd"><summary>Injuries and line moves</summary>${outs.map(([g,n])=>`<div class="dl"><b>${g}</b> ${n}</div>`).join("")}${moves.map(([g,n])=>`<div class="dl"><b>${g}</b> ${n}</div>`).join("")}</details>`:""}`;renderLiveBar()}
 
 /* ---------- settings ---------- */
 function renderSettings(){const sel=(id,opts,v)=>`<select id="${id}">${opts.map(([val,lb])=>`<option value="${val}" ${String(val)===String(v)?"selected":""}>${lb}</option>`).join("")}</select>`;
@@ -1141,7 +1148,7 @@ const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-P
 const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}">${avatar(x.p,x.tm,"av")}
-    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st} · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}</div></div>
+    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st} · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${(pr=>pr?` · <b class="pj">proj ${pr.m}</b>`:"")(projP(x.p,x.st,g.l))}</div></div>
     <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}</span>
       <span class="est"><b>${pct(g.p)}</b> est ${gradeTag(gradeNow(key))}</span></div>
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} Prop lines are researched about every hour; game lines update live.</div>
@@ -1160,9 +1167,11 @@ function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=p
         <button class="go" data-rset="${C.id}" style="margin-top:8px;width:100%;padding:10px;border-radius:10px;background:var(--acc);color:#fff;font:900 13px Archivo">Compare ${BOOK} to this line</button></div>`:`<div class="why">Fair line from ${C.bk}: Over ${fmtAm(C.o)} / Under ${fmtAm(C.u)} at ${C.l}. With the vig removed that's Over ${pct(pO)}. Enter ${poss(BOOK)} number above to look for a gap.</div>`}
       <div class="need"><span>Fair: Over <b>${fmtAm(toAm(pO))}</b> / Under <b>${fmtAm(toAm(1-pO))}</b></span><span style="display:flex;gap:8px">${addBtn(key)}<button class="addbtn" data-cdel="${C.id}">Remove</button></span></div></div></div>`}
 /* "Most books posting" is a stand-in for popularity: no free source publishes real betting volume */
-let PSORT=LS0("sl_psort","line");
+let PSORT=LS0("sl_psort2","proj");
+/* projected stat for tonight: Sharpline's projection when there are averages, otherwise the book line */
+const projVal=it=>{const pr=projP(it.name,it.st,it.line);return pr?pr.m:it.line};
 const edgeOf=key=>{const b=recBest[key];if(b&&!b.assumed)return b.ev;if(key[0]==="p"){const g=SUG[+key.slice(1)];return g.bp!=null?evOf(g.p,g.bp):-1}return-1};
-const propSorter=(a,b)=>PSORT==="books"?(b.books-a.books||b.line-a.line):PSORT==="edge"?(edgeOf(b.key)-edgeOf(a.key)):PSORT==="name"?a.name.localeCompare(b.name):(b.line-a.line||a.name.localeCompare(b.name));
+const propSorter=(a,b)=>PSORT==="proj"?(projVal(b)-projVal(a)||a.name.localeCompare(b.name)):PSORT==="books"?(b.books-a.books||b.line-a.line):PSORT==="edge"?(edgeOf(b.key)-edgeOf(a.key)):PSORT==="name"?a.name.localeCompare(b.name):(b.line-a.line||a.name.localeCompare(b.name));
 function allPropItems(){
   const L=PROPS.map((x,i)=>({key:"p"+i,g:x.g,st:x.st,tm:x.tm,name:x.p,line:SUG[i].l,books:new Set(x.q.map(q=>q.src)).size,html:()=>propRowHTML(i)}));
   CUST.forEach(C=>L.push({key:"c"+C.id,g:C.g,st:C.st,tm:C.tm,name:C.p,line:C.l,books:C.fo?0:1,html:()=>custRowHTML(C)}));
@@ -1176,11 +1185,12 @@ function renderProps(){
   document.getElementById("propChips").innerHTML=
     `<div class="chiprow"><button class="chip ${propGame==="all"?"on":""}" data-pg="all">All games <span class="ct">${cnt("all")}</span></button>`+SNAP.map((g,i)=>`<button class="chip ${propGame==i?"on":""}" data-pg="${i}">${mu(g)} · ${tipT(g)} <span class="ct">${cnt(i)}</span></button>`).join("")+`</div>`+
     `<div class="chiprow stat"><button class="chip s ${propStat==="all"?"on":""}" data-ps="all">All stats</button>`+stats.map(st=>`<button class="chip s ${propStat===st?"on":""}" data-ps="${st}">${STAT_LBL[st]||st} <span class="ct">${inGame.filter(x=>x.st===st).length}</span></button>`).join("")+`</div>`+
-    `<div class="sortrow"><label for="psort">Sort</label><select id="psort">${[["line","Line, high to low"],["books","Most books posting"],["edge","Best edge"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${PSORT===v?"selected":""}>${l}</option>`).join("")}</select></div>`;
+    `<div class="sortrow"><label for="psort">Sort</label><select id="psort">${[["proj","Projected, high to low"],["line","Line, high to low"],["books","Most books posting"],["edge","Best edge"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${PSORT===v?"selected":""}>${l}</option>`).join("")}</select></div>`;
   let html="";
   SNAP.forEach((G,gi)=>{if(propGame!=="all"&&propGame!=gi)return;
     const gItems=items.filter(x=>x.g===gi&&(propStat==="all"||x.st===propStat));if(!gItems.length)return;
     html+=`<div class="gh">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${tipT(G)}</span></div>`;
+    if(propStat==="all"){const rows=gItems.slice().sort(propSorter);html+=`<div class="list">${rows.map(r=>r.html()).join("")}</div>`;return}
     const sts=[...new Set(gItems.map(x=>x.st))].sort((a,b)=>statRank(a)-statRank(b));
     sts.forEach(st=>{const rows=gItems.filter(x=>x.st===st).sort(propSorter);
       html+=`<div class="sh"><span>${STAT_LBL[st]||st}</span><i></i><em>${rows.length}</em></div><div class="list">${rows.map(r=>r.html()).join("")}</div>`});
@@ -1249,7 +1259,7 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
 });
 document.addEventListener("change",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf){const R=reviewRows[+rv.dataset.rv];if(e.target.type==="checkbox"){R.on=e.target.checked;rv.classList.toggle("off",!R.on);const g=document.querySelector("[data-grade]");const n=reviewRows.filter(r=>r.on).length;if(g)g.textContent=`Grade ${n} line${n===1?"":"s"}`}else R[e.target.dataset.rvf]=e.target.value;return}if(e.target.id==="cg"){const af=document.getElementById("addForm");const keep={cp:document.getElementById("cp").value};af.innerHTML=addFormHTML();document.getElementById("cp").value=keep.cp;return}const d=e.target.dataset;if(d.todds){const b=BETS.find(x=>x.id==d.todds),v=Math.abs(+e.target.value);if(b){if(v>=100){const neg=b.odds!=null?b.odds<0:b._s==="-";b.odds=neg?-v:v;b.ev=b.p!=null?evPush(b.p,b.push||0,b.odds):null}else b.odds=null;saveBets();renderTrack()}}
   if(d.tstake){const b=BETS.find(x=>x.id==d.tstake),v=+e.target.value;if(b&&v>0){b.stake=v;saveBets();renderTrack()}}
-  if(e.target.id==="psort"){PSORT=e.target.value;LS.set("sl_psort",PSORT);renderProps();return}
+  if(e.target.id==="psort"){PSORT=e.target.value;LS.set("sl_psort2",PSORT);renderProps();return}
   if(d.unit){const v=+e.target.value;if(v>0){UNIT=v;LS.set("sl_unit",UNIT);toast("Default stake $"+v)}}});
 document.addEventListener("input",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf&&e.target.type!=="checkbox"){reviewRows[+rv.dataset.rv][e.target.dataset.rvf]=e.target.value;return}const d=e.target.dataset;if(d.ed){(EDV[d.ed]=EDV[d.ed]||{})[d.f]=e.target.value;LS.set("sl_edv",EDV);updRec(d.ed);syncLater(d.ed)}});
 document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanFiles=[...e.target.files].slice(0,8);
