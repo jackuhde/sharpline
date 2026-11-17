@@ -378,7 +378,7 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
 <div class="wrap">
   <section class="view on" id="v-top">
     <div class="ph"><div class="eyebrow">Tonight's slate</div><h1>Top List</h1>
-      <p>The 10 biggest differences on the board, ranked. Any Fliff line that grades green, from a screenshot scan or typed in, is added here automatically.</p></div>
+      <p>Up to 10 bets with a real price and a positive expected return, ranked. Anything you scan or type that grades green is added automatically. Spots without a price sit in the watch list below.</p><div id="stale"></div></div>
     <div id="topList"></div>
   </section>
 
@@ -446,6 +446,9 @@ const fmtAm=a=>a==null||isNaN(a)?"–":(a>0?"+":"")+a;
 const pct=x=>(x*100).toFixed(0)+"%";
 const pct1=x=>(x*100).toFixed(1)+"%";
 const evOf=(p,am)=>p*dec(am)-1;
+/* EV per $1 with a push chance: win pays dec-1, push returns stake, loss costs 1 */
+const evPush=(pW,pP,am)=>pW*(dec(am)-1)-(1-pW-pP);
+const fairAmPush=(pW,pP)=>decToAm(1+(1-pW-pP)/pW);
 const team=n=>TEAMS[n]||[n.slice(0,3).toUpperCase(),"#444","#999"];
 const initials=n=>n.split(" ").filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
 let uid=0;
@@ -507,15 +510,16 @@ function recHTML(key){const m=model(key),v=EDV[key]||{},num=x=>x===""||x==null||
   else if(m.type==="sp"){const L=sgd("L")??m.lnA;far=Math.abs(L-m.lnA)>3;const pA=clampP(m.pA+(L-m.lnA)*m.per);sides=[{lbl:m.A+" "+fmtPt(L),p:pA,o:a,c:"n"},{lbl:m.B+" "+fmtPt(-L),p:1-pA,o:b,c:"n"}]}
   else{if(assumed.length){recCls[key]="na";recBest[key]=null;return`<span style="color:var(--mute)">Enter both teams' odds to compare.</span><small>My estimate: ${m.A} ${pct(m.pA)} · ${m.B} ${pct(1-m.pA)}</small>`}
     sides=[{lbl:m.A+" ML",p:m.pA,o:a,c:"n"},{lbl:m.B+" ML",p:1-m.pA,o:b,c:"n"}]}
-  sides.forEach(x=>x.ev=evOf(x.p,x.o));const best=sides[0].ev>=sides[1].ev?sides[0]:sides[1];
+  let push=0;if(m.type!=="ml"){const Lp=m.type==="ou"?Lshow:(sgd("L")??m.lnA);if(Number.isInteger(Lp)){push=Math.min(.12,m.per);sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
+  sides.forEach(x=>{x.push=push;x.ev=evPush(x.p,push,x.o)});const best=sides[0].ev>=sides[1].ev?sides[0]:sides[1];
   const evs=x=>(x.ev>=0?"+":"")+(x.ev*100).toFixed(1)+"%";
   const real=!assumed.length;
   const fo=key[0]==="c"&&(custOf(+key.slice(1))||{}).fo&&!m.proj;
   const tier=!real?"na":fo?"nr":best.ev>=.02?"g":best.ev>=-.01?"y":"r";
   const word={g:"Strong value · bet it",y:best.ev>=0?"Thin edge · small stake or skip":"About fair · no real edge",r:"Overpriced · pass",na:"Enter Fliff's odds to grade this",nr:"Fliff only · add another book's line to compare"}[tier];
   const pos=Math.max(3,Math.min(97,50+best.ev*500));
-  const detail=`${sides[0].lbl} ${pct(sides[0].p)} (needs ${fmtAm(toAm(sides[0].p))}) · ${sides[1].lbl} ${pct(sides[1].p)} (needs ${fmtAm(toAm(sides[1].p))})`;
-  const notes=[];if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");
+  const detail=`${sides[0].lbl} ${pct(sides[0].p)} (needs ${fmtAm(fairAmPush(sides[0].p,push))}) · ${sides[1].lbl} ${pct(sides[1].p)} (needs ${fmtAm(fairAmPush(sides[1].p,push))})`;
+  const notes=[];if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);
   const gap=lineGap(key,best,m,Lshow,sgd("L")),why=explain(key,best,gap,real);
   const grade=fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key);
   recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade};
@@ -593,9 +597,11 @@ function nameOf(key){const k=key[0],i=+key.slice(1);if(k==="c"){const C=custOf(i
 function topItems(){
   const items=[];
   TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
-    const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(x.p,price),p:x.p,price,assumed:bp==null,head:x.head,cond:x.cond,why:x.why})});
+    const cond=/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(x.p,price),p:x.p,price,assumed:bp==null||cond,head:x.head,cond:x.cond,why:x.why})});
   Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl,cond:`Fliff: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
-  return items.filter(x=>x.ev>0).sort((a,b)=>b.ev-a.ev).slice(0,10)}
+  return items.filter(x=>x.ev>0&&!x.assumed).sort((a,b)=>b.ev-a.ev).slice(0,10)}
+/* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
+function watchItems(){const out=[];TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base])return;const E=EDV[base];if(E&&E.a&&E.b)return;const bp=x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||/^only if/i.test(x.cond||""))out.push({n,base,key:"t"+n,p:x.p,head:x.head,cond:x.cond,why:x.why})});return out}
 function saveFind(key){const b=recBest[key];
   if(!b){toast("Enter both odds first");return}
   if(b.assumed){toast("Enter Fliff's odds for both sides first");return}
@@ -801,7 +807,13 @@ function renderTop(){
         <div class="st"><div class="k">Line gap</div><div class="v">${x.gap&&x.gap.d>0?"+"+x.gap.d+" pt":"–"}</div></div>
         <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
       <div class="why"><b style="color:var(--ink)">Why take it:</b> ${x.why}${x.assumed?" Difference shown assumes -110.":""}</div>
-      <div class="act">${addBtn(x.key)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("")||`<div class="empty"><b>No edges right now</b>Scan Fliff screenshots or enter Fliff's lines. Anything that grades green lands here automatically.</div>`;
+      <div class="act">${addBtn(x.key)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("")||`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
+  const W=watchItems();if(W.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Watch list · needs a price</div><div class="hint" style="margin:0 4px 10px">These have no current price, or only an old one that may have moved, so there is no real edge number yet. Enter Fliff's odds on the row (or scan it) and it gets graded and ranked.</div>`+W.map(x=>{const N=nameOf(x.base),G=SNAP[N.g];
+    return`<div class="top watch"><div class="kind">${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat}</div>
+      <div class="face">${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
+      <div style="margin-top:10px"><span class="pick n">${x.cond}</span></div>
+      <div class="stats"><div class="st"><div class="k">Est. chance</div><div class="v">${pct(x.p)}</div></div><div class="st"><div class="k">Bet only at</div><div class="v">${fmtAm(toAm(x.p))} or better</div></div><div class="st"><div class="k">Edge</div><div class="v" style="color:var(--mute)">needs price</div></div></div>
+      <div class="why">${x.why}</div><div class="act"><button class="addbtn" data-jump="${x.base}">Enter price</button></div></div>`}).join(""));
 }
 
 /* ---------- props ---------- */
@@ -943,10 +955,15 @@ function applyData(d){
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
   if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];parlay=[];
     LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_parlay_v2",parlay);LS.set("sl_date",d.date)}
-  DATA_DATE=d.date;blendProjections();
+  DATA_DATE=d.date;blendProjections();staleCheck(d);
   const dt=new Date(d.date+"T12:00:00");
   document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
 }
+function staleCheck(d){const el=document.getElementById("stale");if(!el)return;const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
+  const age=d.version?(Date.now()-new Date(d.version))/36e5:99;let msg="";
+  if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted around 10:45 AM ET.`;
+  else if(age>5)msg=`Lines were last checked ${Math.round(age)} hours ago. Prices may have moved, so confirm before betting.`;
+  el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
 async function fetchData(){const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 const SPLASH_MIN=1900,bootStart=Date.now();
 function hideSplash(){const el=document.getElementById("splash");if(!el)return;setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),600)},Math.max(0,SPLASH_MIN-(Date.now()-bootStart)))}
