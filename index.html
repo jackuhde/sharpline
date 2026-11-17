@@ -591,7 +591,8 @@ function avatar(name,teamName,cls=""){const[ab,c1,c2]=team(teamName),n=normN(nam
 const logo=n=>{const[ab,c1,c2]=team(n);return`<div class="logo" style="background:linear-gradient(135deg,${c1},${c2})">${ab}</div>`};
 const tipT=g=>new Date(g.tip).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
 const mu=g=>`${team(g.away)[0]} @ ${team(g.home)[0]}`;
-const STAT={"Points":"PTS","Rebounds":"REB","Assists":"AST","3-Pointers":"3PM","Pts+Reb":"PTS+REB","Steals":"STL","Pts+Reb+Ast":"PRA","Blocks":"BLK"};
+const STAT={"Points":"PTS","Rebounds":"REB","Assists":"AST","3-Pointers":"3PM","Pts+Reb":"PTS+REB","Steals":"STL","Pts+Reb+Ast":"PRA","Blocks":"BLK","Pts+Ast":"PTS+AST","Reb+Ast":"REB+AST","Double Double":"DD","Triple Double":"TD"};
+const YN={"Double Double":1,"Triple Double":1};
 
 /* ---------- my prop suggestions (aligned with PROPS) ----------
    p = my estimated hit chance for the suggested side. Basis is in `why`.
@@ -613,7 +614,7 @@ const passConf=c=>SET.minConf==="Any"||(c&&CONF_RANK[c.lv]>=CONF_RANK[SET.minCon
 /* ---------- line editor engine ----------
    My estimate is set at one line. When you enter a different line, the chance shifts by a
    per-point rate (rough NBA averages). Far from the original line the estimate gets rougher. */
-const PER_STAT={"Points":.045,"Rebounds":.07,"Assists":.08,"3-Pointers":.12,"Pts+Reb":.035,"Pts+Reb+Ast":.03,"Pts+Ast":.035,"Reb+Ast":.05,"Steals":.15,"Blocks":.15,"Turnovers":.12};
+const PER_STAT={"Points":.045,"Rebounds":.07,"Assists":.08,"3-Pointers":.12,"Pts+Reb":.035,"Pts+Reb+Ast":.03,"Pts+Ast":.035,"Reb+Ast":.05,"Steals":.15,"Blocks":.15,"Turnovers":.12,"Double Double":.0,"Triple Double":.0};
 const clampP=p=>Math.min(.97,Math.max(.03,p));
 /* Spread of outcomes (standard deviation) by market. Used to move a probability from one line to another
    along a bell curve instead of a flat rate per point. NBA game margin SD about 12.5, game total about 18. */
@@ -996,11 +997,13 @@ function projP(name,st,L){const P=projOf(name);if(!P||L==null)return null;if(OUT
    3. Fresh absences: a teammate who averages 15+ and was just ruled out frees shots and touches (+5% per 20 points he averaged, at most +10%).
    4. Market: the books' line, moved by their prices when both sides are posted, is a second estimate of the same thing.
    The two are averaged (60% player when last-10 data exists, 50% on season averages alone, 0% when there are no averages). */
-const STAT_COMP={"Points":["pts"],"Rebounds":["reb"],"Assists":["ast"],"3-Pointers":["tpm"],"Pts+Reb+Ast":["pts","reb","ast"],"Pts+Reb":["pts","reb"],"Pts+Ast":["pts","ast"],"Reb+Ast":["reb","ast"]};
+const STAT_COMP={"Points":["pts"],"Rebounds":["reb"],"Assists":["ast"],"3-Pointers":["tpm"],"Steals":["stl"],"Blocks":["blk"],"Pts+Reb+Ast":["pts","reb","ast"],"Pts+Reb":["pts","reb"],"Pts+Ast":["pts","ast"],"Reb+Ast":["reb","ast"]};
+const COUNT_ST={"3-Pointers":1,"Steals":1,"Blocks":1,"Turnovers":1};
 function gameSpread(gi){const e=LIVE.ev&&LIVE.ev[gi];if(e&&e.odds&&e.odds.spread&&e.odds.spread.home!=null)return Math.abs(e.odds.spread.home);
   const G=SNAP[gi],mk=G&&G.mk.find(m=>m.k.startsWith("Spread"));return mk?Math.abs(parseFloat(mk.k.split(" ").pop())):0}
 function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=STAT_COMP[st],P=projOf(x.p),why=[];
   if(OUT.has(normN(x.p)))return null;
+  if(YN[st])return projYN(x,P);
   /* market estimate */
   const ls=x.q.filter(q=>typeof q.l==="number").map(q=>q.l).sort((a,b)=>a-b);if(!ls.length)return null;
   const Lm=ls[Math.floor((ls.length-1)/2)],sdM=sdFor(st,Lm);let mMarket=Lm,mkt="book line "+Lm;
@@ -1016,7 +1019,15 @@ function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=ST
   const m=mPlayer==null?mMarket:w*mPlayer+(1-w)*mMarket;
   const disagree=mPlayer!=null&&Math.abs(mPlayer-mMarket)>Math.max(2,.1*Lm)&&Math.sign(mPlayer-Lm)!==Math.sign(mMarket-Lm||-(mPlayer-Lm));
   return{m:Math.round(m*10)/10,mPlayer:mPlayer==null?null:Math.round(mPlayer*10)/10,mMarket:Math.round(mMarket*10)/10,Lm,w,why,mkt,disagree,
-    pOver:L=>{const raw=st==="3-Pointers"?poisOver(m,L):1-Phi((L-m)/sdFor(st,m));return Math.min(.95,Math.max(.05,.5+.85*(raw-.5)))}}}
+    pOver:L=>{const raw=COUNT_ST[st]?poisOver(m,L):1-Phi((L-m)/sdFor(st,m));return Math.min(.95,Math.max(.05,.5+.85*(raw-.5)))}}}
+/* double double / triple double: Yes is stored as Over 0.5.
+   Player estimate = how often he has done it this season (his game log), market estimate = DraftKings' Yes price minus about 4 points of vig. */
+function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Double"?P.dd:P.td):null;
+  const pm=q?Math.max(.01,imp(q.o)-.04):null;if(rate==null&&pm==null)return null;
+  const w=rate!=null&&pm!=null?(P.gp>=8?.5:.35):rate!=null?1:0,p=w*(rate||0)+(1-w)*(pm||0);
+  const why=[rate!=null?`done it in ${Math.round(rate*100)}% of his games${P.gp?` (${P.gp} played)`:""}`:"no game log"],mkt=pm!=null?`DraftKings Yes ${fmtAm(q.o)} (about ${Math.round(pm*100)}% after vig)`:"no market price";
+  return{yn:1,m:null,mPlayer:rate,mMarket:pm,Lm:.5,w,why,mkt,disagree:rate!=null&&pm!=null&&Math.abs(rate-pm)>.2,
+    pOver:()=>Math.min(.95,Math.max(.01,p))}}
 /* every board prop takes its pick, chance and tier from tonight's projection */
 function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
   const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}
@@ -1025,6 +1036,7 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   const prices=x.q.filter(q=>q.l===g.l).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
   if(g.bp!=null)g.bp=prices.reduce((b,o)=>dec(o)>dec(b)?o:b,prices[0]);
   const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
+  if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
     (pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")})}
 /* ---------- letter grades: S (best) to F ----------
@@ -1194,17 +1206,17 @@ function renderTop(){
 
 /* ---------- props ---------- */
 let propGame="all",propStat="all";
-const STAT_ORDER=["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast","Pts+Reb","Pts+Ast","Reb+Ast","Steals","Blocks","Turnovers"];
-const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-Pointers":"Threes","Pts+Reb+Ast":"PRA","Pts+Reb":"Pts+Reb","Steals":"Steals","Blocks":"Blocks","Pts+Ast":"Pts+Ast","Reb+Ast":"Reb+Ast","Turnovers":"Turnovers"};
+const STAT_ORDER=["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast","Pts+Reb","Pts+Ast","Reb+Ast","Steals","Blocks","Double Double","Triple Double","Turnovers"];
+const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-Pointers":"Threes","Pts+Reb+Ast":"PRA","Pts+Reb":"Pts+Reb","Steals":"Steals","Blocks":"Blocks","Pts+Ast":"Pts+Ast","Reb+Ast":"Reb+Ast","Turnovers":"Turnovers","Double Double":"Double double","Triple Double":"Triple double"};
 const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}">${avatar(x.p,x.tm,"av")}
-    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st} · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}</div></div>
-    <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}</span>
+    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
+    <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}`}</span>
       <span class="est"><b>${pct(g.p)}</b> est ${gradeTag(gradeNow(key))}</span></div>
-    ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} Prop lines are researched about every hour; game lines update live.</div>
-      ${x.q.map(q=>`<div class="qrow"><span><b>${q.l}</b> · ${[q.o!=null?"Over "+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${q.url}" target="_blank" rel="noopener">${q.src}</a></div>`).join("")}
-      <div class="need"><span>Bet only at <b>${fmtAm(toAm(g.p))}</b> or better on ${BOOK}</span>${addBtn(key)}</div></div></div>`}
+    ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
+      ${x.q.map(q=>`<div class="qrow"><span><b>${YN[x.st]?"Yes":q.l}</b> · ${[q.o!=null?(YN[x.st]?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.note||"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${q.url}" target="_blank" rel="noopener">${q.src}</a></div>`).join("")}
+      <div class="need"><span>Bet ${YN[x.st]?(g.s==="o"?"Yes ":"No "):""}only at <b>${fmtAm(toAm(g.p))}</b> or better on ${BOOK}</span>${addBtn(key)}</div></div></div>`}
 function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=pr?pr.pO:devig(C.o,C.u)[0],so=pO>=.5,pp=so?pO:1-pO;
   return`<div class="row" data-row="${key}">${avatar(C.p,C.tm,"av")}
     <div><div class="nm">${C.p}<span class="cbadge">${C.fo?(projP(C.p,C.st,C.l)?"My line":"Screenshot only"):"Added"}</span></div><div class="sub">${team(C.tm)[0]} · ${STAT_LBL[C.st]||C.st} · ${C.l}${C.fo?"":" at "+C.bk}</div></div>
@@ -1326,7 +1338,59 @@ function renderAll(){const open=[...document.querySelectorAll(".row.open")].map(
   renderTop();renderProps();renderLines();renderTrack();document.querySelectorAll("[data-edbox]").forEach(b=>updRec(b.dataset.edbox));open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")})}
 /* ================= live layer: ESPN game lines, status, injuries, auto-grading ================= */
 let JERSEY=LS0("sl_jersey",{d:"",m:{}}).m||{};
-const LIVE={ev:{},inj:{},injTs:0,oddsTs:0,okOdds:null,okInj:null,boardOk:null,last:0,busy:null};
+const LIVE={ev:{},inj:{},injTs:0,oddsTs:0,okOdds:null,okInj:null,boardOk:null,last:0,busy:null,props:{},propsTs:0,okProps:null,ids:{},logs:{},logsBusy:null};
+/* ---------- live player props and averages ----------
+   The researched board (data.json) covers the players previews write about. DraftKings posts every rotation player,
+   so the app reads those directly and adds anything the board is missing. Averages come from each player's ESPN game log. */
+let BOARD={props:[],sug:[],proj:[]};
+{const c=LS0("sl_roster",{d:"",ids:{}});LIVE.ids=c.ids||{};const g=LS0("sl_glog",{d:"",m:{}});LIVE.logs=g.m||{};LIVE.logsD=g.d}
+const pid=x=>x.g+"|"+normN(x.p)+"|"+x.st;
+function liveRow(r,G,gi){const e=LIVE.ev[gi]||{},moved=r.lOpen!=null&&r.lOpen!==r.l;
+  return{l:r.l,o:r.o,u:r.u,src:"DraftKings (live)",url:e.id?`https://www.espn.com/nba/game/_/gameId/${e.id}`:"https://sportsbook.draftkings.com/leagues/basketball/nba",live:1,upd:r.upd,
+    note:moved?`opened ${r.lOpen}`:(r.oOpen!=null&&r.oOpen!==r.o?`Over opened ${fmtAm(r.oOpen)}`:"")}}
+function buildProps(){PROPS=BOARD.props.map(x=>({...x,q:x.q.slice()}));SUG=BOARD.sug.map(x=>({...x}));
+  const add=[];
+  Object.keys(LIVE.props).forEach(k=>{const gi=+k,G=SNAP[gi],e=LIVE.ev[gi];if(!G||!e)return;if(e.state&&e.state!=="pre")return;
+    LIVE.props[k].forEach(r=>{const who=LIVE.ids[r.ath];if(!who)return;const tm=who.tm===e.homeId?G.home:who.tm===e.awayId?G.away:null;if(!tm)return;
+      const row=liveRow(r,G,gi),i=PROPS.findIndex(x=>x.g===gi&&x.st===r.st&&normN(x.p)===normN(who.name));
+      if(i>=0){const x=PROPS[i];x.q=[row,...x.q.filter(q=>!/draftkings/i.test(q.src)||q.l===r.l)];x.lp=1;SUG[i].l=r.l}
+      else add.push({x:{g:gi,p:who.name,tm,st:r.st,q:[row],lp:1,lonly:1},s:{s:"o",l:r.l,p:.5,t:"pass",why:"",bk:"DraftKings"}})})});
+  add.sort((a,b)=>a.x.g-b.x.g||a.x.tm.localeCompare(b.x.tm)||a.x.p.localeCompare(b.x.p)||statRank(a.x.st)-statRank(b.x.st));
+  add.forEach(a=>{PROPS.push(a.x);SUG.push(a.s)});remapKeys()}
+/* your entered odds, saved finds and tracked bets are keyed by list position; when props are added, move them with their player */
+function remapKeys(){const prev=LS0("sl_pid",{d:"",ids:[]}),now=PROPS.map(pid);
+  if(prev.d===DATA_DATE&&prev.ids.length&&prev.ids.join()!==now.join()){const at={};now.forEach((id,i)=>{if(at[id]==null)at[id]=i});
+    const mv=k=>{if(!/^p\d+$/.test(k))return k;const id=prev.ids[+k.slice(1)];return id!=null&&at[id]!=null?"p"+at[id]:null};
+    const re=obj=>{const out={};Object.keys(obj).forEach(k=>{const n=mv(k);if(n){out[n]=obj[k];if(out[n]&&out[n].key===k)out[n].key=n}});Object.keys(obj).forEach(k=>delete obj[k]);Object.assign(obj,out)};
+    re(EDV);re(SAVED);LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);
+    let ch=0;BETS.forEach(b=>{if(b.date===DATA_DATE&&/^p\d+$/.test(b.key)){const n=mv(b.key);if(n&&n!==b.key){b.key=n;ch=1}}});if(ch)saveBets()}
+  LS.set("sl_pid",{d:DATA_DATE,ids:now})}
+/* averages: the board's researched numbers, replaced by the player's own ESPN game log when it has loaded */
+function buildProj(){PROJ=BOARD.proj.map(x=>({...x}));
+  Object.keys(LIVE.logs).forEach(id=>{const L=LIVE.logs[id],who=LIVE.ids[id];if(!L||!who)return;const s=L.season,t=L.l10;
+    const e={p:who.name,ab:who.ab||"",pts:s.pts,reb:s.reb,ast:s.ast,tpm:s.tpm,stl:s.stl,blk:s.blk,gp:s.gp,dd:L.dd,td:L.td,min:s.min,
+      l10:t?{pts:t.pts,reb:t.reb,ast:t.ast,tpm:t.tpm,stl:t.stl,blk:t.blk}:null,l10min:t?t.min:null,src:`ESPN game log (${s.gp} games${t?`, last ${t.gp}`:""})`};
+    const i=PROJ.findIndex(x=>normN(x.p)===normN(who.name));if(i>=0)PROJ[i]=e;else PROJ.push(e)})}
+async function loadProps(force){const gis=Object.keys(LIVE.ev).filter(gi=>{const e=LIVE.ev[gi];return e&&e.id&&(e.state||"pre")==="pre"});
+  if(!gis.length)return"none";if(!force&&Date.now()-LIVE.propsTs<8*60000)return"cached";
+  const r=await Promise.all(gis.map(gi=>SharpLive.propBets(LIVE.ev[gi].id).then(v=>[gi,v]).catch(()=>[gi,null])));
+  let ok=0;r.forEach(([gi,v])=>{if(v){LIVE.props[gi]=v;ok++}});if(!ok)throw new Error("props");LIVE.propsTs=Date.now();return"ok"}
+async function loadRosters(){const ids=[...new Set(Object.values(LIVE.ev).flatMap(e=>[e.homeId,e.awayId]).filter(Boolean))];
+  const c=LS0("sl_roster",{d:"",ids:{},teams:[]});if(c.d===DATA_DATE&&ids.every(t=>(c.teams||[]).includes(t))){LIVE.ids=c.ids;return}
+  const maps=await Promise.all(ids.map(t=>SharpLive.rosterIds(t).then(m=>{Object.values(m).forEach(a=>{a.tm=t});return m}).catch(()=>null)));
+  const got=ids.filter((t,i)=>maps[i]);const all=Object.assign({},...maps.filter(Boolean));if(!Object.keys(all).length)return;
+  Object.values(LIVE.ev).forEach(e=>Object.values(all).forEach(a=>{if(a.tm===e.homeId)a.ab=e.homeAb;if(a.tm===e.awayId)a.ab=e.awayAb}));
+  LIVE.ids=all;LS.set("sl_roster",{d:DATA_DATE,ids:all,teams:got});
+  const J={};Object.values(all).forEach(a=>{if(a.jersey)J[SharpLive.norm(a.name)]=a.jersey});JERSEY=J;LS.set("sl_jersey",{d:DATA_DATE,m:J})}
+/* game logs for everyone with a prop tonight, a few at a time, saved for the day */
+async function loadLogs(){if(LIVE.logsBusy)return LIVE.logsBusy;
+  if(LIVE.logsD!==DATA_DATE){LIVE.logs={};LIVE.logsD=DATA_DATE}
+  const want=[...new Set(Object.values(LIVE.props).flat().map(r=>r.ath))].filter(id=>LIVE.ids[id]&&!(id in LIVE.logs));
+  Object.values(LIVE.ids).length&&BOARD.props.forEach(x=>{const id=Object.keys(LIVE.ids).find(k=>normN(LIVE.ids[k].name)===normN(x.p));if(id&&!(id in LIVE.logs)&&!want.includes(id))want.push(id)});
+  if(!want.length)return 0;
+  LIVE.logsBusy=(async()=>{let n=0;for(let i=0;i<want.length;i+=6){await Promise.all(want.slice(i,i+6).map(id=>SharpLive.gamelog(id).then(v=>{LIVE.logs[id]=v||0;n++}).catch(()=>{})))}
+    LS.set("sl_glog",{d:DATA_DATE,m:LIVE.logs});return n})();
+  try{return await LIVE.logsBusy}finally{LIVE.logsBusy=null}}
 const nick=n=>(n||"").trim().split(" ").pop().toLowerCase();
 const ago=ts=>{if(!ts)return"never";const m=Math.round((Date.now()-ts)/60000);return m<1?"just now":m<60?m+"m ago":Math.floor(m/60)+"h "+(m%60?m%60+"m ":"")+"ago"};
 const clock=ts=>new Date(ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
@@ -1374,6 +1438,7 @@ function applyInjuries(){const INJ=LIVE.inj;if(!Object.keys(INJ).length)return;c
 function freshOf(base){const k=base[0],i=+base.slice(1),gi=k==="l"?LINES[i].g:k==="p"?PROPS[i].g:(custOf(i)||{}).g;
   if(gi!=null&&started(gi))return{lv:"started",txt:"Game started"};
   if(k==="l"&&LINES[i].live&&Date.now()-LINES[i].live<15*60000)return{lv:"live",txt:`Live · ${ago(LINES[i].live)}`};
+  if(k==="p"&&PROPS[i]&&PROPS[i].lp&&LIVE.propsTs&&Date.now()-LIVE.propsTs<20*60000)return{lv:"live",txt:`Live · ${ago(LIVE.propsTs)}`};
   const ts=boardTs(),age=(Date.now()-ts)/60000;
   return age<=90?{lv:"recent",txt:`Updated ${clock(ts)}`}:age<=180?{lv:"aging",txt:`Verify · from ${clock(ts)}`}:{lv:"stale",txt:`Stale · from ${clock(ts)}`}}
 const freshTag=f=>f?`<span class="fr fr-${f.lv}">${f.txt}</span>`:"";
@@ -1409,20 +1474,21 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
     const needInj=manual||Date.now()-LIVE.injTs>5*60000;
     const pI=needInj?SharpLive.injuries().then(m=>{LIVE.inj=m;LIVE.injTs=Date.now();res.inj="ok"}).catch(()=>res.inj="fail"):Promise.resolve(res.inj="cached");
     await Promise.all([pB,pO,pI]);
-    try{const cache=LS0("sl_jersey",{d:"",m:{}});if(cache.d!==DATA_DATE||!Object.keys(cache.m).length){const ids=[...new Set(Object.values(LIVE.ev).flatMap(e=>[e.homeId,e.awayId]).filter(Boolean))];
-      if(ids.length){const maps=await Promise.all(ids.map(id=>SharpLive.roster(id).catch(()=>({}))));const m=Object.assign({},...maps);if(Object.keys(m).length){JERSEY=m;LS.set("sl_jersey",{d:DATA_DATE,m})}}}}catch(e){console.warn("roster",e)}
-    applyLiveOdds();applyInjuries();applyProjections();
+    try{await loadRosters()}catch(e){console.warn("roster",e)}
+    try{res.props=await loadProps(manual)}catch(e){res.props="fail"}
+    applyLiveOdds();buildProps();buildProj();applyInjuries();applyProjections();
     try{res.graded=await gradePending()}catch(e){}
-    LIVE.okOdds=res.odds!=="fail";LIVE.okInj=res.inj!=="fail";LIVE.boardOk=res.board!=="fail";LIVE.last=Date.now();
+    LIVE.okOdds=res.odds!=="fail";LIVE.okProps=res.props!=="fail";LIVE.okInj=res.inj!=="fail";LIVE.boardOk=res.board!=="fail";LIVE.last=Date.now();
     renderAll();flashChanges(before);renderLiveBar();return res})();
-  try{const r=await LIVE.busy;if(manual||r.graded){const fails=[r.board==="fail"&&"board",r.odds==="fail"&&"live odds",r.inj==="fail"&&"injuries"].filter(Boolean);
-      toast(fails.length===3?"Refresh failed. Check your connection.":fails.length?`Partly updated · couldn't reach ${fails.join(" and ")}`:`Updated${r.graded?` · ${r.graded} bet${r.graded===1?"":"s"} graded`:""}`,fails.length?"warn":"ok")}
+  try{const r=await LIVE.busy;if(manual||r.graded){const fails=[r.board==="fail"&&"board",r.odds==="fail"&&"live odds",r.props==="fail"&&"player props",r.inj==="fail"&&"injuries"].filter(Boolean);
+      toast(fails.length>=3?"Refresh failed. Check your connection.":fails.length?`Partly updated · couldn't reach ${fails.join(" and ")}`:`Updated${r.graded?` · ${r.graded} bet${r.graded===1?"":"s"} graded`:""}`,fails.length?"warn":"ok")}
     return r}
-  finally{LIVE.busy=null;setRefreshing(false)}}
+  finally{LIVE.busy=null;setRefreshing(false);
+    loadLogs().then(n=>{if(n){const before=snapshotEV();buildProj();applyProjections();renderAll();flashChanges(before)}}).catch(()=>{})}}
 function setRefreshing(on){document.querySelectorAll("[data-refresh]").forEach(b=>b.classList.toggle("spin",on))}
 function renderLiveBar(){const el=document.getElementById("livebar");if(!el)return;const bt=boardTs();
   const cell=(ok,lbl,ts)=>`<span class="lb ${ok===false?"bad":ts&&Date.now()-ts<15*60000?"ok":"old"}"><i></i>${lbl} ${ok===false?"unavailable":ago(ts)}</span>`;
-  el.innerHTML=cell(LIVE.okOdds,"Game lines",LIVE.oddsTs)+cell(LIVE.okInj,"Injuries",LIVE.injTs)+`<span class="lb ${bt&&Date.now()-bt<90*60000?"ok":"old"}"><i></i>Props ${bt?clock(bt):"–"}</span>`}
+  el.innerHTML=cell(LIVE.okOdds,"Game lines",LIVE.oddsTs)+cell(LIVE.okInj,"Injuries",LIVE.injTs)+(LIVE.propsTs||LIVE.okProps===false?cell(LIVE.okProps,"Props",LIVE.propsTs):`<span class="lb ${bt&&Date.now()-bt<90*60000?"ok":"old"}"><i></i>Research ${bt?clock(bt):"–"}</span>`)}
 /* subtle feedback when a number moves after a refresh */
 function snapshotEV(){const m={};Object.keys(recBest).forEach(k=>{const b=recBest[k];if(b&&!b.assumed)m[k]=b.ev});LINES.forEach((L,i)=>m["L"+i]=L.p);return m}
 function flashChanges(before){const after=snapshotEV();Object.keys(after).forEach(k=>{if(before[k]==null)return;const d=after[k]-before[k];if(Math.abs(d)<.004)return;
@@ -1440,14 +1506,14 @@ function flashChanges(before){const after=snapshotEV();Object.keys(after).forEac
 /* ---------- data loading + live updates ---------- */
 const POLL_MS=3*60*1000;
 function applyData(d){
-  SNAP=(d.games||[]).slice().sort((x,y)=>new Date(x.tip)-new Date(y.tip));PROPS=d.props||[];SUG=(d.sug||[]).map(x=>({...x}));LINES=d.lines||[];TOP=d.top||[];
-  PROJ=(d.proj||[]).map(r=>({p:r[0],ab:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],src:(d.projSrc||{})[r[6]]||"season averages",l10:{pts:r[7],reb:r[8],ast:r[9],tpm:r[10]},min:r[11],l10min:r[12]}));
+  SNAP=(d.games||[]).slice().sort((x,y)=>new Date(x.tip)-new Date(y.tip));LINES=d.lines||[];TOP=d.top||[];
+  BOARD={props:d.props||[],sug:(d.sug||[]).map(x=>({...x})),proj:(d.proj||[]).map(r=>({p:r[0],ab:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],src:(d.projSrc||{})[r[6]]||"season averages",l10:{pts:r[7],reb:r[8],ast:r[9],tpm:r[10]},min:r[11],l10min:r[12]}))};
   OUT=new Set((d.games||[]).flatMap(g=>(g.out||[]).map(normN)));
   SNAP_TIME=d.asof||"";DATA_VERSION=d.version||"";
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
   if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];
     LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_date",d.date)}
-  DATA_DATE=d.date;applyProjections();staleCheck(d);
+  DATA_DATE=d.date;buildProps();buildProj();applyInjuries();applyProjections();staleCheck(d);
   const dt=new Date(d.date+"T12:00:00");
   document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
 }
