@@ -32,4 +32,28 @@ t("sb total",sb.odds.total.line===214.5&&sb.odds.total.over===-108&&sb.odds.tota
 const inj=L.parseInjuries({injuries:[{displayName:"Toronto Raptors",injuries:[{status:"Day-To-Day",shortComment:"Barnes (illness) is questionable for Tuesday",date:"2026-11-17T17:29Z",athlete:{displayName:"Scottie Barnes"},details:{fantasyStatus:{abbreviation:"GTD"}}},
  {status:"Out",shortComment:"",athlete:{displayName:"Kawhi Leonard"},details:{fantasyStatus:{abbreviation:"OUT"}}},{status:"Day-To-Day",shortComment:"Smith has been ruled out for Tuesday's game",athlete:{displayName:"Joe Smith"},details:{}}]}]});
 t("inj quest",inj["scottie barnes"].level==="quest");t("inj out",inj["kawhi leonard"].level==="out");t("inj out from note",inj["joe smith"].level==="out");
+
+// DraftKings prop feed (shape of ESPN core propBets, Scottie Barnes on Nov 17): first of each pair is the Over
+const it=(ath,tid,tn,tot,am,op)=>({athlete:{$ref:`http://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2027/athletes/${ath}?lang=en`},type:{id:String(tid),name:tn},odds:{american:{value:am,open:op},total:{value:tot,open:tot}},lastUpdated:"2026-11-17T20:25Z"});
+const pb=L.parsePropBets([it(4433134,1,"Total Points","20.5","-121","-112"),it(4433134,1,"Total Points","20.5","-105","-114"),
+  it(4433134,2,"Total Assists","4.5","-153","+119"),it(4433134,2,"Total Assists","4.5","+116","-157"),
+  {type:{id:"72",name:"1st Half Total"},odds:{american:{value:"-110"}}},
+  it(4433134,92,"To Record a Double Double",undefined,"+262","+253"),it(4433134,218,"Points Milestones","25+","+192","-112")]);
+t("props parsed",pb.length===3);
+t("over first",pb[0].st==="Points"&&pb[0].l===20.5&&pb[0].o===-121&&pb[0].u===-105&&pb[0].ath==="4433134");
+t("assists pair",pb[1].st==="Assists"&&pb[1].o===-153&&pb[1].u===116&&pb[1].oOpen===119);
+t("double double yes only",pb[2].st==="Double Double"&&pb[2].l===.5&&pb[2].o===262&&pb[2].u===null&&pb[2].yn);
+t("milestones and game markets ignored",!pb.some(x=>/Milestone/.test(x.st)));
+// game log averages
+const gl=L.parseGamelog({names:["minutes","fieldGoalsMade-fieldGoalsAttempted","fieldGoalPct","threePointFieldGoalsMade-threePointFieldGoalsAttempted","threePointPct","freeThrowsMade-freeThrowsAttempted","freeThrowPct","totalRebounds","assists","blocks","steals","fouls","turnovers","points"],
+  events:{a:{gameDate:"2026-11-15T00:00Z"},b:{gameDate:"2026-11-13T00:00Z"},c:{gameDate:"2026-10-30T00:00Z"},d:{gameDate:"2026-10-28T00:00Z"}},
+  seasonTypes:[{displayName:"2026-27 Regular Season",categories:[{events:[{eventId:"a",stats:["36","13-27","48.1","4-8","50","0-3","0","9","4","2","1","3","0","30"]},{eventId:"b",stats:["32","7-15","46.7","1-2","50","2-4","50","6","6","0","3","1","6","17"]}]},
+    {events:[{eventId:"c",stats:["39","19-34","55.9","1-2","50","2-3","66.7","5","5","0","2","6","4","41"]},{eventId:"d",stats:["0","0-0","0","0-0","0","0-0","0","0","0","0","0","0","0","0"]}]}]},{displayName:"Preseason",categories:[]}]});
+t("gamelog games played skip DNP",gl.season.gp===3);
+t("gamelog season pts",gl.season.pts===29.3&&gl.season.tpm===2&&gl.season.min===35.7);
+t("gamelog last10 present",gl.l10&&gl.l10.gp===3);
+t("gamelog dd rate",Math.abs(gl.dd-0)<1e-9);
+// double double grading
+const bxDD={players:{"scottie barnes":{name:"Scottie Barnes",pts:22,reb:11,ast:4,stl:1,blk:0,dnp:false,min:34}}};
+t("dd graded",L.grade({kind:"prop",player:"Scottie Barnes",stat:"Double Double",line:.5,side:"o"},game,bxDD).res==="W");
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);
