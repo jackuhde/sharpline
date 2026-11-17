@@ -138,3 +138,10 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - Stable keys: entered odds, saved finds and tracked bets follow the player when props are added (remapKeys).
 - Projection: market read on the same curve as the projection (Poisson for count stats), player weight 45% with last-10 data (35% season only) when a two-sided price exists; chance held within 7 points of DraftKings' no-vig chance; side follows the projection.
 - Grades: S 8%+ (max 3 per night, needs agreement with the market and no cap), A 3%+, B 1%+, C -1.5%+, D -4%+, F below; then reliability steps and the confidence cap. Tonight: 582 props, about 1 S, 37 A, 37 B.
+
+## Player profiles (Nov 17)
+- profile.js: tap a player's jersey card or name anywhere (props rows, your own added rows, Top List cards, watch list, scanner results, tracker bets) to open a full-screen profile over the current screen. Back (button, swipe or browser back) closes it; the list underneath is never re-rendered away, so filters, sort and scroll stay put.
+- Opens on the prop it was tapped from. Market chips switch props; the prop panel shows the live line, both sides with prices, model chance and EV, Sharpline's projection (labeled model), grade and confidence, DraftKings' last line move time, when prices were checked, and stale or started warnings.
+- Actual results (ESPN game logs, regular season): bar chart vs tonight's line for L5, L10, L20 and vs tonight's opponent (this season and last), averages for Season, L5, L10, L20, Home, Away and vs opponent, and a game log with the selected stat highlighted.
+- Headshots are not used. Player photos are not something Sharpline places in the app; the jersey card is the player image.
+- Tracked bets now store the player's team and ESPN id so old bets can still open a profile.

@@ -88,7 +88,7 @@ function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
     const cls=L==null?"n":ov?"o":un?"u":"p",h=Math.max(2,H-pad-y(v));
     return`<g class="bar ${cls}" style="--d:${j*28}ms"><rect x="${x0}" y="${y(v)}" width="${bw}" height="${h}" rx="5"/>
       <text class="bv" x="${x0+bw/2}" y="${y(v)-5}">${yn?(v>=(st==="Double Double"?2:3)?"✓":"✗"):v}</text>
-      <text class="bo" x="${x0+bw/2}" y="${H-7}">${r.home?"":"@"}${esc(ab2(r.opp))}</text>
+      <text class="bo" x="${x0+bw/2}" y="${H-7}">${PF.range==="opp"?new Date(r.t).toLocaleDateString([], {month:"numeric",year:"2-digit"}):(r.home?"":"@")+esc(ab2(r.opp))}</text>
       <title>${new Date(r.t).toLocaleDateString([], {month:"short",day:"numeric"})} ${r.home?"vs":"@"} ${esc(ab2(r.opp))}: ${v} ${(STAT[st]||st)}${r.res?`, ${r.res} ${r.score}`:""}</title></g>`}).join("");
   const lineSvg=L!=null?`<line class="ln" x1="0" x2="${W}" y1="${y(L)}" y2="${y(L)}"/>`:"";
   const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
