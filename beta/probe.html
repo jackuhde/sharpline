@@ -1,11 +1,11 @@
-<!doctype html><meta charset=utf-8><body style="font:12px monospace;background:#fff;color:#000"><pre id=o>waiting</pre><iframe id=f src="index.html" style="width:400px;height:300px"></iframe><script>
-const o=document.getElementById("o");
+<!doctype html><meta charset=utf-8><body style="font:12px monospace;background:#fff;color:#000"><pre id=o>waiting</pre><iframe id=f src="" style="width:400px;height:300px"></iframe><script>
+document.getElementById("f").src="index.html?nc="+Date.now();const o=document.getElementById("o");
 setTimeout(()=>{try{const w=document.getElementById("f").contentWindow;
-const r=w.eval(`(()=>{const out={props:PROPS.length,board:BOARD.props.length,live:PROPS.filter(x=>x.lp).length,lonly:PROPS.filter(x=>x.lonly).length,logs:Object.keys(LIVE.logs).length,ids:Object.keys(LIVE.ids).length,okProps:LIVE.okProps,proj:PROJ.length,withL10:PROJ.filter(p=>p.l10&&p.l10.pts!=null).length};
+document.title="x";const r=w.eval(`(()=>{const out={props:PROPS.length,board:BOARD.props.length,live:PROPS.filter(x=>x.lp).length,lonly:PROPS.filter(x=>x.lonly).length,logs:Object.keys(LIVE.logs).length,ids:Object.keys(LIVE.ids).length,okProps:LIVE.okProps,proj:PROJ.length,withL10:PROJ.filter(p=>p.l10&&p.l10.pts!=null).length};
 const byG={};PROPS.forEach(x=>{const k=x.g+" "+x.st;byG[k]=(byG[k]||0)+1});out.byG=byG;
 const gr={};const evs=[];PROPS.forEach((x,i)=>{const G=gradeNow("p"+i);gr[G]=(gr[G]||0)+1;const g=SUG[i];if(g.bp!=null){const ev=evOf(g.p,g.bp);const c=baseConf("p"+i,(g.s==="o"?"Over ":"Under ")+g.l,g.p,g.bp,g.l);evs.push([Math.round(ev*1000)/10,c&&c.lv,x.p,x.st,g.s+g.l,g.bp,g.proj])}});
-out.grades=gr;evs.sort((a,b)=>b[0]-a[0]);out.top=evs.slice(0,25);const ds=evs.map(e=>e[0]);out.n=ds.length;out.q=[.5,.75,.9,.95,.98,.99].map(q=>ds[Math.floor((1-q)*ds.length)]);
+out.grades=gr;evs.sort((a,b)=>b[0]-a[0]);out.top=evs.slice(0,12);out.sk=[...S_KEYS];out.A=PROPS.map((x,i)=>[gradeNow("p"+i),x.p,x.st,SUG[i].s+SUG[i].l,SUG[i].bp,SUG[i].proj]).filter(r=>r[0]==="A"||r[0]==="S").slice(0,30);const ds=evs.map(e=>e[0]);out.n=ds.length;out.q=[.5,.75,.9,.95,.98,.99].map(q=>ds[Math.floor((1-q)*ds.length)]);
 const cf={};evs.forEach(e=>cf[e[1]]=(cf[e[1]]||0)+1);out.conf=cf;
-out.sample=PROPS.filter(x=>x.p==="Scottie Barnes").map((x,i)=>x.st+" "+JSON.stringify(x.q[0]));
+out.sample0=PROPS.filter(x=>x.p==="Scottie Barnes").map((x,i)=>x.st+" "+JSON.stringify(x.q[0]));
 return JSON.stringify(out,null,1)})()`);o.textContent=r}catch(e){o.textContent="ERR "+e+"\n"+e.stack}},Number(new URLSearchParams(location.search).get("t")||45000));
 </script>
