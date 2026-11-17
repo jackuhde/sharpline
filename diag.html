@@ -1,0 +1,14 @@
+<!doctype html><meta charset=utf-8><title>diag</title><body style="font:12px monospace;background:#fff;color:#000"><pre id=o>loading</pre><script>
+const o=document.getElementById("o");const log=s=>o.textContent+=s+"\n";o.textContent="";
+const q=new URLSearchParams(location.search),ev=q.get("ev")||"401910002",ath=q.get("ath")||"4433134";
+(async()=>{
+try{const r=await fetch(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/events/${ev}/competitions/${ev}/odds/100/propBets?lang=en&region=us&limit=1000`);const j=await r.json();
+log("propBets CORS ok, count "+j.count+" items "+j.items.length+" pageCount "+j.pageCount);
+const types={};j.items.forEach(x=>types[x.type.id+" "+x.type.name]=(types[x.type.id+" "+x.type.name]||0)+1);log(JSON.stringify(types,null,1));
+j.items.forEach((x,i)=>{const a=x.athlete.$ref.match(/athletes\/(\d+)/)[1];if(a===ath)log(i+" "+x.type.name+" "+x.odds.total.value+" "+x.odds.american.value+" open "+x.odds.total.open+" "+x.odds.american.open+" upd "+x.lastUpdated)});
+}catch(e){log("propBets ERR "+e)}
+try{const r=await fetch(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${ath}/gamelog`);const j=await r.json();
+log("gamelog CORS ok; labels "+JSON.stringify(j.labels||j.names));log(JSON.stringify(j).slice(0,1500));
+}catch(e){log("gamelog ERR "+e)}
+})();
+</script>
