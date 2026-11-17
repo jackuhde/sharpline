@@ -102,3 +102,12 @@ Responsible use applies throughout: no "lock" language, "Pass" and "No edge" are
 - Tests: 33 math + 10 parser tests passing, plus browser checks of tracking, settling, reload persistence and a real OCR read of a tipster image.
 
 Known limits: the book name is read once per screenshot, so a post naming two books labels every line with the first one found. No team model for game lines yet.
+
+## Phase 5 notes (done)
+
+- **Dashboard** at the top of the Top List: tonight's games, date, first tip and when lines were updated; best priced edge; your tracked record and open bets (tap to open Tracker); injury notes. Injuries and line moves expand underneath.
+- **Settings** (gear in the header): your sportsbook name (used in labels; grading is the same for any book), Top List minimum edge (default 2%) and minimum confidence, default stake, clear today's entries, delete tracked bets, CSV export, and how the numbers work. Filters hide bets and say how many are hidden; they never change a grade, edge or confidence.
+- **Self-hosted fonts** (Archivo, JetBrains Mono, SIL Open Font License, 128 KB). The app makes no outside requests on load besides its own files, so it opens faster and works fully offline after the first visit.
+- Phone header: the date moved into the dashboard so Scan and Settings fit.
+
+Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section and fills in as bets are settled. A true backtest still needs paid historical odds data.
