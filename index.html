@@ -1008,8 +1008,9 @@ function projTonight(i){const x=PROPS[i];if(!x)return null;const st=x.st,comp=ST
   if(YN[st])return projYN(x,P);
   /* market estimate */
   const ls=x.q.filter(q=>typeof q.l==="number").map(q=>q.l).sort((a,b)=>a-b);if(!ls.length)return null;
-  const Lm=ls[Math.floor((ls.length-1)/2)],sdM=sdFor(st,Lm);let mMarket=Lm,mkt="book line "+Lm;
-  const q2=x.q.find(q=>q.l===Lm&&q.o!=null&&q.u!=null),qc=x.q.find(q=>q.l===Lm&&q.oc!=null&&q.uc!=null);
+  const lv=x.q.find(q=>q.live&&q.o!=null&&q.u!=null);
+  const Lm=lv?lv.l:ls[Math.floor((ls.length-1)/2)],sdM=sdFor(st,Lm);let mMarket=Lm,mkt="book line "+Lm;
+  const q2=lv||x.q.find(q=>q.l===Lm&&q.o!=null&&q.u!=null),qc=x.q.find(q=>q.l===Lm&&q.oc!=null&&q.uc!=null);
   const pm=q2?devig(q2.o,q2.u)[0]:qc?qc.oc/(qc.oc+qc.uc):null;
   if(pm!=null){mMarket=COUNT_ST[st]?poisMean(pm,Lm):Lm-sdM*invPhi(1-pm);mkt=`market ${Math.round(mMarket*10)/10} (${Lm} at ${q2?fmtAm(q2.o)+"/"+fmtAm(q2.u):qc.oc+"¢/"+qc.uc+"¢"})`}
   /* player estimate */
