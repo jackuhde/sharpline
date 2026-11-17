@@ -4,12 +4,22 @@
 (function(root){
 const STAT_RE=[[/pts\s*\+\s*reb\s*\+\s*ast|points\s*\+\s*rebounds\s*\+\s*assists|\bpra\b/i,"Pts+Reb+Ast"],[/pts\s*\+\s*reb|points\s*\+\s*rebounds/i,"Pts+Reb"],[/pts\s*\+\s*ast|points\s*\+\s*assists/i,"Pts+Ast"],[/reb\s*\+\s*ast|rebounds\s*\+\s*assists/i,"Reb+Ast"],[/three|3[\s-]*p(t|oint)|3pm|made 3|3s made/i,"3-Pointers"],[/rebound|\breb(s)?\b/i,"Rebounds"],[/assist|\bast(s)?\b/i,"Assists"],[/point|\bpts\b/i,"Points"],[/steal/i,"Steals"],[/block/i,"Blocks"],[/turnover/i,"Turnovers"]];
 const norm=x=>(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();
-const BOOKS=[["draftkings","DraftKings"],["fanduel","FanDuel"],["betmgm","BetMGM"],["caesars","Caesars"],["fanatics","Fanatics"],["espn ?bet","ESPN BET"],["bet ?365","bet365"],["hard ?rock","Hard Rock"],["bally","Bally Bet"],["fliff","Fliff"],["prizepicks","PrizePicks"],["underdog","Underdog"],["novig","Novig"],["kalshi","Kalshi"],["polymarket","Polymarket"],["betrivers","BetRivers"],["bovada","Bovada"],["pinnacle","Pinnacle"]];
+const BOOKS=[["draftkings","DraftKings"],["fanduel","FanDuel"],["betmgm","BetMGM"],["caesars","Caesars"],["fanatics","Fanatics"],["espn ?bet","ESPN BET"],["bet ?365","bet365"],["hard ?rock","Hard Rock"],["bally","Bally Bet"],["fliff","Fliff"],["prizepicks","PrizePicks"],["underdog","Underdog"],["novig","Novig"],["kalshi","Kalshi"],["polymarket","Polymarket"],["prophet ?x","ProphetX"],["sporttrade","Sporttrade"],["robinhood","Robinhood"],["crypto\\.com","Crypto.com"],["betr\\b","Betr"],["dabble","Dabble"],["betrivers","BetRivers"],["bovada","Bovada"],["pinnacle","Pinnacle"]];
 function detectBook(all){const t=(all||"").toLowerCase();for(const[re,n]of BOOKS)if(new RegExp("\\b"+re).test(t))return n;return null}
-const isSlip=all=>/\bparlay\b|\b\d+[- ]?leg\b|\bsgp\b|same game|\bbet slip\b|\bto win\b|\bpayout\b/i.test(all||"");
+/* a parlay needs parlay words, or slip words with more than one leg; one bet with a payout is still one bet */
+const isSlip=(all,n)=>/\bparlay\b|\b\d+[- ]?leg\b|\bsgp\b|same game/i.test(all||"")||(n>1&&/\bbet slip\b|\bto win\b|\bpayout\b/i.test(all||""));
 const decToAm=d=>d>=2?Math.round((d-1)*100):-Math.round(100/(d-1));
 /* rewrite decimal and fractional odds as American so the rest of the parser sees one format */
-function normOdds(t){
+/* prediction-market contracts: a YES at 48 cents is a 48% implied chance, the same as +108; fees are not included */
+const c2am=c=>{const p=c/100;return p>=.5?-Math.round(100*p/(1-p)):Math.round(100*(1-p)/p)};
+function normPM(t){
+  /* "25+ points" means 25 or more, which is Over 24.5 */
+  t=t.replace(/\b(\d{1,3})\+\s*(?=(?:pts|points|reb|rebs|rebounds|ast|asts|assists|threes|3pm|3-pointers|three|made threes|pra|steals|blocks)\b)/gi,(m,n)=>"Over "+(+n-0.5)+" ");
+  const yn=(m,w,c)=>{c=+c;if(!(c>=1&&c<=99))return m;const am=c2am(c);return(/yes/i.test(w)?"Over ":"Under ")+(am>0?"+":"")+am+"⁽ᵖ⁾"};
+  t=t.replace(/\b(?:buy\s+)?(yes|no)\b\s*[:·•-]?\s*(\d{1,2}(?:\.\d)?)\s*(?:¢|c\b|cents?\b|%)/gi,yn);
+  t=t.replace(/\b(?:buy\s+)?(yes|no)\b\s*[:·•-]?\s*\$0?\.(\d{2})\b/gi,yn);
+  return t}
+function normOdds(t){t=normPM(t);
   t=t.replace(/(^|[\s(@])([1-9]\d?\.\d{2})(?=$|[\s)])/g,(m,a,d)=>{const v=parseFloat(d);if(v<1.01||v>51)return m;const am=decToAm(v);return a+(am>0?"+":"")+am+"⁽ᵈ⁾"});
   t=t.replace(/(^|[\s(@])(\d{1,3})\/(\d{1,3})(?=$|[\s)])/g,(m,a,n,dn)=>{n=+n;dn=+dn;if(![1,2,3,4,5,6,7,8,9,10,11,13,15,20].includes(dn)||!n)return m;const am=decToAm(1+n/dn);return a+(am>0?"+":"")+am+"⁽ᶠ⁾"});
   return t}
@@ -53,9 +63,21 @@ function parse(lines,ctx){const rows=[],names=ctx.names,teams=ctx.teams;let play
         else if(m[3]){const o=parseInt(m[3]);if(expect==="sp"&&sOdds==null){sOdds=o;expect=null}else if(expect==="tot"&&tOdds==null&&tot!=null){tOdds=o;expect=null}else if(ml==null)ml=o}}
       if(spread!=null)rows.push({k:"G",ab:team.ab,mk:"spread",line:spread,odds:sOdds,side:"-",raw:t});
       if(tot!=null)rows.push({k:"G",ab:team.ab,mk:"total",line:tot,odds:tOdds,side:tSide||"over",raw:t});
+      if(/⁽ᵖ⁾/.test(t)&&!/\bOver\b/.test(t))ml=null;
       if(ml!=null)rows.push({k:"G",ab:team.ab,mk:"moneyline",line:null,odds:ml,side:"-",raw:t});}
   });flush();
-  const all=lines.map(l=>l.t).join("\n"),book=detectBook(all),slip=isSlip(all);
-  rows.forEach(r=>{r.book=book;r.slip=slip;if(r.raw&&/⁽/.test(r.raw))r.conv=true;if(r.raw)r.raw=r.raw.replace(/⁽.⁾/g,"")});return rows}
+  const all=lines.map(l=>l.t).join("\n"),book=detectBook(all),slip=isSlip(all,rows.length);
+  const money=re=>{const m=all.match(re);return m?parseFloat(m[1].replace(/,/g,"")):null};
+  const stake=money(/(?:wager|stake|risk|bet amount|total cost|cost)\s*:?\s*\$\s?([\d,]+(?:\.\d{1,2})?)/i);
+  const toWin=money(/(?:to win|potential win(?:nings)?|profit)\s*:?\s*\$\s?([\d,]+(?:\.\d{1,2})?)/i);
+  const payout=money(/(?:potential payout|total payout|payout|to return|returns?)\s*:?\s*\$\s?([\d,]+(?:\.\d{1,2})?)/i);
+  const win=toWin!=null?toWin:(payout!=null&&stake!=null&&payout>stake?+(payout-stake).toFixed(2):null);
+  const payAm=stake&&win?decToAm(1+win/stake):null;
+  rows.forEach(r=>{r.book=book;r.slip=slip;if(r.raw&&/⁽ᵖ⁾/.test(r.raw))r.pm=true;if(r.raw&&/⁽[ᵈᶠ]⁾/.test(r.raw))r.conv=true;if(r.raw)r.raw=r.raw.replace(/⁽.⁾/g,"");
+    if(slip){r.slipStake=stake;r.slipWin=win}
+    else if(rows.length===1&&stake!=null){r.stake=stake;r.toWin=win;r.payAm=payAm;const o=r.k==="P"?(r.over!=null?r.over:r.under):r.odds;
+      if(payAm!=null&&o!=null&&Math.abs(dec(o)-dec(payAm))>.04)r.payMismatch=true}});
+  return rows}
+const dec=a=>a>0?1+a/100:1+100/Math.abs(a);
 root.SharpOCR={parse,fixText,findName,detectBook,normOdds};
 })(typeof window!=="undefined"?window:module.exports);

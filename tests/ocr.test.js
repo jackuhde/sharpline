@@ -14,4 +14,12 @@ r=run("RJ Barrett Over 21.5 Points 5/2");t("fractional plus",r[0].over===250);
 r=run("Tue 11/17 Jalen Brunson Over 25.5 Points -115");t("date not odds",r[0].over===-115&&!r[0].conv);
 r=run("3-Leg Parlay +596\nJalen Brunson\nOver 25.5 Points -115\nRJ Barrett\nUnder 21.5 Points -110\nFanDuel");t("parlay slip legs",r.length===2&&r.every(x=>x.slip&&x.book==="FanDuel"));
 r=run("Knicks -3.5 -110 O 216.5 -110 -150");t("game line row",r.length===3&&r[0].mk==="spread"&&r[2].odds===-150);
+// prediction markets
+r=run("Kalshi\nJalen Brunson: 25+ points\nYes 48¢  No 53¢");t("kalshi 25+ yes/no",r.length===1&&r[0].line===24.5&&r[0].over===108&&r[0].under===-113&&r[0].pm&&r[0].book==="Kalshi");
+r=run("Polymarket\nRJ Barrett Over 21.5 points\nYes 41c No 60c");t("polymarket cents",r[0].over===144&&r[0].under===-150&&r[0].pm);
+r=run("ProphetX\nJalen Brunson Over 25.5 Points -112 Under 25.5 -104");t("prophetx american",r[0].book==="ProphetX"&&r[0].over===-112);
+r=run("Knicks Yes 64¢ No 37¢");t("pm team ml",r.length===1&&r[0].mk==="moneyline"&&r[0].odds===-178);
+r=run("Knicks No 37¢");t("lone NO is not this team's ML",r.length===0);
+r=run("Jalen Brunson Over 25.5 Points -115\nWager $10.00\nTo Win $8.70");t("stake and to-win",r[0].stake===10&&r[0].toWin===8.7&&r[0].payAm===-115&&!r[0].payMismatch);
+r=run("Jalen Brunson Over 25.5 Points -115\nWager $10.00\nPayout $21.00");t("payout mismatch flagged",r[0].toWin===11&&r[0].payMismatch);
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);
