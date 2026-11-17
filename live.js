@@ -96,9 +96,20 @@ function parseGamelog(j){const names=j.names||[],ix=k=>names.indexOf(k);const ev
   const cnt=r=>["pts","reb","ast","stl","blk"].filter(k=>(r[k]||0)>=10).length;
   const out={season:avg(rows),l10:rows.length>=3?avg(rows.slice(0,10)):null,dd:rows.filter(r=>cnt(r)>=2).length/rows.length,td:rows.filter(r=>cnt(r)>=3).length/rows.length,last:rows[0].t};
   return out}
+/* every regular-season game as a row (newest first), for player profiles: date, opponent, home/away, result, full line */
+function parseGamelogRows(j){const names=j.names||[],ix=k=>names.indexOf(k),ev=j.events||{};
+  const reg=(j.seasonTypes||[]).find(t=>/regular/i.test(t.displayName||""));if(!reg)return[];const rows=[];
+  (reg.categories||[]).forEach(c=>(c.events||[]).forEach(e=>{const s=e.stats||[];if(!s.length)return;const E=ev[e.eventId]||{},o=E.opponent||{};
+    const raw=k=>{const i=ix(k);return i<0?null:s[i]},n=k=>{const v=parseFloat(String(raw(k)).split("-")[0]);return isNaN(v)?null:v},att=k=>{const m=String(raw(k)||"").match(/^(\d+)-(\d+)$/);return m?+m[2]:null};
+    const min=n("minutes");
+    rows.push({id:e.eventId,t:E.gameDate||"",opp:o.abbreviation||"",oppName:o.displayName||"",home:E.atVs==="vs",res:E.gameResult||"",score:E.score||"",
+      min:min||0,dnp:!min,pts:n("points"),reb:n("totalRebounds"),ast:n("assists"),tpm:n("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),tpa:att("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
+      fgm:n("fieldGoalsMade-fieldGoalsAttempted"),fga:att("fieldGoalsMade-fieldGoalsAttempted"),stl:n("steals"),blk:n("blocks"),tov:n("turnovers")})}));
+  return rows.filter(r=>!r.dnp).sort((a,b)=>a.t<b.t?1:a.t>b.t?-1:0)}
+async function gamelogRows(athId,season){return parseGamelogRows(await getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${athId}/gamelog${season?"?season="+season:""}`,12000))}
 async function gamelog(athId){return parseGamelog(await getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${athId}/gamelog`,12000))}
 /* roster with ESPN athlete ids, so prop feed ids can be turned into names */
-function parseRosterIds(j){const out={};(j.athletes||[]).flatMap(a=>a.items?a.items:[a]).forEach(a=>{if(a.id&&a.displayName)out[a.id]={name:a.displayName,jersey:a.jersey!=null?String(a.jersey):""}});return out}
+function parseRosterIds(j){const out={};(j.athletes||[]).flatMap(a=>a.items?a.items:[a]).forEach(a=>{if(a.id&&a.displayName)out[a.id]={name:a.displayName,jersey:a.jersey!=null?String(a.jersey):"",pos:(a.position||{}).abbreviation||""}});return out}
 async function rosterIds(teamId){return parseRosterIds(await getJSON(`${BASE}/teams/${teamId}/roster`,12000))}
 
 /* ---------- grading ---------- */
@@ -128,6 +139,6 @@ function grade(spec,game,bx){if(!spec||!game)return null;
     const v=keys.reduce((a,k)=>a+p[k],0);return{res:cmp(v,spec.line,spec.side),detail:`${p.name} ${v} ${spec.stat.toLowerCase()} vs ${spec.line}`}}
   return null}
 
-root.SharpLive={norm,scoreboard,injuries,box,roster,parseRoster,propBets,parsePropBets,gamelog,parseGamelog,rosterIds,parseRosterIds,PROP_TYPES,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
+root.SharpLive={norm,scoreboard,injuries,box,roster,parseRoster,propBets,parsePropBets,gamelog,parseGamelog,gamelogRows,parseGamelogRows,rosterIds,parseRosterIds,PROP_TYPES,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
 })(typeof window!=="undefined"?window:globalThis);
 if(typeof module!=="undefined")module.exports=globalThis.SharpLive||window.SharpLive;

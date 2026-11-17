@@ -13,7 +13,101 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preload" href="fonts/archivo-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/archivo-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<style>@font-face{font-family:Archivo;font-style:normal;font-weight:500;font-display:swap;src:url(fonts/archivo-latin-500-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:600;font-display:swap;src:url(fonts/archivo-latin-600-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:700;font-display:swap;src:url(fonts/archivo-latin-700-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:800;font-display:swap;src:url(fonts/archivo-latin-800-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:900;font-display:swap;src:url(fonts/archivo-latin-900-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2")}</style>
+<style>@font-face{font-family:Archivo;font-style:normal;font-weight:500;font-display:swap;src:url(fonts/archivo-latin-500-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:600;font-display:swap;src:url(fonts/archivo-latin-600-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:700;font-display:swap;src:url(fonts/archivo-latin-700-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:800;font-display:swap;src:url(fonts/archivo-latin-800-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:900;font-display:swap;src:url(fonts/archivo-latin-900-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2")}
+/* ---------- player profile ---------- */
+.pfa{display:block;cursor:pointer;border-radius:12px}.pfn{cursor:pointer}.pfn:hover{text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
+.face[data-prof]{cursor:pointer}
+body.pf-lock{overflow:hidden}
+.prof{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;display:none;-webkit-overflow-scrolling:touch}
+.prof.on{display:block;animation:pfIn .32s cubic-bezier(.2,.8,.2,1)}
+.prof.out{animation:pfOut .26s ease forwards}
+@keyframes pfIn{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+@keyframes pfOut{to{transform:translateX(28px);opacity:0}}
+.pf-in{max-width:620px;margin:0 auto;padding:0 14px 60px}
+.pf-bar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 0 10px;background:linear-gradient(var(--bg) 70%,transparent)}
+.pf-back{display:flex;align-items:center;gap:4px;padding:8px 12px 8px 8px;border-radius:12px;background:var(--s2);border:1px solid var(--line);font:800 13px Archivo;color:var(--ink)}
+.pf-back svg{width:18px;height:18px;fill:none;stroke:var(--acc2);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.pf-tt{font:800 11px Archivo;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+.pf-hero{position:relative;display:flex;gap:16px;align-items:flex-end;padding:18px 16px;border-radius:22px;overflow:hidden;
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--c1) 55%,transparent),transparent 60%),linear-gradient(160deg,var(--s2),var(--s1));border:1px solid var(--line)}
+.pf-hero:after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;border:18px solid color-mix(in srgb,var(--c2) 30%,transparent);opacity:.5}
+.pf-av .jav{width:104px;height:104px;border-radius:24px;box-shadow:0 14px 30px -14px rgba(0,0,0,.9)}
+.pf-av .jav svg{border-radius:24px}
+.pf-id{min-width:0;position:relative;z-index:1}
+.pf-id h2{font:900 28px/1.02 Archivo;letter-spacing:-.8px;margin:4px 0 8px}
+.pf-mu{font:800 14px Archivo;color:var(--ink);display:flex;flex-direction:column;gap:2px}.pf-mu span{font:700 12px Archivo;color:var(--mute)}
+.pf-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 2px}
+.pf-chip{padding:4px 9px;border-radius:99px;font:900 10.5px Archivo;letter-spacing:.6px;text-transform:uppercase;background:var(--s2);color:var(--mute);border:1px solid var(--line)}
+.pf-chip.ok{color:var(--over);border-color:color-mix(in srgb,var(--over) 40%,transparent)}
+.pf-chip.inj-out{background:var(--under);color:#fff;border:0}.pf-chip.inj-doubt,.pf-chip.inj-quest{background:var(--gold);color:#14120c;border:0}
+.pf-chip.live{color:var(--acc2);border-color:var(--acc)}
+.pf-note{font:700 12px/1.35 Archivo;color:var(--mute)}
+.pf-mk{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin:0 -14px;padding-left:14px;scrollbar-width:none}.pf-mk::-webkit-scrollbar{display:none}
+.pf-mk button{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:14px;background:var(--s1);border:1px solid var(--line);transition:.18s}
+.pf-mk button span{font:800 10.5px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}.pf-mk button b{font:900 16px Archivo;color:var(--ink)}
+.pf-mk button.on{background:linear-gradient(160deg,var(--acc),#b8922a);border-color:transparent;transform:translateY(-1px)}.pf-mk button.on span,.pf-mk button.on b{color:#14120c}
+.pf-card{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:15px 14px;margin-top:12px}
+.pf-swap{animation:pfSwap .28s ease}@keyframes pfSwap{from{opacity:.3;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pf-ph,.pf-ch{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.pf-ph h3,.pf-ch h3{font:900 19px Archivo;letter-spacing:-.4px;margin-top:3px}.pf-ph .ln{color:var(--acc2)}
+.pf-gr{display:flex;align-items:center;gap:6px}
+.pf-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-side{padding:12px;border-radius:15px;background:var(--bg);border:1px solid var(--line)}
+.pf-side.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.pf-side .k{font:800 11px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.6px}
+.pf-side .v{font:900 26px JetBrains Mono,monospace;letter-spacing:-1px;margin:3px 0 0}
+.pf-side .s{font:700 11px Archivo;color:var(--dim)}
+.pf-prob{height:6px;border-radius:9px;background:var(--s3);margin:10px 0 6px;overflow:hidden}.pf-prob i{display:block;height:100%;background:var(--acc);border-radius:9px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.pf-side:not(.on) .pf-prob i{background:var(--dim)}
+.pf-side .s2{font:700 12px Archivo;color:var(--mute)}.pf-side .s2 b{color:var(--ink)}
+.pos{color:var(--over)}.neg{color:var(--under)}
+.pf-model{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:12px;padding:12px;border-radius:15px;border:1px dashed var(--line2)}
+.pf-model .k{font:800 10.5px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}.pf-model .k em{font-style:normal;color:var(--acc2);margin-left:3px}
+.pf-model .v{font:900 20px Archivo;margin-top:2px}.pf-model .v.o{color:var(--over)}.pf-model .v.u{color:var(--under)}
+.pf-why{font:600 12.5px/1.5 Archivo;color:var(--mute);margin-top:10px}
+.pf-fresh{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;font:700 11.5px Archivo;color:var(--dim)}
+.pf-warn{margin-top:10px;padding:9px 11px;border-radius:12px;background:color-mix(in srgb,var(--gold) 14%,transparent);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);font:700 12px/1.4 Archivo;color:var(--ink)}
+.pf-books{margin-top:10px}.pf-books summary{font:800 12px Archivo;color:var(--acc2);cursor:pointer}
+.pf-act{margin-top:12px;display:flex;justify-content:flex-end}
+.seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:var(--bg);border:1px solid var(--line);flex:none}
+.seg button{padding:6px 9px;border-radius:9px;font:800 11.5px Archivo;color:var(--mute);transition:.15s;white-space:nowrap}
+.seg button.on{background:var(--s3);color:var(--ink)}
+.seg.wide{overflow-x:auto;margin-bottom:12px;scrollbar-width:none}.seg.wide::-webkit-scrollbar{display:none}
+.pf-chart{width:100%;height:auto;display:block;overflow:visible}
+.pf-chart .bar rect{transform-box:fill-box;transform-origin:50% 100%}
+.pf-chart.anim .bar rect{transform:scaleY(0)}.pf-chart.anim .bar text{opacity:0}
+.pf-chart.anim.go .bar rect{transform:none;transition:transform .5s cubic-bezier(.2,.8,.2,1) var(--d)}.pf-chart.anim.go .bar text{opacity:1;transition:opacity .3s ease calc(var(--d) + .25s)}
+.bar.o rect{fill:var(--over)}.bar.u rect{fill:color-mix(in srgb,var(--under) 75%,var(--s3))}.bar.p rect,.bar.n rect{fill:var(--acc)}
+.bar .bv{font:800 10px JetBrains Mono,monospace;fill:var(--ink);text-anchor:middle}
+.bar .bo{font:800 8.5px Archivo;fill:var(--dim);text-anchor:middle}
+.pf-chart .ln{stroke:var(--acc2);stroke-width:1.6;stroke-dasharray:5 4}
+.pf-chart .lt{font:900 10px JetBrains Mono,monospace;fill:var(--acc2);text-anchor:end}
+.pf-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:8px;font:700 12.5px Archivo;color:var(--mute)}.pf-sum b{color:var(--ink)}.pf-sum b.pos{color:var(--over)}.pf-sum b.neg{color:var(--under)}
+.pf-leg{margin-left:auto;display:flex;align-items:center;gap:5px;font:700 11px Archivo;color:var(--dim)}
+.pf-leg i{display:inline-block;width:9px;height:9px;border-radius:3px}.pf-leg i.o{background:var(--over)}.pf-leg i.u{background:var(--under)}.pf-leg i.l{height:0;width:12px;border-top:2px dashed var(--acc2);border-radius:0}
+.pf-sub{font:700 12px Archivo;color:var(--mute);margin-left:4px}
+.pf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pf-sc{padding:10px 8px;border-radius:13px;background:var(--bg);border:1px solid var(--line);text-align:center}
+.pf-sc .v{font:900 19px JetBrains Mono,monospace;letter-spacing:-.6px}.pf-sc .k{font:800 10.5px Archivo;color:var(--mute);letter-spacing:.6px;margin-top:2px}
+.pf-sc.hot{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 10%,var(--bg))}.pf-sc.hot .k{color:var(--acc2)}
+.pf-sub2{margin-top:10px;font:700 12px Archivo;color:var(--mute)}
+.pf-tw{overflow-x:auto;margin:0 -14px;padding:0 14px}
+.pf-log{width:100%;border-collapse:collapse;font:700 12.5px JetBrains Mono,monospace;white-space:nowrap}
+.pf-log th{font:800 10.5px Archivo;color:var(--dim);text-align:right;padding:6px 6px;letter-spacing:.5px;border-bottom:1px solid var(--line)}
+.pf-log td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);color:var(--ink)}
+.pf-log th:nth-child(-n+3),.pf-log td:nth-child(-n+3){text-align:left;font-family:Archivo}
+.pf-log td.res.w{color:var(--over)}.pf-log td.res.l{color:var(--mute)}
+.pf-log .hot{background:color-mix(in srgb,var(--acc) 9%,transparent);color:var(--acc2)}.pf-log td.hot{font-weight:800}
+.pf-log td.o{color:var(--over)}.pf-log td.u{color:var(--under)}.pf-log small{color:var(--dim);font-size:10px}
+.pf-more{margin-top:10px;width:100%;padding:10px;border-radius:12px;background:var(--s2);border:1px solid var(--line);font:800 12.5px Archivo;color:var(--ink)}
+.pf-empty{padding:16px;border-radius:16px;border:1px dashed var(--line2);color:var(--mute);font:700 13px/1.5 Archivo;margin-top:12px}
+.pf-load{display:flex;align-items:center;gap:6px;color:var(--mute);font:700 12.5px Archivo}
+.pf-load i{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pfDot 1s infinite ease-in-out}.pf-load i:nth-child(2){animation-delay:.15s}.pf-load i:nth-child(3){animation-delay:.3s}
+.pf-load span{margin-left:6px}
+@keyframes pfDot{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:none}}
+.pf-foot{margin:16px 4px 0;font:600 11.5px/1.5 Archivo;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.prof.on,.prof.out,.pf-swap{animation:none}.pf-chart.anim .bar rect{transform:none}.pf-chart.anim .bar text{opacity:1}}
+</style>
 <style>
 :root{
   --bg:#0a0a0b;--s1:#131312;--s2:#1a1918;--s3:#23221f;--line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.1);
@@ -529,6 +623,7 @@ html,body{overscroll-behavior-y:none}
   <p class="foot">Estimates are mine, built from published odds, and lines move. Check every price at your book before betting. Bet only what you can afford to lose.</p>
 </div>
 
+<div class="prof" id="prof" role="dialog" aria-label="Player profile"></div>
 <div class="sheet" id="scanSheet"><div class="sheet-bg" data-scanclose="1"></div><div class="sheet-in">
   <div class="sheet-h"><div><div class="eyebrow">Upload</div><h2>Scan any bet</h2></div><button class="x" data-scanclose="1">×</button></div>
   <p class="sheet-p">Upload screenshots from any sportsbook, a bet slip, or a tip someone posted (X, Instagram, Discord, group chats). Sharpline reads them on your phone, so nothing is uploaded. Then it shows every line it found so you can fix misreads before grading. It grades the exact line and odds in the screenshot and shows what the board has now.</p>
@@ -552,7 +647,8 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
-<script src="live.js?v=1794990001"></script>
+<script src="live.js?v=1795000001"></script>
+<script src="profile.js?v=1795000001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -964,7 +1060,7 @@ function showScanResults(results,miss,fails,added,nrows,trunc){const st=document
   st.innerHTML=`Read ${nrows} line${nrows===1?"":"s"} → ${rows.length} bet${rows.length===1?"":"s"} graded (both sides of a game line count as one)${fails?` · ${fails} screenshot${fails>1?"s":""} unreadable`:""}${added?` · <span style="color:var(--over)">${added} added to your Top List</span>`:""}`;
   document.getElementById("scanRes").innerHTML=(rows.length?`<div class="reshead"><span style="color:var(--over)">● ${c("g")} bet</span><span style="color:var(--gold)">● ${c("y")} thin</span><span style="color:var(--under)">● ${c("r")} pass</span>${c("nr")?`<span style="color:var(--acc2)">● ${c("nr")} Screenshot only</span>`:""}${c("na")?`<span>● ${c("na")} missing odds</span>`:""}</div>
     <div class="list">${rows.map(r=>{const N=nameOf(r.key),b=r.best,big=r.tier==="na"?"–":r.tier==="nr"?pct(b.p):((b.ev>=0?"+":"")+(b.ev*100).toFixed(1)+"%");
-      return`<div class="sr" data-jump="${r.key}">${gradeTag(b.grade||"F")}<div class="m"><b>${r.key[0]!=="l"?N.name+" · ":""}${b.lbl}</b><span>${r.key[0]==="l"?N.name+" · ":(STAT_LBL[N.stat]||N.stat)+" · "}${r.tier==="na"?"odds not read":((r.src&&r.src.book)||"Screenshot")+" "+fmtAm(b.o)+(b.gap&&b.gap.d?` · ${b.gap.d>0?"+":""}${b.gap.d} pt vs market`:"")}</span>${r.tier==="g"||(r.key[0]==="c"&&(custOf(+r.key.slice(1))||{}).fo&&r.tier!=="nr")?`<span class="exs">${b.why}</span>`:r.tier==="nr"?`<span class="exs" style="color:var(--mute)">Not on my board, so there's no outside line to compare. The screenshot's own prices lean ${b.lbl}. Tap to add another book's line.</span>`:""}<span class="bn">Board now: ${boardNow(r.key)}</span></div><div class="c" style="color:${col[r.tier]}">${big}<small>${r.tier==="nr"?"its own no-vig":"difference"}</small></div></div>`}).join("")}</div>`:"")+
+      return`<div class="sr" data-jump="${r.key}">${gradeTag(b.grade||"F")}<div class="m"><b>${r.key[0]!=="l"?`<span class="pfn" ${pfKeyAttr(r.key)}>${N.name}</span> · `:""}${b.lbl}</b><span>${r.key[0]==="l"?N.name+" · ":(STAT_LBL[N.stat]||N.stat)+" · "}${r.tier==="na"?"odds not read":((r.src&&r.src.book)||"Screenshot")+" "+fmtAm(b.o)+(b.gap&&b.gap.d?` · ${b.gap.d>0?"+":""}${b.gap.d} pt vs market`:"")}</span>${r.tier==="g"||(r.key[0]==="c"&&(custOf(+r.key.slice(1))||{}).fo&&r.tier!=="nr")?`<span class="exs">${b.why}</span>`:r.tier==="nr"?`<span class="exs" style="color:var(--mute)">Not on my board, so there's no outside line to compare. The screenshot's own prices lean ${b.lbl}. Tap to add another book's line.</span>`:""}<span class="bn">Board now: ${boardNow(r.key)}</span></div><div class="c" style="color:${col[r.tier]}">${big}<small>${r.tier==="nr"?"its own no-vig":"difference"}</small></div></div>`}).join("")}</div>`:"")+
     (trunc?`<div class="warn">One screenshot had more lines than I could read in one pass. Crop it into two shorter screenshots to catch the rest.</div>`:"")+
     (miss.length?`<div class="warn" style="color:var(--mute);border-color:var(--line2);background:var(--bg)"><b style="color:var(--ink)">Couldn't grade (${miss.length}):</b> ${miss.slice(0,15).join(", ")}${miss.length>15?"…":""}. Usually a missing price or a player I couldn't place on a team.</div>`:"")+
     (rows.length?`<p class="sheet-p" style="margin-top:10px">Green lines are already on your Top List. Tap any line to jump to it.</p>`:"");}
@@ -1119,7 +1215,7 @@ function trackBet(key){const base=baseOf(key);if(tracked(key)){go("track");retur
     const bp=key[0]==="t"?(TOP[+key.slice(1)].bp??(base[0]==="p"?SUG[+base.slice(1)].bp:LINES[+base.slice(1)].bp)):base[0]==="p"?SUG[+base.slice(1)].bp:base[0]==="l"?LINES[+base.slice(1)].bp:null;
     rec={pick:lg.pick,odds:bp??null,p:lg.p,push:0,ev:bp!=null?evOf(lg.p,bp):null,grade:bp!=null?gradeFor(base,evOf(lg.p,bp),false):null,conf:null,src:"board"}}
   const lblRaw=b&&!b.assumed?b.lbl:(legOf(key)||{}).pick||"",Lx=b&&!b.assumed?b.L:parseFloat(lblRaw.split(" ")[1]);
-  rec.spec=specFor(base,lblRaw,Lx);rec.home=G.home;rec.away=G.away;rec.ev=(LIVE.ev[N.g]||{}).id||null;
+  rec.spec=specFor(base,lblRaw,Lx);rec.home=G.home;rec.away=G.away;if(base[0]!=="l"){const X=base[0]==="p"?PROPS[+base.slice(1)]:custOf(+base.slice(1));if(X){rec.tm=X.tm;rec.ath=Object.keys(LIVE.ids).find(k=>normN(LIVE.ids[k].name)===normN(X.p))||null}}rec.ev=(LIVE.ev[N.g]||{}).id||null;
   BETS.unshift({id:Date.now(),date:DATA_DATE,key:base,name:N.name,game:mu(G),tip:G.tip,mkt:N.stat,book:SCANNED.has(base)&&SCANBOOK[base]?SCANBOOK[base]:BOOK,stake:SCANSTAKE[base]||UNIT,res:null,...rec});
   saveBets();renderAll();toast(rec.odds==null?"Tracked. Add the odds you got in the Tracker":"Tracked")}
 const profitOf=b=>b.odds==null?0:b.res==="W"?b.stake*(dec(b.odds)-1):b.res==="L"?-b.stake:0;
@@ -1150,7 +1246,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
     <div class="hint" style="margin-top:10px">Win rate alone doesn't mean profit. At your average odds (${S.avgO==null?"–":fmtAm(S.avgO)}) you need to win ${S.be==null?"about 52%":pct1(S.be)} just to break even. ROI is what counts, and it takes 100+ bets before it says much.</div>
   </div>
   ${pend.length?`<div class="eyebrow tk-h">Open bets · ${pend.length}</div><div class="list">${pend.map(b=>`<div class="tb" data-tid="${b.id}">
-     <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":b.name+" · "}${b.pick}</div><div class="sub">${b.game} · ${b.mkt} · ${b.src}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
+     <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}</div><div class="sub">${b.game} · ${b.mkt} · ${b.src}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
      <div class="tb-in"><div><label>Odds you got</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
      ${b.spec&&!b.noAuto?`<div class="hint" style="margin-top:8px">Grades itself when the game is final.</div>`:""}<div class="tb-res"><button data-res="${b.id}|W" class="w">Won</button><button data-res="${b.id}|L" class="l">Lost</button><button data-res="${b.id}|P">Push</button><button data-res="${b.id}|V">Void</button></div></div>`).join("")}</div>`:""}
   ${Object.keys(byM).length?`<div class="eyebrow tk-h">By market</div><div class="list tk-t">${Object.entries(byM).map(([m,l])=>{const x=trackStats(l);return`<div class="tr"><span>${m}</span><span>${x.W}-${x.L}${x.P?"-"+x.P:""}</span><span style="color:${x.net>0?"var(--over)":x.net<0?"var(--under)":"var(--mute)"}">${x.n?money(x.net):"–"}</span><span>${x.roi==null?"–":(x.roi>=0?"+":"")+(x.roi*100).toFixed(0)+"%"}</span></div>`}).join("")}</div>`:""}
@@ -1159,7 +1255,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
      <div class="stats">${cell("Sharpline score",C.brier.toFixed(3))}${cell("Book price score",C.bookB==null?"–":C.bookB.toFixed(3))}${cell("Coin flip",".250")}</div>
      <div class="list tk-t" style="margin-top:10px"><div class="tr th"><span>Estimate</span><span>Bets</span><span>Expected</span><span>Actual</span></div>${C.bins.filter(x=>x.n).map(x=>`<div class="tr"><span>${x.lb}</span><span>${x.n}</span><span>${pct(x.est)}</span><span>${pct(x.act)}</span></div>`).join("")}</div>
      <div class="hint" style="margin-top:8px">If "Actual" keeps landing well below "Expected", Sharpline is overconfident and its edges should be trusted less.</div></div>`:""}
-  ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":b.name+" · "}${b.pick} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
+  ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
      <div class="sub">${b.auto?`<span class="autog">Auto-graded</span> ${b.gnote} · `:""}${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
   ${unitHTML()}
   <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`}
@@ -1213,7 +1309,7 @@ function renderTop(){
     const d=x.src==="built"?(TOP[x.n].k==="p"?SUG[TOP[x.n].i]:LINES[TOP[x.n].i]):null;
     return`<div class="top" data-key="${x.key}"><div class="rank">${n+1}</div>${freshTag(x.fresh)}
       <div class="kind">${gradeTag(capGrade(gradeFor(x.base,x.ev,false),x.conf),"md")} ${confTag(x.conf)} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your find</span>':""}</div>
-      <div class="face">${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
+      <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
       <div style="margin-top:10px"><span class="pick ${x.src==="saved"?"o":"n"}">${x.cond}</span></div>
       <div class="stats"><div class="st"><div class="k">Difference</div><div class="v" style="color:var(--over)">+${(x.ev*100).toFixed(1)}%</div></div>
         <div class="st"><div class="k">Line gap</div><div class="v">${x.gap&&x.gap.d>0?"+"+x.gap.d+" pt":"–"}</div></div>
@@ -1228,7 +1324,7 @@ function renderTop(){
     const dy=y0-el.getBoundingClientRect().top;if(Math.abs(dy)>2){el.style.transform=`translateY(${dy}px)`;el.style.transition="none";requestAnimationFrame(()=>{el.style.transition="transform .38s cubic-bezier(.2,.7,.2,1)";el.style.transform=""})}});
   const W=watchItems();if(W.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Watch list · needs a price</div><div class="hint" style="margin:0 4px 10px">These have no current price, or only an old one that may have moved, so there is no real edge number yet. Enter ${poss(BOOK)} odds on the row (or scan it) and it gets graded and ranked.</div>`+W.map(x=>{const N=nameOf(x.base),G=SNAP[N.g];
     return`<div class="top watch"><div class="kind">${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat}</div>
-      <div class="face">${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
+      <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
       <div style="margin-top:10px"><span class="pick n">${x.cond}</span></div>
       <div class="stats"><div class="st"><div class="k">Est. chance</div><div class="v">${pct(x.p)}</div></div><div class="st"><div class="k">Bet only at</div><div class="v">${fmtAm(toAm(x.p))} or better</div></div><div class="st"><div class="k">Edge</div><div class="v" style="color:var(--mute)">needs price</div></div></div>
       <div class="why">${x.why}</div><div class="act"><button class="addbtn" data-jump="${x.base}">Enter price</button></div></div>`}).join(""));
@@ -1240,16 +1336,16 @@ const STAT_ORDER=["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast","Pts+
 const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-Pointers":"Threes","Pts+Reb+Ast":"PRA","Pts+Reb":"Pts+Reb","Steals":"Steals","Blocks":"Blocks","Pts+Ast":"Pts+Ast","Reb+Ast":"Reb+Ast","Turnovers":"Turnovers","Double Double":"Double double","Triple Double":"Triple double"};
 const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
-  return`<div class="row" data-row="${i}">${avatar(x.p,x.tm,"av")}
-    <div><div class="nm">${x.p}${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
+  return`<div class="row" data-row="${i}"><span class="pfa" ${pfKeyAttr(key)}>${avatar(x.p,x.tm,"av")}</span>
+    <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
     <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}`}</span>
       <span class="est"><b>${pct(g.p)}</b> est ${gradeTag(gradeNow(key))}</span></div>
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
       ${x.q.map(q=>`<div class="qrow"><span><b>${YN[x.st]?"Yes":q.l}</b> · ${[q.o!=null?(YN[x.st]?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.note||"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${q.url}" target="_blank" rel="noopener">${q.src}</a></div>`).join("")}
       <div class="need"><span>Bet ${YN[x.st]?(g.s==="o"?"Yes ":"No "):""}only at <b>${fmtAm(toAm(g.p))}</b> or better on ${BOOK}</span>${addBtn(key)}</div></div></div>`}
 function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=pr?pr.pO:devig(C.o,C.u)[0],so=pO>=.5,pp=so?pO:1-pO;
-  return`<div class="row" data-row="${key}">${avatar(C.p,C.tm,"av")}
-    <div><div class="nm">${C.p}<span class="cbadge">${C.fo?(projP(C.p,C.st,C.l)?"My line":"Screenshot only"):"Added"}</span></div><div class="sub">${team(C.tm)[0]} · ${STAT_LBL[C.st]||C.st} · ${C.l}${C.fo?"":" at "+C.bk}</div></div>
+  return`<div class="row" data-row="${key}"><span class="pfa" ${pfKeyAttr(key)}>${avatar(C.p,C.tm,"av")}</span>
+    <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${C.p}</span><span class="cbadge">${C.fo?(projP(C.p,C.st,C.l)?"My line":"Screenshot only"):"Added"}</span></div><div class="sub">${team(C.tm)[0]} · ${STAT_LBL[C.st]||C.st} · ${C.l}${C.fo?"":" at "+C.bk}</div></div>
     <div class="r"><span class="pick ${so?"o":"u"} pass">${so?"▲ Over":"▼ Under"} ${C.l}</span><span class="est"><b>${pct(pp)}</b> ${C.fo?(projP(C.p,C.st,C.l)?"proj":"screenshot"):"fair"} ${gradeTag(gradeNow(key))}</span></div>
     ${edHTML(key)}
     <div class="det">${C.fo?`<div class="why">${pr?`This came from your screenshot. No book line was published, so I built one: ${pr.P.p} averages ${pr.m} ${(STAT_LBL[C.st]||C.st).toLowerCase()} (${pr.P.src}), which makes Over ${C.l} about ${pct(pr.pO)}. Add a sportsbook line below to make it sharper.`:`This came from your screenshot, but I don't have an outside line or season average for it. Enter another sportsbook's line and odds to check ${BOOK} against it.`}</div>
@@ -1364,7 +1460,7 @@ document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanF
   document.getElementById("scanGo").disabled=!scanFiles.length;document.getElementById("scanGo").textContent=scanFiles.length?`Read ${scanFiles.length} screenshot${scanFiles.length>1?"s":""}`:"Read lines";
   document.getElementById("scanStat").textContent="";document.getElementById("scanRes").innerHTML=""});
 function toast(m,kind){const t=document.getElementById("toast");t.textContent=m;t.className="on"+(kind?" "+kind:"");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),kind?2600:1600)}
-function renderAll(){const open=[...document.querySelectorAll(".row.open")].map(r=>r.dataset.row);
+function renderAll(){if(window.PF&&PF.open)setTimeout(()=>renderProfile(true),0);const open=[...document.querySelectorAll(".row.open")].map(r=>r.dataset.row);
   renderTop();renderProps();renderLines();renderTrack();document.querySelectorAll("[data-edbox]").forEach(b=>updRec(b.dataset.edbox));open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")})}
 /* ================= live layer: ESPN game lines, status, injuries, auto-grading ================= */
 let JERSEY=LS0("sl_jersey",{d:"",m:{}}).m||{};
@@ -1373,7 +1469,7 @@ const LIVE={ev:{},inj:{},injTs:0,oddsTs:0,okOdds:null,okInj:null,boardOk:null,la
    The researched board (data.json) covers the players previews write about. DraftKings posts every rotation player,
    so the app reads those directly and adds anything the board is missing. Averages come from each player's ESPN game log. */
 let BOARD={props:[],sug:[],proj:[]};
-{const c=LS0("sl_roster",{d:"",ids:{}});LIVE.ids=c.ids||{};const g=LS0("sl_glog",{d:"",m:{}});LIVE.logs=g.m||{};LIVE.logsD=g.d}
+{const c=LS0("sl_roster2",{d:"",ids:{}});LIVE.ids=c.ids||{};const g=LS0("sl_glog",{d:"",m:{}});LIVE.logs=g.m||{};LIVE.logsD=g.d}
 const pid=x=>x.g+"|"+normN(x.p)+"|"+x.st;
 function liveRow(r,G,gi){const e=LIVE.ev[gi]||{},moved=r.lOpen!=null&&r.lOpen!==r.l;
   return{l:r.l,o:r.o,u:r.u,src:"DraftKings (live)",url:e.id?`https://www.espn.com/nba/game/_/gameId/${e.id}`:"https://sportsbook.draftkings.com/leagues/basketball/nba",live:1,upd:r.upd,
@@ -1406,11 +1502,11 @@ async function loadProps(force){const gis=Object.keys(LIVE.ev).filter(gi=>{const
   const r=await Promise.all(gis.map(gi=>SharpLive.propBets(LIVE.ev[gi].id).then(v=>[gi,v]).catch(()=>[gi,null])));
   let ok=0;r.forEach(([gi,v])=>{if(v){LIVE.props[gi]=v;ok++}});if(!ok)throw new Error("props");LIVE.propsTs=Date.now();return"ok"}
 async function loadRosters(){const ids=[...new Set(Object.values(LIVE.ev).flatMap(e=>[e.homeId,e.awayId]).filter(Boolean))];
-  const c=LS0("sl_roster",{d:"",ids:{},teams:[]});if(c.d===DATA_DATE&&ids.every(t=>(c.teams||[]).includes(t))){LIVE.ids=c.ids;return}
+  const c=LS0("sl_roster2",{d:"",ids:{},teams:[]});if(c.d===DATA_DATE&&ids.every(t=>(c.teams||[]).includes(t))){LIVE.ids=c.ids;return}
   const maps=await Promise.all(ids.map(t=>SharpLive.rosterIds(t).then(m=>{Object.values(m).forEach(a=>{a.tm=t});return m}).catch(()=>null)));
   const got=ids.filter((t,i)=>maps[i]);const all=Object.assign({},...maps.filter(Boolean));if(!Object.keys(all).length)return;
   Object.values(LIVE.ev).forEach(e=>Object.values(all).forEach(a=>{if(a.tm===e.homeId)a.ab=e.homeAb;if(a.tm===e.awayId)a.ab=e.awayAb}));
-  LIVE.ids=all;LS.set("sl_roster",{d:DATA_DATE,ids:all,teams:got});
+  LIVE.ids=all;LS.set("sl_roster2",{d:DATA_DATE,ids:all,teams:got});
   const J={};Object.values(all).forEach(a=>{if(a.jersey)J[SharpLive.norm(a.name)]=a.jersey});JERSEY=J;LS.set("sl_jersey",{d:DATA_DATE,m:J})}
 /* game logs for everyone with a prop tonight, a few at a time, saved for the day */
 async function loadLogs(){if(LIVE.logsBusy)return LIVE.logsBusy;

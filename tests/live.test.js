@@ -56,4 +56,11 @@ t("gamelog dd rate",Math.abs(gl.dd-0)<1e-9);
 // double double grading
 const bxDD={players:{"scottie barnes":{name:"Scottie Barnes",pts:22,reb:11,ast:4,stl:1,blk:0,dnp:false,min:34}}};
 t("dd graded",L.grade({kind:"prop",player:"Scottie Barnes",stat:"Double Double",line:.5,side:"o"},game,bxDD).res==="W");
+
+// game-log rows for profiles
+const glr=L.parseGamelogRows({names:["minutes","fieldGoalsMade-fieldGoalsAttempted","fieldGoalPct","threePointFieldGoalsMade-threePointFieldGoalsAttempted","threePointPct","freeThrowsMade-freeThrowsAttempted","freeThrowPct","totalRebounds","assists","blocks","steals","fouls","turnovers","points"],
+  events:{a:{gameDate:"2026-11-15T00:00Z",atVs:"vs",opponent:{abbreviation:"MIA"},gameResult:"W",score:"120-110"},b:{gameDate:"2026-11-13T00:00Z",atVs:"@",opponent:{abbreviation:"NY"},gameResult:"L",score:"112-108"},d:{gameDate:"2026-11-10T00:00Z",atVs:"@",opponent:{abbreviation:"BOS"}}},
+  seasonTypes:[{displayName:"2026-27 Regular Season",categories:[{events:[{eventId:"b",stats:["32","7-15","46.7","1-2","50","2-4","50","6","6","0","3","1","6","17"]},{eventId:"a",stats:["36","13-27","48.1","4-8","50","0-3","0","9","4","2","1","3","0","30"]},{eventId:"d",stats:["0","0-0","0","0-0","0","0-0","0","0","0","0","0","0","0","0"]}]}]}]});
+t("rows newest first, DNP dropped",glr.length===2&&glr[0].id==="a");
+t("row fields",glr[0].home===true&&glr[0].opp==="MIA"&&glr[0].pts===30&&glr[0].tpm===4&&glr[0].tpa===8&&glr[0].fga===27&&glr[1].home===false&&glr[1].res==="L");
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);
