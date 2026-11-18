@@ -26,6 +26,9 @@ async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted
       if(isOpen||now-G.propsFetched>PROPS_BG||force)jobs.push(SharpLive.liveProps(e.id).then(r=>{mergeProps(e.id,r);G.propsTs=Date.now();G.propsOk=true}).catch(()=>{G.propsOk=false}).finally(()=>{G.propsFetched=Date.now()}));
       if(!G.pre)jobs.push(SharpLive.fetchProps(e.id,100,1).then(r=>{G.pre={};r.forEach(m=>{G.pre[m.ath+"|"+m.st]=m})}).catch(()=>{}));
       await Promise.all(jobs)}));
+    /* season stats for anyone with a live market but no averages yet (bench players without pregame props) */
+    const need=[];live.forEach(e=>Object.values(gameOf(e.id).props).forEach(m=>{if(LIVE.ids[m.ath]&&!(m.ath in LIVE.logs)&&!need.includes(m.ath))need.push(m.ath)}));
+    if(need.length){await Promise.all(need.slice(0,6).map(a=>SharpLive.gamelog(a).then(v=>{LIVE.logs[a]=v||0}).catch(()=>{LIVE.logs[a]=0})));buildProj()}
     saveHist()}finally{LV.busy=false}
   render()}
 function start(){if(LV.timer)return;LV.timer=setInterval(()=>poll(false),POLL);poll(true)}
@@ -34,9 +37,13 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&wanted())
 /* record line and price changes this phone sees */
 function push(k,pt){const h=HIST[k]||(HIST[k]=[]),l=h[h.length-1];if(l&&l.l===pt.l&&l.o===pt.o&&l.u===pt.u)return;h.push(pt);if(h.length>80)h.splice(0,h.length-80)}
 function recLine(id,o){push(id+"|total",{t:Date.now(),l:o.total.line,o:o.total.over,u:o.total.under});push(id+"|spread",{t:Date.now(),l:o.spread.home,o:o.spread.homeOdds,u:o.spread.awayOdds})}
+/* ESPN's per-market update times run on a shifted clock, so compare each market only with the newest one in the same feed:
+   a line that hasn't moved for minutes while the game keeps going is treated as outdated */
+const LAG_MAX=4*60000;
 function mergeProps(id,r){const G=gameOf(id),now=Date.now(),seen=new Set();G.noMarket=!!r.none||!r.length;
+  const ts=r.map(m=>Date.parse(m.upd)).filter(x=>!isNaN(x)),newest=ts.length?Math.max(...ts):null;
   r.forEach(m=>{const k=m.ath+"|"+m.st;seen.add(k);const p=G.props[k]||(G.props[k]={ath:m.ath,st:m.st});
-    Object.assign(p,{l:m.l,o:m.o,u:m.u,lOpen:m.lOpen,oOpen:m.oOpen,uOpen:m.uOpen,yn:m.yn,seen:now,gone:false});push(id+"|"+k,{t:now,l:m.l,o:m.o,u:m.u})});
+    const u=Date.parse(m.upd);Object.assign(p,{l:m.l,o:m.o,u:m.u,lOpen:m.lOpen,oOpen:m.oOpen,uOpen:m.uOpen,yn:m.yn,seen:now,gone:false,lag:newest!=null&&!isNaN(u)?newest-u:null});push(id+"|"+k,{t:now,l:m.l,o:m.o,u:m.u})});
   Object.keys(G.props).forEach(k=>{if(!seen.has(k)&&!G.props[k].gone){G.props[k].gone=true;G.props[k].goneTs=now}});
   G.alts=r.alts||[]}
 
@@ -61,7 +68,7 @@ function model(id,mk){const e=LV.sb.find(x=>x.id===id),G=gameOf(id);if(!e||mk.yn
      35% model, 65% DraftKings' no-vig chance, and never more than 4 points from the market */
   const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw,side=cur+mean>=mk.l?"o":"u",p=side==="o"?pO:1-pO,price=side==="o"?mk.o:mk.u;
   return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,ev:price!=null?evOf(p,price):null,capped:pm!=null}}
-function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH}
+function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH&&!(mk.lag>LAG_MAX)}
 
 /* ---------- views ---------- */
 const teamTag=(ab,full)=>{const[,c1,c2]=team(full||"");return`<span class="lv-tm" style="--c1:${c1};--c2:${c2}">${esc(ab2(ab))}</span>`};
@@ -115,7 +122,7 @@ function moveChart(k,pre,mk){const h=(HIST[k]||[]).filter(p=>p.l!=null);const pt
 function lean(pre,mk){const base=mk.lOpen??(pre&&pre.l);if(base==null)return"";if(mk.l>base)return`<span class="lv-dir o">Moving toward Over (line up ${r1(mk.l-base)})</span>`;if(mk.l<base)return`<span class="lv-dir u">Moving toward Under (line down ${r1(base-mk.l)})</span>`;
   if(mk.oOpen!=null&&mk.o!=null&&mk.o!==mk.oOpen)return`<span class="lv-dir ${dec(mk.o)<dec(mk.oOpen)?"o":"u"}">Same line, ${dec(mk.o)<dec(mk.oOpen)?"Over":"Under"} price shortened</span>`;return""}
 function propRow(id,k,mk,pre){const m=model(id,mk),f=fresh(id,mk),st=mk.gone?"susp":f?"live":"old",open=LV.exp[k];
-  const chip=st==="susp"?`<span class="lv-st susp">Suspended or pulled ${mk.goneTs?ago(mk.goneTs):""}</span>`:st==="old"?`<span class="lv-st old">Outdated</span>`:`<span class="lv-st live">Live</span>`;
+  const chip=st==="susp"?`<span class="lv-st susp">Suspended or pulled ${mk.goneTs?ago(mk.goneTs):""}</span>`:st==="old"?`<span class="lv-st old">${mk.lag>LAG_MAX?`Not updated for ${Math.round(mk.lag/60000)} min`:"Outdated"}</span>`:`<span class="lv-st live">Live</span>`;
   const val=f&&m&&m.ev!=null&&m.ev>=.03;
   return`<div class="lv-pr ${st} ${val?"val":""} ${open?"open":""}" data-lvx="${esc(k)}"><div class="lv-pr-top">
       <div class="lv-pr-l"><b>${STAT_LBL[mk.st]||mk.st}</b> ${chip}<div class="s">${m?`Now <b>${r1(m.cur)}</b> · needs ${m.need<0?"none, already over":r1(m.need)+" more"}`:""}${pre&&pre.l!=null?` · pregame ${pre.l}`:""}</div></div>
