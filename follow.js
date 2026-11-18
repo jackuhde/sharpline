@@ -4,6 +4,7 @@
 (function(){
   const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
   const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const N=s=>(typeof normN==="function"?normN(s):String(s||"").toLowerCase());
   const LBL={out:"Out",doubt:"Doubtful",quest:"Questionable",dtd:"Day-to-day",prob:"Probable",none:"No injury listed"};
   /* the ESPN injury report entry for this player on his current team, or "none" */

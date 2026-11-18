@@ -732,7 +732,7 @@ html,body{overscroll-behavior-y:none}
 <script src="ocrparse.js?v=1794947364"></script>
 <script src="live.js?v=1795000002"></script>
 <script src="profile.js?v=1795200001"></script>
-<script src="follow.js?v=1795200002"></script>
+<script src="follow.js?v=1795200003"></script>
 <script src="livegame.js?v=1795200001"></script>
 <script>
 
@@ -1451,7 +1451,7 @@ function allPropItems(){
   CUST.forEach(C=>L.push({key:"c"+C.id,g:C.g,st:C.st,tm:C.tm,name:C.p,line:C.l,books:C.fo?0:1,html:()=>custRowHTML(C)}));
   return L}
 function renderProps(){
-  {const fs=document.getElementById("slFollow");if(fs&&window.SLF)fs.innerHTML=SLF.strip()}
+  {const fs=document.getElementById("slFollow");if(fs&&window.SLF)try{fs.innerHTML=SLF.strip()}catch(e){console.error(e);fs.innerHTML=""}}
   const af=document.getElementById("addForm");if(af&&!af.dataset.init){af.innerHTML=addFormHTML();af.dataset.init=1}
   const items=allPropItems(),inGame=items.filter(x=>propGame==="all"||x.g==propGame);
   const stats=STAT_ORDER.filter(st=>inGame.some(x=>x.st===st)).concat([...new Set(inGame.map(x=>x.st))].filter(st=>!STAT_ORDER.includes(st)));
