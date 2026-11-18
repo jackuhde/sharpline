@@ -57,13 +57,15 @@ function model(id,mk){const e=LV.sb.find(x=>x.id===id),G=gameOf(id);if(!e||mk.yn
   const cur=curOf(pl,mk.st),need=mk.l-cur;
   const pOverRaw=need<0?1:mean<=0?0:(COUNT_ST[mk.st]||mean<5)?poisOver(mean,need):1-Phi((need-mean)/Math.sqrt(Math.max(vr,.5)));
   const pm=mk.o!=null&&mk.u!=null?devig(mk.o,mk.u)[0]:mk.o!=null?Math.max(.01,imp(mk.o)-.025):null;
-  const pO=pm!=null?Math.min(pm+.07,Math.max(pm-.07,pOverRaw)):pOverRaw,side=cur+mean>=mk.l?"o":"u",p=side==="o"?pO:1-pO,price=side==="o"?mk.o:mk.u;
-  return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,ev:price!=null?evOf(p,price):null,capped:pm!=null&&pO!==pOverRaw}}
+  /* live markets react to things this model can't see (rotations, matchups, pace in real time), so lean on them:
+     35% model, 65% DraftKings' no-vig chance, and never more than 4 points from the market */
+  const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw,side=cur+mean>=mk.l?"o":"u",p=side==="o"?pO:1-pO,price=side==="o"?mk.o:mk.u;
+  return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,ev:price!=null?evOf(p,price):null,capped:pm!=null}}
 function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH}
 
 /* ---------- views ---------- */
 const teamTag=(ab,full)=>{const[,c1,c2]=team(full||"");return`<span class="lv-tm" style="--c1:${c1};--c2:${c2}">${esc(ab2(ab))}</span>`};
-const statusTxt=e=>e.state==="in"?(e.period>4?"OT"+(e.period>5?e.period-4:""):"Q"+e.period)+" · "+(e.clock||""):e.state==="post"?"Final":tipLocal(e);
+const statusTxt=e=>e.state==="in"?(/^0(\.0)?$|^0:00$/.test(e.clock||"")||!e.clockSec?(e.detail||"Break"):(e.period>4?"OT"+(e.period>5?e.period-4:""):"Q"+e.period)+" · "+e.clock):e.state==="post"?"Final":tipLocal(e);
 const tipLocal=e=>new Date(e.date).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
 const upd=ts=>ts?ago(ts):"never";
 function feedBar(){const age=LV.sbTs?Date.now()-LV.sbTs:null,old=age==null||age>FRESH;
@@ -109,7 +111,7 @@ function propRow(id,k,mk,pre){const m=model(id,mk),f=fresh(id,mk),st=mk.gone?"su
       <div class="lv-pr-r"><div class="ln">${mk.yn?"Yes":mk.l}</div><div class="px">O ${fmtAm(mk.o)}${mk.yn?"":` · U ${fmtAm(mk.u)}`}</div></div></div>
     ${m?`<div class="lv-pr-m"><span>Projected final <b>${r1(m.final)}</b> <em>model</em></span><span>${m.side==="o"?"Over":"Under"} <b>${pct(m.p)}</b></span>${f&&m.ev!=null?`<span class="${m.ev>=0?"pos":"neg"}">${m.ev>=0?"+":""}${(m.ev*100).toFixed(1)}% EV</span>`:`<span class="muted">No EV: price not current</span>`}${val?`<span class="lv-val">Potential edge</span>`:""}</div>`
       :`<div class="lv-pr-m"><span class="muted">${mk.yn?"Yes/No markets aren't modeled live.":"No season data for a live projection; showing the market only."}</span></div>`}
-    ${open?`<div class="lv-pr-x">${m?`<p>${esc(m.name)} has ${r1(m.cur)} in ${Math.round((m.pl&&m.pl.min)||0)} minutes${m.pl&&m.pl.pf!=null?` with ${m.pl.pf} fouls`:""}. About ${r1(m.gameLeft)} game minutes are left; Sharpline expects him to play about ${r1(m.minLeft)} of them${m.mwhy.length?` (${esc(m.mwhy.join(", "))})`:""}, adding about ${r1(m.remMean)} for a projected ${r1(m.final)}. Chance of Over ${mk.l}: ${pct(m.pO)}${m.capped?` (model said ${pct(m.pOverRaw)}; held within 7 points of DraftKings' no-vig ${pct(m.pm)})`:m.pm!=null?`; DraftKings no-vig ${pct(m.pm)}`:""}.</p>`:""}
+    ${open?`<div class="lv-pr-x">${m?`<p>${esc(m.name)} has ${r1(m.cur)} in ${Math.round((m.pl&&m.pl.min)||0)} minutes${m.pl&&m.pl.pf!=null?` with ${m.pl.pf} fouls`:""}. About ${r1(m.gameLeft)} game minutes are left; Sharpline expects him to play about ${r1(m.minLeft)} of them${m.mwhy.length?` (${esc(m.mwhy.join(", "))})`:""}, adding about ${r1(m.remMean)} for a projected ${r1(m.final)}. Chance of Over ${mk.l}: ${pct(m.pO)}${m.pm!=null?` (Sharpline's in-game model alone says ${pct(m.pOverRaw)}; blended with DraftKings' no-vig ${pct(m.pm)}, which sees rotations and matchups this model can't)`:""}.</p>`:""}
       ${lean(pre,mk)}${moveChart(id+"|"+k,pre,mk)}
       ${m&&f&&m.price!=null?`<button class="lv-track" data-lvtrack="${esc(id+"|"+k)}">+ Track ${m.side==="o"?"Over":"Under"} ${mk.l} at ${fmtAm(m.price)}</button>`:""}</div>`:""}</div>`}
 function boxTable(G,teamId){const ps=Object.values(G.box.players).filter(p=>p.teamId===teamId).sort((a,b)=>(b.starter-a.starter)||(b.min-a.min));
