@@ -1615,7 +1615,7 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
 function setRefreshing(on){document.querySelectorAll("[data-refresh]").forEach(b=>b.classList.toggle("spin",on))}
 /* header time = when the app last pulled live odds, props and injuries (not the hourly research time) */
 function setWhen(){const el=document.getElementById("when");if(!el||!DATA_DATE)return;const dt=new Date(DATA_DATE+"T12:00:00");
-  const t=LIVE.last?new Date(LIVE.last).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):null;
+  const t=LIVE.last?new Date(LIVE.last).toLocaleTimeString([], {hour:"numeric",minute:"2-digit",timeZoneName:"short"}):null;
   el.innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${t?"Live "+t:"Research "+(SNAP_TIME.split(", ").pop()||"–")}`}
 function renderLiveBar(){setWhen();const el=document.getElementById("livebar");if(!el)return;const bt=boardTs();
   const cell=(ok,lbl,ts)=>`<span class="lb ${ok===false?"bad":ts&&Date.now()-ts<15*60000?"ok":"old"}"><i></i>${lbl} ${ok===false?"unavailable":ago(ts)}</span>`;
@@ -1641,6 +1641,8 @@ function applyData(d){
   BOARD={props:d.props||[],sug:(d.sug||[]).map(x=>({...x})),proj:(d.proj||[]).map(r=>({p:r[0],ab:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],src:(d.projSrc||{})[r[6]]||"season averages",l10:{pts:r[7],reb:r[8],ast:r[9],tpm:r[10]},min:r[11],l10min:r[12]}))};
   OUT=new Set((d.games||[]).flatMap(g=>(g.out||[]).map(normN)));
   SNAP_TIME=d.asof||"";DATA_VERSION=d.version||"";
+  /* show the research time in this device's own time zone, not the "ET" text in the file */
+  {const v=new Date(DATA_VERSION);if(!isNaN(v))SNAP_TIME=v.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})+", "+v.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",timeZoneName:"short"})}
   /* new day = new slate: clear yesterday's entries so nothing points at the wrong bet */
   if(LS0("sl_date","")!==d.date){Object.keys(EDV).forEach(k=>delete EDV[k]);Object.keys(SAVED).forEach(k=>delete SAVED[k]);CUST=[];
     LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_date",d.date)}
@@ -1651,7 +1653,7 @@ function applyData(d){
 let STALE=false;
 function staleCheck(d){const el=document.getElementById("stale");const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
   const age=d.version?(Date.now()-new Date(d.version))/36e5:99;let msg="";
-  if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted around 10:45 AM ET.`;
+  if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted each morning.`;
   else if(age>5)msg=`Lines were last checked ${Math.round(age)} hours ago. Prices may have moved, so confirm before betting.`;
   STALE=!!msg;if(el)el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
 async function fetchData(){const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
