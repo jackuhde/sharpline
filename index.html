@@ -1424,11 +1424,11 @@ function renderTop(){
   {const L=items.length<5?leanItems(new Set(items.map(x=>x.base)),8-items.length):[];
    if(!items.length&&!L.length)document.getElementById("topList").innerHTML=`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
    if(L.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:${items.length?22:4}px 4px 8px">${items.length?"More to consider":"Best available tonight"}</div>
-    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player, ranked. At DraftKings' price most are not an edge; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
+    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player. A positive number at DraftKings that still isn't on the main list means lower confidence, usually because his averages and the market disagree. The rest aren't an edge at DraftKings yet; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
     ${L.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];return`<div class="top lean" data-key="${x.key}"><div class="rank">${items.length+n+1}</div>${freshTag(x.fresh)}
-      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} <span class="lean-tag">Lean</span> Prop · ${N.stat}</div>
+      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} <span class="lean-tag">${x.ev>=.02?"Lower confidence":"Lean"}</span> Prop · ${N.stat}</div>
       <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
-      <div style="margin-top:10px"><span class="pick n">DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better</span></div>
+      <div style="margin-top:10px"><span class="pick n">${x.ev>=.02?`DraftKings ${fmtAm(x.price)} now · fair ${fmtAm(toAm(x.p))}`:`DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better`}</span></div>
       <div class="stats"><div class="st"><div class="k">Model chance</div><div class="v">${Math.round(x.p*100)}%</div></div>
         <div class="st"><div class="k">At DraftKings</div><div class="v" style="color:${x.ev>=0?"var(--over)":"var(--under)"}">${x.ev>=0?"+":""}${(x.ev*100).toFixed(1)}%</div></div>
         <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
