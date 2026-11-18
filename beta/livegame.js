@@ -74,24 +74,33 @@ function valueCount(id){const G=gameOf(id);let n=0;Object.values(G.props).forEac
 function topPerf(id){const G=gameOf(id);if(!G.box)return"";const ps=Object.values(G.box.players).filter(p=>!p.dnp).sort((a,b)=>(b.pts||0)-(a.pts||0)).slice(0,3);
   return ps.map(p=>`<span>${esc(p.name.split(" ").slice(-1)[0])} <b>${p.pts}</b>p ${p.reb}r ${p.ast}a</span>`).join("")}
 function gameCard(e){const G=gameOf(e.id),o=G.odds,n=Object.values(G.props).filter(m=>!m.gone).length,v=valueCount(e.id);
-  return`<button class="lv-card" data-lvg="${e.id}"><div class="lv-row"><div class="lv-teams">
+  return`<div class="lv-row"><div class="lv-teams">
     <div class="lv-t">${teamTag(e.awayAb,e.away)}<b class="sc" data-sc="${e.id}a">${e.awayScore}</b></div>
     <div class="lv-t">${teamTag(e.homeAb,e.home)}<b class="sc" data-sc="${e.id}h">${e.homeScore}</b></div></div>
     <div class="lv-clock"><span class="lv-live">Live</span><b>${esc(statusTxt(e))}</b></div></div>
     <div class="lv-mk">${o?`<span>Live total <b>${o.total.line??"–"}</b></span><span>Spread <b>${ab2(e.homeAb)} ${o.spread.home>0?"+":""}${o.spread.home??"–"}</b></span>`:`<span>No live game line right now</span>`}
       <span>${n?`<b>${n}</b> live player markets`:G.propsFetched?"No live player markets":"Loading markets"}</span>${v?`<span class="lv-val">${v} with potential value</span>`:""}</div>
     ${G.box?`<div class="lv-perf">${topPerf(e.id)}</div>`:""}
-    <div class="lv-upd">Odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)}</div></button>`}
+    <div class="lv-upd">Odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)}</div>`}
+const SC={};
+function syncCards(box,live){const have=new Map([...box.querySelectorAll("[data-lvg]")].map(b=>[b.dataset.lvg,b]));
+  live.forEach((e,i)=>{let b=have.get(e.id);if(!b){b=document.createElement("button");b.className="lv-card";b.dataset.lvg=e.id}have.delete(e.id);
+    const h=gameCard(e);if(b._h!==h){b.innerHTML=h;b._h=h}
+    const prev=SC[e.id];if(prev&&(prev.a!==e.awayScore||prev.h!==e.homeScore)){const el=b.querySelector(prev.a!==e.awayScore?'[data-sc$="a"]':'[data-sc$="h"]');if(el){el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")}}
+    SC[e.id]={a:e.awayScore,h:e.homeScore};if(box.children[i]!==b)box.insertBefore(b,box.children[i]||null)});
+  have.forEach(b=>b.remove())}
 let lastList="",lastGame="";
 function renderList(){const el=document.getElementById("liveBody");if(!el)return;
   const live=LV.sb.filter(e=>e.state==="in"),pre=LV.sb.filter(e=>e.state==="pre"),post=LV.sb.filter(e=>e.state==="post");
   const html=feedBar()+(!LV.sbTs?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Checking for games in progress…</span></div>`:
-    (live.length?`<div class="lv-h">In progress <em>${live.length}</em></div>${live.map(gameCard).join("")}`
+    (live.length?`<div class="lv-h">In progress <em>${live.length}</em></div><div id="lvCards"></div>`
       :`<div class="pf-empty"><b style="color:var(--ink)">No games in progress right now.</b> Live scores, live lines and live player props appear here once a game tips off. ${pre.length?`Next tip: ${esc(ab2(pre[0].awayAb))} @ ${esc(ab2(pre[0].homeAb))} at ${tipLocal(pre[0])}.`:""}</div>`)+
     (pre.length?`<div class="lv-h">Up next</div><div class="lv-mini">${pre.map(e=>`<div><span>${esc(ab2(e.awayAb))} @ ${esc(ab2(e.homeAb))}</span><b>${tipLocal(e)}</b></div>`).join("")}</div>`:"")+
     (post.length?`<div class="lv-h">Final</div><div class="lv-mini">${post.map(e=>`<div><span>${esc(ab2(e.awayAb))} ${e.awayScore} @ ${esc(ab2(e.homeAb))} ${e.homeScore}</span><b>Final</b></div>`).join("")}</div>`:""))+
     `<p class="pf-foot">Live lines and live player props are DraftKings' in-game markets as published through ESPN. Projections are Sharpline's model. Bet only after confirming the price at your book; live prices change in seconds.</p>`;
-  if(html!==lastList){el.innerHTML=html;lastList=html}
+  const cards=document.getElementById("lvCards"),keep=cards&&cards.parentNode===el?cards:null;
+  if(html!==lastList){if(keep)keep.remove();el.innerHTML=html;lastList=html;const slot=document.getElementById("lvCards");if(keep&&slot)slot.replaceWith(keep)}
+  const box=document.getElementById("lvCards");if(box)syncCards(box,live);
   const nb=document.querySelector('.nav [data-v="live"]');if(nb)nb.classList.toggle("haslive",live.length>0)}
 
 /* ---------- game view ---------- */
