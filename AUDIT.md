@@ -145,3 +145,17 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - Actual results (ESPN game logs, regular season): bar chart vs tonight's line for L5, L10, L20 and vs tonight's opponent (this season and last), averages for Season, L5, L10, L20, Home, Away and vs opponent, and a game log with the selected stat highlighted.
 - Headshots are not used. Player photos are not something Sharpline places in the app; the jersey card is the player image.
 - Tracked bets now store the player's team and ESPN id so old bets can still open a profile.
+
+## Live section, live projections, follows (Nov 17)
+- New Live tab (livegame.js). Scores, clock and period from the ESPN scoreboard every 20 seconds while the screen is open. Box score, plays and ESPN win probability from the ESPN summary feed.
+- Live game lines and live player props are DraftKings' in-game markets (ESPN core odds, provider 200). Pregame open and close game lines are DraftKings provider 100.
+- Market states: Live (in the latest fetch and recently updated), "Not updated for N min" (still listed but its price has not changed for over 4 minutes while newer markets in the same feed have), Suspended or pulled (missing from the latest fetch). EV is hidden unless the market is Live and the fetch is under 75 seconds old. EV is also hidden when only one side is posted.
+- ESPN's per-market lastUpdated runs on a shifted clock, so it is only compared with other markets in the same feed, never shown as a time.
+- Line movement history is not available free. The app records what it sees on this phone (game totals and player props) and charts that, labeled as such.
+- Live model: current stat plus per-minute rate times expected minutes left. Rate blends season and last-10 per-minute production with tonight's rate. Minutes left shrink for foul trouble and blowouts, zero if ejected or fouled out. Probability is 35% model and 65% DraftKings no-vig, held within 4 points of the market. "Potential edge" needs EV of 3% or more.
+- Not modeled live: opponent defense and pace beyond tonight's in-game rates, injuries beyond ESPN's status, Yes/No markets (double double, triple double).
+- Started games stay in Props with a "Live now" tag and their pregame lines and grades, kept for comparison, with a link to Live.
+- Game view updates in place (only changed blocks are replaced) so taps and scroll position survive refreshes.
+- Profiles: turnovers added to averages and the game log. DraftKings alternate lines (milestones, Over only) listed with implied chance and his actual hit rate; tapping one charts his games against it. No EV on these because only one side is posted.
+- Follow a player (star in the profile), recently viewed players, and injury-change alerts for followed players (checked on each ESPN injury refresh, shown as a toast and in the Props tab). All stored on this phone only. Cross-device sync needs accounts, which are not built.
+- Tests: tests/live.test.js now covers game-line parsing (live and pregame), alternate lines and minutes left (47 checks).

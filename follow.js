@@ -13,8 +13,9 @@
     isF(n){return F.follows().some(x=>N(x.n)===N(n))},
     toggle(n,t){let L=F.follows();const on=!F.isF(n);
       if(on)L.unshift({n,t,ts:Date.now(),inj:typeof LIVE!=="undefined"&&LIVE.injTs?injOf(n,t):undefined});else L=L.filter(x=>N(x.n)!==N(n));
-      SV("sl_follow",L.slice(0,40));return on},
-    seen(n,t){if(!n)return;const L=F.recent().filter(x=>N(x.n)!==N(n));L.unshift({n,t:t||"",ts:Date.now()});SV("sl_recent",L.slice(0,12))},
+      SV("sl_follow",L.slice(0,40));F.paint();return on},
+    seen(n,t){if(!n)return;const L=F.recent().filter(x=>N(x.n)!==N(n));L.unshift({n,t:t||"",ts:Date.now()});SV("sl_recent",L.slice(0,12));F.paint()},
+    paint(){const el=document.getElementById("slFollow");if(el)el.innerHTML=F.strip()},
     clearRecent(){SV("sl_recent",[])},
     dismiss(i){const A=F.alerts();A.splice(i,1);SV("sl_alerts",A)},
     /* called after each ESPN injury refresh: records a change in a followed player's status since the last check */
@@ -35,6 +36,8 @@
         ${rc.length?`<div class="sl-row"><span class="sl-h">Recently viewed</span>${rc.map(x=>chip(x,false)).join("")}<button class="sl-clr" data-slclr="1">Clear</button></div>`:""}
         <div class="sl-note">Saved on this phone only.</div></div>`}
   };
+  /* "Live" link on a started game's pregame card */
+  document.addEventListener("click",e=>{if(e.target.closest("[data-golive]")&&window.go){e.preventDefault();go("live");scrollTo(0,0)}});
   document.addEventListener("click",e=>{const t=e.target.closest("[data-sldis],[data-slclr]");if(!t)return;
     if(t.dataset.sldis!=null)F.dismiss(+t.dataset.sldis);else F.clearRecent();
     const el=document.getElementById("slFollow");if(el)el.innerHTML=F.strip()});

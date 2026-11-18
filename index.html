@@ -182,6 +182,7 @@ body.pf-lock{overflow:hidden}
 .pf-star.on{border-color:var(--acc);color:var(--acc)}
 .pf-alt{display:grid;gap:6px}.pf-alt button{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.03));color:var(--tx);border-radius:10px;padding:8px 10px;font:600 12.5px Archivo;cursor:pointer;text-align:left}
 .pf-alt button.on{border-color:var(--acc)}.pf-alt b{font-family:"JetBrains Mono",monospace}.pf-alt small{color:var(--dim);font-size:11px}
+.gh-live{font-style:normal;color:#ff5d5d;font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.gh-note{font-size:12px;color:var(--dim);padding:8px 12px;border:1px dashed var(--line);border-radius:10px;margin:6px 0 8px}.gh-note .lnk{border:0;background:none;color:var(--acc);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
 </style>
 <style>
 :root{
@@ -731,7 +732,7 @@ html,body{overscroll-behavior-y:none}
 <script src="ocrparse.js?v=1794947364"></script>
 <script src="live.js?v=1795000002"></script>
 <script src="profile.js?v=1795200001"></script>
-<script src="follow.js?v=1795200001"></script>
+<script src="follow.js?v=1795200002"></script>
 <script src="livegame.js?v=1795200001"></script>
 <script>
 
@@ -1464,7 +1465,7 @@ function renderProps(){
   SNAP.forEach((G,gi)=>{if(propGame!=="all"&&propGame!=gi)return;
     const gItems=items.filter(x=>x.g===gi&&(propStat==="all"||x.st===propStat));if(!gItems.length)return;
     const col=GCOL.includes(gi);
-    html+=`<button class="gh gtog ${col?"col":""}" data-gtog="${gi}" aria-expanded="${!col}">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${tipT(G)}</span><span class="gcount">${gItems.length}</span><i class="chev"></i></button><div class="gbody ${col?"col":""}">`;
+    html+=`<button class="gh gtog ${col?"col":""}" data-gtog="${gi}" aria-expanded="${!col}">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${LIVE.ev[gi]&&LIVE.ev[gi].state==="in"?`<em class="gh-live">Live now</em>`:LIVE.ev[gi]&&LIVE.ev[gi].state==="post"?"Final":tipT(G)}</span><span class="gcount">${gItems.length}</span><i class="chev"></i></button><div class="gbody ${col?"col":""}">${LIVE.ev[gi]&&LIVE.ev[gi].state==="in"?`<div class="gh-note">This game has started. These are the pregame lines and grades, kept for comparison. Current in-game prices are in <button class="lnk" data-golive="1">Live</button>.</div>`:""}`;
     if(propStat==="all"){const rows=gItems.slice().sort(propSorter);html+=`<div class="list">${rows.map(r=>r.html()).join("")}</div></div>`;return}
     const sts=[...new Set(gItems.map(x=>x.st))].sort((a,b)=>statRank(a)-statRank(b));
     sts.forEach(st=>{const rows=gItems.filter(x=>x.st===st).sort(propSorter);
