@@ -1747,7 +1747,7 @@ const SPLASH_MIN=1900,bootStart=Date.now();
 function hideSplash(){const el=document.getElementById("splash");if(!el)return;setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),600)},Math.max(0,SPLASH_MIN-(Date.now()-bootStart)))}
 async function boot(){
   try{const d=await fetchData();applyData(d);renderAll();hideSplash()}
-  catch(e){document.getElementById("when").innerHTML="<b>Offline</b>couldn't load lines";
+  catch(e){console.error(e);document.getElementById("when").innerHTML="<b>Offline</b>couldn't load lines";document.getElementById("when").title=String(e&&e.stack||e).slice(0,300);
     document.getElementById("topList").innerHTML=`<div class="empty"><b>Couldn't load tonight's lines</b>Check your connection and reopen Sharpline.</div>`;hideSplash();return}
   refreshAll();
   /* live lines every minute near game time, every 5 minutes otherwise; the board itself every 3 minutes */
