@@ -191,6 +191,7 @@ body.pf-lock{overflow:hidden}
 .acct-f{display:grid;gap:8px}.acct-f input{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:11px 12px;font:500 15px Archivo}
 .acct-note{font-size:12px;color:var(--dim);margin:0}.acct-msg{font-size:12.5px;margin:0;color:var(--tx)}
 .acct-link{justify-self:start;border:0;background:none;color:var(--dim);font:600 12px Archivo;text-decoration:underline;cursor:pointer;padding:0}
+.top.lean{opacity:.96}.lean-tag{font:800 10px Archivo;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
 </style>
 <style>
 :root{
@@ -1013,6 +1014,15 @@ function topItems(){
   items.forEach(x=>{if(x.ev>0&&!x.assumed&&(x.fresh.lv==="stale"||(x.base[0]==="p"&&PROPS[+x.base.slice(1)].live&&PROPS[+x.base.slice(1)].live.lv==="out")))topItems.verify.push(x)});
   const ok=items.filter(x=>x.ev>0&&!x.assumed&&x.fresh.lv!=="stale"&&x.fresh.lv!=="started"&&!topItems.verify.includes(x));topItems.hidden=ok.filter(x=>!(x.ev>=SET.minEdge&&passConf(x.conf))).length;
   return ok.filter(x=>x.ev>=SET.minEdge&&passConf(x.conf)).sort((a,b)=>b.ev-a.ev).slice(0,10)}
+/* Best available props when there are few or no priced edges: the model's strongest sides at DraftKings'
+   current price, one per player, games not started. Labeled as leans with their real (often negative) difference
+   and the price that would make each a 2% edge, so they are never presented as edges. */
+function leanItems(skip,n){const by={};
+  PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||skip.has(k)||SAVED[k]||OUT.has(normN(x.p))||YN[x.st])return;
+    const f=freshOf(k);if(f.lv==="started"||f.lv==="stale")return;if(x.live&&x.live.lv==="out")return;
+    const ev=evOf(g.p,g.bp),nm=normN(x.p);if(g.p<.5)return;
+    if(!by[nm]||by[nm].ev<ev)by[nm]={key:k,base:k,ev,p:g.p,price:g.bp,fresh:f,head:`${x.p} ${propPick(i)}`,need:toAm(g.p/1.02),why:g.why}});
+  return Object.values(by).sort((a,b)=>b.ev-a.ev||b.p-a.p).slice(0,n)}
 function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
   const best={lbl,p:x.p,o:price,L:parseFloat(w[1]),push:0};return confFor(base,best,threeNums(base,best,m,true),false)}catch(e){return null}}
 /* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
@@ -1410,7 +1420,20 @@ function renderTop(){
         <div class="st"><div class="k">Line gap</div><div class="v">${x.gap&&x.gap.d>0?"+"+x.gap.d+" pt":"–"}</div></div>
         <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
       <div class="why"><b style="color:var(--ink)">Why take it:</b> ${x.why}${x.assumed?" Difference shown assumes -110.":""}</div>
-      <div class="act">${addBtn(x.key)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("")||`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
+      <div class="act">${addBtn(x.key)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("");
+  {const L=items.length<5?leanItems(new Set(items.map(x=>x.base)),8-items.length):[];
+   if(!items.length&&!L.length)document.getElementById("topList").innerHTML=`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
+   if(L.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:${items.length?22:4}px 4px 8px">${items.length?"More to consider":"Best available tonight"}</div>
+    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player, ranked. At DraftKings' price most are not an edge; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
+    ${L.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];return`<div class="top lean" data-key="${x.key}"><div class="rank">${items.length+n+1}</div>${freshTag(x.fresh)}
+      <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} <span class="lean-tag">Lean</span> Prop · ${N.stat}</div>
+      <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
+      <div style="margin-top:10px"><span class="pick n">DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better</span></div>
+      <div class="stats"><div class="st"><div class="k">Model chance</div><div class="v">${Math.round(x.p*100)}%</div></div>
+        <div class="st"><div class="k">At DraftKings</div><div class="v" style="color:${x.ev>=0?"var(--over)":"var(--under)"}">${x.ev>=0?"+":""}${(x.ev*100).toFixed(1)}%</div></div>
+        <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
+      <div class="why"><b style="color:var(--ink)">Why:</b> ${x.why}</div>
+      <div class="act">${addBtn(x.key)}</div></div>`}).join("")}`)}
   if(topItems.verify&&topItems.verify.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>{const N=nameOf(x.base);
     return`<div class="vrow"><div><b>${x.head}</b><div class="sub">${x.base[0]==="p"&&PROPS[+x.base.slice(1)].live?PROPS[+x.base.slice(1)].live.txt:`Showed ${(x.ev*100).toFixed(1)}% when lines were checked at ${clock(boardTs())}. Prices may have moved since.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`}).join("")}</div>`);
   if(topItems.hidden)document.getElementById("topList").insertAdjacentHTML("afterbegin",`<div class="hint" style="margin:0 4px 12px">${topItems.hidden} positive-edge bet${topItems.hidden===1?" is":"s are"} hidden by your settings (edge ${(SET.minEdge*100).toFixed(0)}%+${SET.minConf!=="Any"?", "+SET.minConf+" confidence+":""}). Their grades don't change. <button class="lnk" data-settings="1">Settings</button></div>`);
