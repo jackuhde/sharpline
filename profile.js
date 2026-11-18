@@ -29,7 +29,7 @@ window.openProfile=function(o){let name=o.n,tm=o.t,st=o.s,key=o.k||null,gi=-1;
   const el=document.getElementById("prof");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   if(!(history.state&&history.state.sl==="prof"))history.pushState({sl:"prof"},"");
   renderProfile();loadRows()};
-function hideProfile(){PF.open=false;const el=document.getElementById("prof");el.classList.add("out");document.body.classList.remove("pf-lock");
+function hideProfile(){PF.open=false;const el=document.getElementById("prof");el.classList.add("out");if(!document.getElementById("lg").classList.contains("on"))document.body.classList.remove("pf-lock");
   setTimeout(()=>{el.classList.remove("on","out");el.innerHTML=""},260)}
 window.closeProfile=()=>{if(history.state&&history.state.sl==="prof")history.back();else hideProfile()};
 window.addEventListener("popstate",()=>{if(PF.open)hideProfile()});
@@ -70,7 +70,7 @@ function propPanel(){const ms=marketsOf();if(!PF.key)return ms.length?"":`<div c
     <div class="pf-sides">${side(yn?"Yes":"Over "+g.l,pO,bo,evO,g.s==="o")}${yn?`<div class="pf-side"><div class="k">No</div><div class="v">–</div><div class="s">DraftKings posts Yes only</div><div class="pf-prob"><i style="width:${Math.round((1-pO)*100)}%"></i></div><div class="s2"><b>${pct(1-pO)}</b> model</div></div>`:side("Under "+g.l,1-pO,bu,evU,g.s==="u")}</div>
     <div class="pf-model"><div><div class="k">Projection <em>model</em></div><div class="v">${projTxt}</div></div><div><div class="k">Lean</div><div class="v ${g.s==="o"?"o":"u"}">${yn?(g.s==="o"?"Yes":"No"):(g.s==="o"?"Over":"Under")}</div></div><div><div class="k">Fair price</div><div class="v">${fmtAm(toAm(g.p))}</div></div></div>
     <div class="pf-why">${esc(g.why)}</div>
-    <div class="pf-fresh">${freshTag(f)}${lv&&lv.upd?`<span>DraftKings last moved this line ${new Date(lv.upd).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}${lv.note?` (${esc(lv.note)})`:""}</span>`:""}${LIVE.propsTs?`<span>Prices checked ${ago(LIVE.propsTs)}</span>`:""}</div>
+    <div class="pf-fresh">${freshTag(f)}${lv&&lv.note?`<span>DraftKings ${esc(lv.note.replace(/^opened/,"line opened at").replace(/^Over opened/,"Over opened at"))}</span>`:""}${LIVE.propsTs?`<span>Prices checked ${ago(LIVE.propsTs)}</span>`:""}</div>
     ${x.q.length>1?`<details class="pf-books"><summary>All posted lines (${x.q.length})</summary>${x.q.map(q=>`<div class="qrow"><span><b>${yn?"Yes":q.l}</b> · ${[q.o!=null?(yn?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${esc(q.url)}" target="_blank" rel="noopener">${esc(q.src)}</a></div>`).join("")}</details>`:""}
     ${stale}<div class="pf-act">${addBtn(PF.key)}</div></section>`}
 
@@ -136,7 +136,7 @@ window.renderProfile=function(keep){const el=document.getElementById("prof");if(
     </header>
     <div class="pf-status">${statusHTML()}</div>
     ${chips}
-    <div id="pfBody">${propPanel()}
+    <div id="pfBody">${window.liveForPlayer&&liveForPlayer(PF.name)||""}${propPanel()}
     ${!PF.id?`<div class="pf-empty">Stats aren't available for this player right now. Profiles load stats for players on tonight's slate.</div>`
       :!R||R.loading?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading his game log from ESPN…</span></div>`
       :R.err?`<div class="pf-empty">Couldn't reach ESPN for his game log. Pull down to refresh, or try again in a minute.</div>`

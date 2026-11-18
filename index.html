@@ -108,6 +108,64 @@ body.pf-lock{overflow:hidden}
 @keyframes pfDot{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:none}}
 .pf-foot{margin:16px 4px 0;font:600 11.5px/1.5 Archivo;color:var(--dim)}
 @media (prefers-reduced-motion:reduce){.prof.on,.prof.out,.pf-swap{animation:none}.pf-chart.anim .bar rect{transform:none}.pf-chart.anim .bar text{opacity:1}}
+
+/* ---------- live ---------- */
+#lg{z-index:65}
+.nav button.haslive:after{content:"";position:absolute;top:7px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 3px rgba(255,77,77,.18);animation:lvPulse 1.6s infinite}
+@keyframes lvPulse{50%{box-shadow:0 0 0 6px rgba(255,77,77,0)}}
+.lv-live{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;background:rgba(255,77,77,.12);color:#ff6b6b;font:900 10px Archivo;letter-spacing:1px;text-transform:uppercase}
+.lv-live:before{content:"";width:6px;height:6px;border-radius:50%;background:#ff4d4d;animation:lvBlink 1.4s infinite}
+@keyframes lvBlink{50%{opacity:.25}}
+.lv-feed{display:flex;align-items:center;gap:8px;font:700 12px Archivo;color:var(--mute);margin:4px 2px 12px}
+.lv-feed .dot{width:7px;height:7px;border-radius:50%;background:var(--over)}.lv-feed.old .dot{background:var(--gold)}.lv-feed.old{color:var(--gold)}
+.lv-h{font:900 12px Archivo;letter-spacing:1.6px;text-transform:uppercase;color:var(--acc2);margin:18px 2px 8px}.lv-h em{font-style:normal;color:var(--mute);margin-left:4px}
+.lv-card{display:block;width:100%;text-align:left;background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:10px;color:var(--ink);transition:transform .15s}
+.lv-card:active{transform:scale(.99)}
+.lv-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lv-teams{display:flex;flex-direction:column;gap:6px;flex:1}
+.lv-t{display:flex;align-items:center;justify-content:space-between;max-width:190px}
+.lv-tm{display:inline-block;min-width:46px;padding:4px 8px;border-radius:9px;font:900 13px Archivo;color:#fff;text-align:center;background:linear-gradient(135deg,var(--c1),color-mix(in srgb,var(--c1) 60%,#000))}
+.lv-t .sc,.lv-sbt .sc{font:900 26px JetBrains Mono,monospace;letter-spacing:-1px}
+.lv-clock{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.lv-clock b{font:900 16px JetBrains Mono,monospace}
+.lv-mk{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font:700 12px Archivo;color:var(--mute)}.lv-mk b{color:var(--ink)}
+.lv-val{padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over);font:900 11px Archivo}
+.lv-perf{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font:700 12px Archivo;color:var(--mute)}.lv-perf b{color:var(--ink)}
+.lv-upd{margin-top:8px;font:700 11px Archivo;color:var(--dim)}.lv-upd.c{margin:0 2px 10px}
+.lv-mini{background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.lv-mini div{display:flex;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);font:800 13px Archivo}.lv-mini div:first-child{border-top:0}.lv-mini b{color:var(--mute);font-weight:700}
+.lv-sb{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:16px 12px;border-radius:22px;border:1px solid var(--line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ca) 30%,var(--s1)),var(--s1) 40%,var(--s1) 60%,color-mix(in srgb,var(--ch) 30%,var(--s1)))}
+.lv-sbt{display:flex;flex-direction:column;align-items:flex-start;gap:4px}.lv-sbt.r{align-items:flex-end}.lv-sbt span:last-child{font:700 11px Archivo;color:var(--mute)}
+.lv-sbt .sc{font-size:40px;line-height:1}
+.lv-sbc{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}.lv-sbc b{font:900 15px JetBrains Mono,monospace}.lv-sbc small{font:700 10px Archivo;color:var(--dim)}
+.lv-wp{width:110px;height:6px;border-radius:9px;background:var(--ch);overflow:hidden}.lv-wp i{display:block;height:100%;background:var(--ca)}
+.lv-tabs{margin:12px 0}
+.lv-filt{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.lv-filt::-webkit-scrollbar{display:none}
+.lv-filt button{flex:none;padding:7px 11px;border-radius:99px;background:var(--s1);border:1px solid var(--line);font:800 12px Archivo;color:var(--mute)}
+.lv-filt button.on{background:var(--s3);color:var(--ink);border-color:var(--acc)}
+.lv-pl{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:10px}
+.lv-pl-h{display:flex;gap:10px;align-items:center;margin-bottom:6px}.lv-pl-h .jav{width:40px;height:40px}.lv-pl-h b{font:900 15px Archivo}.lv-pl-h .s{font:700 12px JetBrains Mono,monospace;color:var(--mute);margin-top:2px}
+.lv-pr{padding:10px 2px;border-top:1px solid var(--line);cursor:pointer}
+.lv-pr-top{display:flex;justify-content:space-between;gap:10px}
+.lv-pr-l b{font:900 13px Archivo}.lv-pr-l .s{font:700 11.5px Archivo;color:var(--mute);margin-top:3px}.lv-pr-l .s b{font-size:12px;color:var(--ink)}
+.lv-pr-r{text-align:right}.lv-pr-r .ln{font:900 20px JetBrains Mono,monospace;transition:color .4s}.lv-pr-r .px{font:700 11.5px JetBrains Mono,monospace;color:var(--mute)}
+.lv-pr-m{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font:700 12px Archivo;color:var(--mute)}.lv-pr-m b{color:var(--ink)}.lv-pr-m em{font-style:normal;color:var(--acc2);font-size:10.5px;margin-left:2px}.lv-pr-m .muted{color:var(--dim)}
+.lv-st{margin-left:6px;padding:1px 7px;border-radius:99px;font:900 9.5px Archivo;letter-spacing:.6px;text-transform:uppercase;vertical-align:1px}
+.lv-st.live{background:rgba(255,77,77,.12);color:#ff6b6b}.lv-st.susp{background:var(--s3);color:var(--mute)}.lv-st.old{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}
+.lv-pr.susp .lv-pr-r,.lv-pr.old .lv-pr-r{opacity:.45;text-decoration:line-through}
+.lv-pr.val{box-shadow:inset 3px 0 0 var(--over);padding-left:10px}
+.lv-pr-x{margin-top:8px;padding:10px;border-radius:12px;background:var(--bg);font:600 12.5px/1.5 Archivo;color:var(--mute)}.lv-pr-x p{margin:0 0 8px}
+.lv-dir{display:inline-block;font:800 11.5px Archivo;margin-bottom:6px}.lv-dir.o{color:var(--over)}.lv-dir.u{color:var(--under)}
+.lv-move{width:100%;height:auto;display:block}.lv-move path{fill:none;stroke:var(--acc2);stroke-width:2}.lv-move circle{fill:var(--acc)}.lv-move text{font:700 9px Archivo;fill:var(--dim)}
+.lv-ch{list-style:none;margin:6px 0 0;padding:0}.lv-ch li{display:flex;gap:6px;font:700 11.5px Archivo;padding:3px 0;color:var(--mute)}.lv-ch li b{color:var(--ink)}.lv-ch li span{margin-left:auto;color:var(--dim)}
+.lv-nomove{font:700 11.5px Archivo;color:var(--dim);padding:6px 0}
+.lv-track,.lv-open{margin-top:8px;padding:8px 12px;border-radius:11px;background:var(--s2);border:1px solid var(--line2);font:800 12px Archivo;color:var(--ink)}
+.lv-box td:first-child{max-width:130px;overflow:hidden;text-overflow:ellipsis}.lv-box tr.dnp td{color:var(--dim)}
+.lv-lines small{display:block;color:var(--dim);font-size:10px}.lv-ts td:nth-child(2){color:var(--mute);font-family:Archivo;text-align:center}.lv-ts td:first-child{text-align:left}
+.lv-plays{list-style:none;margin:0;padding:0;background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.lv-plays li{display:flex;gap:8px;align-items:baseline;padding:8px 12px;border-top:1px solid var(--line);font:600 12.5px/1.35 Archivo}.lv-plays li:first-child{border-top:0}
+.lv-plays li span{flex:none;font:700 10.5px JetBrains Mono,monospace;color:var(--dim);width:58px}.lv-plays li b{margin-left:auto;font:800 11.5px JetBrains Mono,monospace;color:var(--mute)}.lv-plays li.sc{color:var(--ink)}.lv-plays li.sc b{color:var(--acc2)}
+.lv-inprof{border-color:rgba(255,77,77,.35)}
 </style>
 <style>
 :root{
@@ -616,6 +674,10 @@ html,body{overscroll-behavior-y:none}
     <div id="lineList"></div>
   </section>
 
+  <section class="view" id="v-live">
+    <div class="ph"><div class="eyebrow">In-game</div><h1>Live</h1><p>Scores, live DraftKings lines and live player props, with Sharpline's in-game projections.</p></div>
+    <div id="liveBody"></div>
+  </section>
   <section class="view" id="v-track">
     <div class="ph"><div class="eyebrow">Your record</div><h1>Bet Tracker</h1>
       <p>Tap "+ Track" on any bet you place, then settle it after the game. You'll see your real results and how accurate Sharpline's estimates are. Saved on this phone only.</p></div>
@@ -625,6 +687,7 @@ html,body{overscroll-behavior-y:none}
 </div>
 
 <div class="prof" id="prof" role="dialog" aria-label="Player profile"></div>
+<div class="prof" id="lg" role="dialog" aria-label="Live game"></div>
 <div class="sheet" id="scanSheet"><div class="sheet-bg" data-scanclose="1"></div><div class="sheet-in">
   <div class="sheet-h"><div><div class="eyebrow">Upload</div><h2>Scan any bet</h2></div><button class="x" data-scanclose="1">×</button></div>
   <p class="sheet-p">Upload screenshots from any sportsbook, a bet slip, or a tip someone posted (X, Instagram, Discord, group chats). Sharpline reads them on your phone, so nothing is uploaded. Then it shows every line it found so you can fix misreads before grading. It grades the exact line and odds in the screenshot and shows what the board has now.</p>
@@ -644,12 +707,14 @@ html,body{overscroll-behavior-y:none}
   <button data-v="top" class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z"/></svg>Top List</button>
   <button data-v="props"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Props</button>
   <button data-v="lines"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"/></svg>Lines</button>
+  <button data-v="live"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a12 12 0 0 0 0 17M20.5 3.5a12 12 0 0 1 0 17"/></svg>Live</button>
   <button data-v="track"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg>Tracker<span class="badge" id="badge" style="display:none">0</span></button>
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
 <script src="live.js?v=1795000001"></script>
-<script src="profile.js?v=1795000003"></script>
+<script src="profile.js?v=1795100001"></script>
+<script src="livegame.js?v=1795100001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1412,7 +1477,8 @@ function renderLines(){
 /* ---------- events ---------- */
 
 function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));window.scrollTo({top:0})}
+  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));window.scrollTo({top:0});
+  if(v==="live"&&window.LiveUI){LiveUI.start();LiveUI.render();LiveUI.poll(true)}}
 document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.closest("[data-grade]"))return;if(e.target.closest(".ed input")||e.target.closest(".addp input,.addp select")||e.target.closest(".det input"))return;
   const sb=e.target.closest("[data-sgn]");if(sb){const[k,f]=sb.dataset.sgn.split("|"),cur=sgnOf(k,f),nx=cur==="-"?"+":"-";(EDV[k]=EDV[k]||{})["s"+f]=nx;LS.set("sl_edv",EDV);sb.textContent=nx==="-"?"−":"+";sb.className="sgn "+(nx==="-"?"m":"p");updRec(k);syncLater(k);return}const jp=e.target.closest("[data-jump]");if(jp){jumpTo(jp.dataset.jump);return}
   if(e.target.closest("[data-setclose]")){document.getElementById("setSheet").classList.remove("on");return}
