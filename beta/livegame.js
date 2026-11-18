@@ -67,7 +67,7 @@ function model(id,mk){const e=LV.sb.find(x=>x.id===id),G=gameOf(id);if(!e||mk.yn
   /* live markets react to things this model can't see (rotations, matchups, pace in real time), so lean on them:
      35% model, 65% DraftKings' no-vig chance, and never more than 4 points from the market */
   const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw,side=cur+mean>=mk.l?"o":"u",p=side==="o"?pO:1-pO,price=side==="o"?mk.o:mk.u;
-  return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,ev:price!=null?evOf(p,price):null,capped:pm!=null}}
+  return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,oneSide:mk.o==null||mk.u==null,ev:price!=null&&mk.o!=null&&mk.u!=null?evOf(p,price):null,capped:pm!=null}}
 function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH&&!(mk.lag>LAG_MAX)}
 
 /* ---------- views ---------- */
@@ -127,7 +127,7 @@ function propRow(id,k,mk,pre){const m=model(id,mk),f=fresh(id,mk),st=mk.gone?"su
   return`<div class="lv-pr ${st} ${val?"val":""} ${open?"open":""}" data-lvx="${esc(k)}"><div class="lv-pr-top">
       <div class="lv-pr-l"><b>${STAT_LBL[mk.st]||mk.st}</b> ${chip}<div class="s">${m?`Now <b>${r1(m.cur)}</b> · needs ${m.need<0?"none, already over":r1(m.need)+" more"}`:""}${pre&&pre.l!=null?` · pregame ${pre.l}`:""}</div></div>
       <div class="lv-pr-r"><div class="ln">${mk.yn?"Yes":mk.l}</div><div class="px">O ${fmtAm(mk.o)}${mk.yn?"":` · U ${fmtAm(mk.u)}`}</div></div></div>
-    ${m?`<div class="lv-pr-m"><span>Projected final <b>${r1(m.final)}</b> <em>model</em></span><span>${m.side==="o"?"Over":"Under"} <b>${pct(m.p)}</b></span>${f&&m.ev!=null?`<span class="${m.ev>=0?"pos":"neg"}">${m.ev>=0?"+":""}${(m.ev*100).toFixed(1)}% EV</span>`:`<span class="muted">No EV: price not current</span>`}${val?`<span class="lv-val">Potential edge</span>`:""}</div>`
+    ${m?`<div class="lv-pr-m"><span>Projected final <b>${r1(m.final)}</b> <em>model</em></span><span>${m.side==="o"?"Over":"Under"} <b>${pct(m.p)}</b></span>${f&&m.ev!=null?`<span class="${m.ev>=0?"pos":"neg"}">${m.ev>=0?"+":""}${(m.ev*100).toFixed(1)}% EV</span>`:`<span class="muted">No EV: ${m.oneSide?"only one side posted":"price not current"}</span>`}${val?`<span class="lv-val">Potential edge</span>`:""}</div>`
       :`<div class="lv-pr-m"><span class="muted">${mk.yn?"Yes/No markets aren't modeled live.":"No season data for a live projection; showing the market only."}</span></div>`}
     ${open?`<div class="lv-pr-x">${m?`<p>${esc(m.name)} has ${r1(m.cur)} in ${Math.round((m.pl&&m.pl.min)||0)} minutes${m.pl&&m.pl.pf!=null?` with ${m.pl.pf} fouls`:""}. About ${r1(m.gameLeft)} game minutes are left; Sharpline expects him to play about ${r1(m.minLeft)} of them${m.mwhy.length?` (${esc(m.mwhy.join(", "))})`:""}, adding about ${r1(m.remMean)} for a projected ${r1(m.final)}. Chance of Over ${mk.l}: ${pct(m.pO)}${m.pm!=null?` (Sharpline's in-game model alone says ${pct(m.pOverRaw)}; blended with DraftKings' no-vig ${pct(m.pm)}, which sees rotations and matchups this model can't)`:""}.</p>`:""}
       ${lean(pre,mk)}${moveChart(id+"|"+k,pre,mk)}
@@ -155,24 +155,33 @@ function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.ope
     body=`<div class="lv-filt">${[["all","All"],["Points","Points"],["Rebounds","Rebounds"],["Assists","Assists"],["3-Pointers","Threes"],["combo","Combos"]].map(([v,l])=>`<button class="${LV.stat===v?"on":""}" data-lvs="${v}">${l}</button>`).join("")}<button class="${LV.valOnly?"on":""}" data-lvv="1">Potential edges only</button></div>
       ${G.propsOk===false?`<div class="pf-warn">Couldn't refresh live props. Edges are hidden until prices are current again.</div>`:""}
       ${!G.propsFetched?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading DraftKings live props…</span></div>`:G.noMarket&&!all.length?`<div class="pf-empty">DraftKings has no live player props posted for this game right now. They often pause during reviews and timeouts and between quarters.</div>`:
-      players.length?players.map(P=>`<div class="lv-pl"><div class="lv-pl-h"><span class="pfa" ${pfAttr({n:P.nm,t:P.tm})}>${avatar(P.nm,P.tm||"","av")}</span><div><b class="pfn" ${pfAttr({n:P.nm,t:P.tm})}>${esc(P.nm)}</b><div class="s">${P.pl&&!P.pl.dnp?`${P.pl.pts} PTS · ${P.pl.reb} REB · ${P.pl.ast} AST · ${P.pl.tpm??0} 3PM · ${Math.round(P.pl.min)} MIN · ${P.pl.pf??0} PF`:"Hasn't played yet"}</div></div></div>
+      players.length?players.map(P=>`<div class="lv-pl" data-k="${P.a}"><div class="lv-pl-h"><span class="pfa" ${pfAttr({n:P.nm,t:P.tm})}>${avatar(P.nm,P.tm||"","av")}</span><div><b class="pfn" ${pfAttr({n:P.nm,t:P.tm})}>${esc(P.nm)}</b><div class="s">${P.pl&&!P.pl.dnp?`${P.pl.pts} PTS · ${P.pl.reb} REB · ${P.pl.ast} AST · ${P.pl.tpm??0} 3PM · ${Math.round(P.pl.min)} MIN · ${P.pl.pf??0} PF`:"Hasn't played yet"}</div></div></div>
         ${byP[P.a].sort((x,y)=>statRank(x[1].st)-statRank(y[1].st)).map(([k,mk])=>propRow(e.id,k,mk,G.pre&&G.pre[k])).join("")}</div>`).join(""):`<div class="pf-empty">Nothing matches this filter right now.</div>`}`}
   else if(LV.tab==="box")body=!G.box?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading box score…</span></div>`:`<div class="lv-h">${esc(e.away)}</div>${boxTable(G,e.awayId)}<div class="lv-h">${esc(e.home)}</div>${boxTable(G,e.homeId)}`;
   else{const T=G.box&&G.box.teams||[],tA=T.find(t=>t.id===e.awayId),tH=T.find(t=>t.id===e.homeId),ks=["FG","Field Goal %","3PT","Three Point %","Rebounds","Assists","Turnovers","Fast Break Points","Points in Paint","Largest Lead"];
     body=`<div class="lv-h">Game lines</div>${linesTable(e,G)}
       ${tA&&tH?`<div class="lv-h">Team stats</div><div class="pf-tw"><table class="pf-log lv-ts"><thead><tr><th>${esc(ab2(e.awayAb))}</th><th></th><th>${esc(ab2(e.homeAb))}</th></tr></thead><tbody>${ks.filter(k=>tA.stats[k]!=null).map(k=>`<tr><td>${esc(tA.stats[k])}</td><td>${esc(k)}</td><td>${esc(tH.stats[k])}</td></tr>`).join("")}</tbody></table></div>`:""}
       ${G.box&&G.box.plays.length?`<div class="lv-h">Recent plays</div><ul class="lv-plays">${G.box.plays.slice(0,15).map(p=>`<li class="${p.score?"sc":""}"><span>Q${p.period} ${esc(p.clock)}</span>${esc(p.text)}<b>${p.away}-${p.home}</b></li>`).join("")}</ul>`:""}`}
-  const html=`<div class="pf-in"><div class="pf-bar"><button class="pf-back" data-lvclose="1"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Live</button><span class="pf-tt">${e.state==="in"?`<span class="lv-live">Live</span>`:esc(statusTxt(e))}</span></div>
-    <header class="lv-sb" style="--ca:${ca};--ch:${ch}"><div class="lv-sbt">${teamTag(e.awayAb,e.away)}<b class="sc">${e.awayScore}</b><span>${esc(e.away)}</span></div>
+  const parts={bar:`<div class="pf-bar"><button class="pf-back" data-lvclose="1"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Live</button><span class="pf-tt">${e.state==="in"?`<span class="lv-live">Live</span>`:esc(statusTxt(e))}</span></div>`,
+    sb:`<header class="lv-sb" style="--ca:${ca};--ch:${ch}"><div class="lv-sbt">${teamTag(e.awayAb,e.away)}<b class="sc">${e.awayScore}</b><span>${esc(e.away)}</span></div>
       <div class="lv-sbc"><b>${esc(statusTxt(e))}</b>${wp!=null?`<div class="lv-wp" title="ESPN win probability"><i style="width:${Math.round((1-wp)*100)}%"></i></div><small>${esc(ab2(e.awayAb))} ${Math.round((1-wp)*100)}% · ${esc(ab2(e.homeAb))} ${Math.round(wp*100)}% (ESPN)</small>`:""}</div>
-      <div class="lv-sbt r">${teamTag(e.homeAb,e.home)}<b class="sc">${e.homeScore}</b><span>${esc(e.home)}</span></div></header>
-    ${feedBar()}<div class="lv-upd c">Live odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)} · box ${upd(G.boxTs)}</div>
-    <div class="seg wide lv-tabs">${tabs.map(([v,l])=>`<button class="${LV.tab===v?"on":""}" data-lvt="${v}">${l}</button>`).join("")}</div>
-    <div class="lv-body">${body}</div>
-    <p class="pf-foot">Live markets are DraftKings in-game lines via ESPN. "Projected final" is Sharpline's model: current stats plus his usual per-minute production over the minutes he's expected to play from here. Movement is only what this phone recorded while open.</p></div>`;
-  if(html===lastGame&&keep)return;lastGame=html;el.innerHTML=html;if(keep)el.scrollTop=st0}
+      <div class="lv-sbt r">${teamTag(e.homeAb,e.home)}<b class="sc">${e.homeScore}</b><span>${esc(e.home)}</span></div></header>`,
+    feed:`${feedBar()}<div class="lv-upd c">Live odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)} · box ${upd(G.boxTs)}</div>`,
+    tabs:`<div class="seg wide lv-tabs">${tabs.map(([v,l])=>`<button class="${LV.tab===v?"on":""}" data-lvt="${v}">${l}</button>`).join("")}</div>`,
+    body,
+    foot:`<p class="pf-foot">Live markets are DraftKings in-game lines via ESPN. "Projected final" is Sharpline's model: current stats plus his usual per-minute production over the minutes he's expected to play from here. Movement is only what this phone recorded while open.</p>`};
+  /* patch only the pieces that changed, so taps and scroll position survive the 20-second refreshes */
+  const sig=e.id+"|"+LV.tab;
+  if(!keep||el._sig!==sig||!el.querySelector(".pf-in")){el.innerHTML=`<div class="pf-in">${Object.keys(parts).map(k=>`<div data-part="${k}">${parts[k]}</div>`).join("")}</div>`;el._sig=sig;el._parts={...parts};return}
+  Object.keys(parts).forEach(k=>{if(el._parts[k]===parts[k])return;const box=el.querySelector(`[data-part="${k}"]`);if(!box)return;el._parts[k]=parts[k];
+    if(k==="body")patchKeyed(box,parts[k]);else box.innerHTML=parts[k]});
+  if(keep)el.scrollTop=st0}
+/* replace only the children whose markup changed; fall back to a full swap when the set or order of keyed blocks changes */
+function patchKeyed(box,html){const t=document.createElement("div");t.innerHTML=html;const nw=[...t.children],old=[...box.children];
+  if(nw.length!==old.length||nw.some((n,i)=>n.className!==old[i].className||n.dataset.k!==old[i].dataset.k)){box.innerHTML=html;return}
+  nw.forEach((n,i)=>{if(n.outerHTML!==old[i].outerHTML)old[i].replaceWith(n)})}
 function render(){renderList();if(LV.open)renderGame(true);if(window.PF&&PF.open)renderProfile(true)}
-function openGame(id){lastGame="";LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
+function openGame(id){lastGame="";const g0=document.getElementById("lg");if(g0)g0._sig="";LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   history.pushState({sl:"lg"},"");renderGame();poll(true)}
 function hideGame(){LV.open=null;const el=document.getElementById("lg");el.classList.add("out");if(!(window.PF&&PF.open))document.body.classList.remove("pf-lock");setTimeout(()=>{el.classList.remove("on","out");el.innerHTML=""},260)}
 window.addEventListener("popstate",()=>{if(LV.open&&!(history.state&&history.state.sl==="lg")&&!(window.PF&&PF.open))hideGame()});
