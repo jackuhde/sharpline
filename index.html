@@ -1277,7 +1277,7 @@ function renderDash(){const el=document.getElementById("dash");if(!el)return;
   if(liveInj.length)outs.splice(0,outs.length,...liveInj);
   SNAP.forEach(G=>{if(G.liveMove)moves.push([mu(G),G.liveMove])});
   el.innerHTML=`<div class="livebar" id="livebar"></div><div class="dash">
-    ${tile("Tonight",`${SNAP.length} game${SNAP.length===1?"":"s"}`,`${DATA_DATE?new Date(DATA_DATE+"T12:00:00").toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}):""}${first?` · first tip ${tipT(first)}`:""} · lines updated ${SNAP_TIME.split(", ").pop()||"–"}`)}
+    ${tile("Tonight",`${SNAP.length} game${SNAP.length===1?"":"s"}`,`${DATA_DATE?new Date(DATA_DATE+"T12:00:00").toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}):""}${first?` · first tip ${tipT(first)}`:""} · research ${SNAP_TIME.split(", ").pop()||"–"}`)}
     ${tile("Best priced edge",T?`<span style="color:var(--over)">+${(T.ev*100).toFixed(1)}%</span>`:"None yet",T?T.head:"Scan or enter odds to find one")}
     ${tile("Your record",S.n?`${S.W}-${S.L}${S.P?"-"+S.P:""}`:"No bets yet",S.n?`ROI ${(S.roi>=0?"+":"")+(S.roi*100).toFixed(1)}% · ${open} open`:open?`${open} open`:"Track bets to see results","track")}
     ${tile("Injury news",outs.length?`${outs.length} update${outs.length===1?"":"s"}`:"None listed",LIVE.injTs?`ESPN report · ${ago(LIVE.injTs)}`:"From the morning research")}
@@ -1613,7 +1613,11 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
   finally{LIVE.busy=null;setRefreshing(false);
     loadLogs().then(n=>{if(n){const before=snapshotEV();buildProj();applyProjections();renderAll();flashChanges(before)}}).catch(()=>{})}}
 function setRefreshing(on){document.querySelectorAll("[data-refresh]").forEach(b=>b.classList.toggle("spin",on))}
-function renderLiveBar(){const el=document.getElementById("livebar");if(!el)return;const bt=boardTs();
+/* header time = when the app last pulled live odds, props and injuries (not the hourly research time) */
+function setWhen(){const el=document.getElementById("when");if(!el||!DATA_DATE)return;const dt=new Date(DATA_DATE+"T12:00:00");
+  const t=LIVE.last?new Date(LIVE.last).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):null;
+  el.innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${t?"Live "+t:"Research "+(SNAP_TIME.split(", ").pop()||"–")}`}
+function renderLiveBar(){setWhen();const el=document.getElementById("livebar");if(!el)return;const bt=boardTs();
   const cell=(ok,lbl,ts)=>`<span class="lb ${ok===false?"bad":ts&&Date.now()-ts<15*60000?"ok":"old"}"><i></i>${lbl} ${ok===false?"unavailable":ago(ts)}</span>`;
   el.innerHTML=cell(LIVE.okOdds,"Game lines",LIVE.oddsTs)+cell(LIVE.okInj,"Injuries",LIVE.injTs)+(LIVE.propsTs||LIVE.okProps===false?cell(LIVE.okProps,"Props",LIVE.propsTs):`<span class="lb ${bt&&Date.now()-bt<90*60000?"ok":"old"}"><i></i>Research ${bt?clock(bt):"–"}</span>`)}
 /* subtle feedback when a number moves after a refresh */
@@ -1642,7 +1646,7 @@ function applyData(d){
     LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);LS.set("sl_cust",CUST);LS.set("sl_date",d.date)}
   DATA_DATE=d.date;buildProps();buildProj();applyInjuries();applyProjections();staleCheck(d);
   const dt=new Date(d.date+"T12:00:00");
-  document.getElementById("when").innerHTML=`<b>${dt.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</b>${SNAP.length} games · <span class="livedot"></span>${SNAP_TIME.split(", ").pop()}`;
+  setWhen();
 }
 let STALE=false;
 function staleCheck(d){const el=document.getElementById("stale");const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
