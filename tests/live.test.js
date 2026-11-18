@@ -63,4 +63,26 @@ const glr=L.parseGamelogRows({names:["minutes","fieldGoalsMade-fieldGoalsAttempt
   seasonTypes:[{displayName:"2026-27 Regular Season",categories:[{events:[{eventId:"b",stats:["32","7-15","46.7","1-2","50","2-4","50","6","6","0","3","1","6","17"]},{eventId:"a",stats:["36","13-27","48.1","4-8","50","0-3","0","9","4","2","1","3","0","30"]},{eventId:"d",stats:["0","0-0","0","0-0","0","0-0","0","0","0","0","0","0","0","0"]}]}]}]});
 t("rows newest first, DNP dropped",glr.length===2&&glr[0].id==="a");
 t("row fields",glr[0].home===true&&glr[0].opp==="MIA"&&glr[0].pts===30&&glr[0].tpm===4&&glr[0].tpa===8&&glr[0].fga===27&&glr[1].home===false&&glr[1].res==="L");
+
+/* live game lines (provider 200) and pregame open/close (provider 100) share one schema */
+const lo=L.parseLiveOdds({provider:{id:"100",name:"DraftKings"},overUnder:215.5,overOdds:-115,underOdds:-106,spread:2.5,
+  awayTeamOdds:{moneyLine:-135,open:{pointSpread:{american:"-3.5"},moneyLine:{american:"-152"}},current:{pointSpread:{american:"-2.5"},spread:{american:"-103"}}},
+  homeTeamOdds:{moneyLine:114,open:{pointSpread:{american:"+3.5"},moneyLine:{american:"+128"}},current:{pointSpread:{american:"+2.5"},spread:{american:"-117"}}},
+  open:{total:{american:"216.5"}}});
+t("odds: total now and open",lo.total.line===215.5&&lo.total.open===216.5&&lo.total.over===-115&&lo.total.under===-106);
+t("odds: spread now and open",lo.spread.home===2.5&&lo.spread.homeOpen===3.5&&lo.spread.homeOdds===-117);
+t("odds: moneyline now and open",lo.ml.home===114&&lo.ml.away===-135&&lo.ml.homeOpen===128&&lo.ml.awayOpen===-152);
+t("odds: no provider is null",L.parseLiveOdds({})===null);
+/* milestones: "25+" is an Over 24.5 with one price; duplicates and unknown types dropped */
+const al=L.parseAltLines([
+  {athlete:{$ref:"x/athletes/123?lang=en"},type:{name:"Points Milestones"},odds:{total:{value:"25+"},american:{value:"+150"}}},
+  {athlete:{$ref:"x/athletes/123?lang=en"},type:{name:"Points Milestones"},odds:{total:{value:"25+"},american:{value:"+155"}}},
+  {athlete:{$ref:"x/athletes/123"},type:{name:"Total Points"},odds:{total:{value:"24.5"},american:{value:"-110"}}},
+  {athlete:{$ref:"x/athletes/9"},type:{name:"Rebounds Milestones"},odds:{total:{value:"10+"},american:{value:"-120"}}}]);
+t("alt lines parsed",al.length===2&&al[0].ath==="123"&&al[0].st==="Points"&&al[0].l===24.5&&al[0].o===150&&al[1].st==="Rebounds"&&al[1].l===9.5);
+/* minutes left in regulation from period and clock */
+t("minutes left: Q1 12:00",L.gameMinLeft(1,720)===48);
+t("minutes left: Q3 6:00",L.gameMinLeft(3,360)===18);
+t("minutes left: Q4 0:30",L.gameMinLeft(4,30)===0.5);
+t("minutes left: OT 2:00",L.gameMinLeft(5,120)===2);
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

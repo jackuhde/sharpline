@@ -25,7 +25,7 @@ window.openProfile=function(o){let name=o.n,tm=o.t,st=o.s,key=o.k||null,gi=-1;
   if(!tm&&id&&LIVE.ids[id]){const T=LIVE.ids[id].tm;Object.keys(LIVE.ev).forEach(g=>{const e=LIVE.ev[g];if(e.homeId===T)tm=SNAP[g].home;if(e.awayId===T)tm=SNAP[g].away})}
   if(gi<0&&tm)gi=SNAP.findIndex(G=>G.home===tm||G.away===tm);
   if(!key&&gi>=0){const i=PROPS.findIndex(x=>x.g===gi&&normN(x.p)===normN(name)&&x.st===(st||"Points"));if(i>=0)key="p"+i}
-  Object.assign(PF,{open:true,name,tm:tm||"",gi,id,key,st:st||"Points",range:10,view:"l10",logN:10,anim:true});
+  Object.assign(PF,{open:true,name,tm:tm||"",gi,id,key,st:st||"Points",range:10,view:"l10",logN:10,anim:true,altL:null});if(window.SLF)SLF.seen(name,tm);
   const el=document.getElementById("prof");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   if(!(history.state&&history.state.sl==="prof"))history.pushState({sl:"prof"},"");
   renderProfile();loadRows()};
@@ -74,10 +74,20 @@ function propPanel(){const ms=marketsOf();if(!PF.key)return ms.length?"":`<div c
     ${x.q.length>1?`<details class="pf-books"><summary>All posted lines (${x.q.length})</summary>${x.q.map(q=>`<div class="qrow"><span><b>${yn?"Yes":q.l}</b> · ${[q.o!=null?(yn?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${esc(q.url)}" target="_blank" rel="noopener">${esc(q.src)}</a></div>`).join("")}</details>`:""}
     ${stale}<div class="pf-act">${addBtn(PF.key)}</div></section>`}
 
+/* DraftKings alternate lines ("25+ points" milestones). These are one-sided Over prices, so there is no
+   no-vig fair price or EV for them; the panel shows the price, its implied chance and his actual hit rate. */
+function altsHTML(){if(PF.gi<0||!PF.id||YN[PF.st])return"";const P=LIVE.props&&LIVE.props[PF.gi];
+  const alts=(P&&P.alts||[]).filter(a=>a.ath===PF.id&&a.st===PF.st&&a.o!=null).sort((a,b)=>a.l-b.l);if(!alts.length)return"";
+  const R=ROWS[PF.id],last=R&&R.cur?R.cur.slice(0,10):[],imp=o=>o<0?-o/(-o+100):100/(o+100);
+  const hit=l=>{const v=last.map(r=>valOf(r,PF.st)).filter(x=>x!=null);return v.length?`${v.filter(x=>x>l).length}/${v.length} last ${v.length}`:""};
+  return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">DraftKings alternate lines</div><h3>Over only<span class="pf-sub"> · tap one to chart his games against it</span></h3></div></div>
+    <div class="pf-alt">${alts.map(a=>`<button class="${PF.altL===a.l?"on":""}" data-pfalt="${a.l}"><span>Over <b>${a.l}</b> <small>(${a.l+.5}+)</small></span><span><b>${fmtAm(a.o)}</b> <small>implied ${Math.round(imp(a.o)*100)}%${hit(a.l)?" · hit "+hit(a.l):""}</small></span></button>`).join("")}</div>
+    <div class="pf-sub2">One-sided prices, so Sharpline can't strip the vig or show EV on these. Hit rates are his actual results.</div></section>`}
+
 function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
   let list=PF.range==="opp"?rows.all.filter(r=>r.opp===opp):rows.cur.slice(0,PF.range);
   list=list.filter(r=>valOf(r,st)!=null).slice(0,20).reverse();
-  const g=PF.key?SUG[+PF.key.slice(1)]:null,L=lineFor(st,g?g.l:null);
+  const g=PF.key?SUG[+PF.key.slice(1)]:null,L=lineFor(st,PF.altL!=null?PF.altL:g?g.l:null);
   const tabs=[[5,"L5"],[10,"L10"],[20,"L20"],["opp","vs "+ab2(opp)]].filter(t=>t[0]!=="opp"||opp);
   const head=`<div class="pf-ch"><div><div class="eyebrow">Actual results</div><h3>${yn?st.toLowerCase().replace(/^./,c=>c.toUpperCase())+" history":(STAT_LBL[st]||st)+" by game"}</h3></div>
     <div class="seg">${tabs.map(([v,l])=>`<button class="${PF.range===v?"on":""}" data-pfr="${v}">${l}</button>`).join("")}</div></div>`;
@@ -101,21 +111,21 @@ function avgsHTML(rows){const opp=oppAb();const views=[["season","Season"],["l5"
   const sel={season:rows.cur,l5:rows.cur.slice(0,5),l10:rows.cur.slice(0,10),l20:rows.cur.slice(0,20),home:rows.cur.filter(r=>r.home),away:rows.cur.filter(r=>!r.home),opp:rows.all.filter(r=>r.opp===opp)}[PF.view]||[];
   const A=k=>{const v=sel.map(r=>r[k]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
   const fg=sel.reduce((a,r)=>a+(r.fgm||0),0),fga=sel.reduce((a,r)=>a+(r.fga||0),0),tpa=sel.reduce((a,r)=>a+(r.tpa||0),0),tpm=sel.reduce((a,r)=>a+(r.tpm||0),0);
-  const comp=STAT_COMP[PF.st]||[];const cards=[["PTS","pts"],["REB","reb"],["AST","ast"],["3PM","tpm"],["STL","stl"],["BLK","blk"],["MIN","min"],["PRA",null]];
+  const comp=STAT_COMP[PF.st]||[];const cards=[["PTS","pts"],["REB","reb"],["AST","ast"],["3PM","tpm"],["STL","stl"],["BLK","blk"],["TO","tov"],["MIN","min"],["PRA",null]];
   const card=([l,k])=>{const v=k?A(k):(A("pts")!=null?A("pts")+A("reb")+A("ast"):null),hot=k?comp.includes(k):PF.st==="Pts+Reb+Ast";return`<div class="pf-sc ${hot?"hot":""}"><div class="v">${r1(v)}</div><div class="k">${l}</div></div>`};
   const note=PF.view==="l20"&&rows.cur.length<20?` · only ${rows.cur.length} games this season`:PF.view==="opp"?" · this season and last":"";
   return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Actual averages</div><h3>${sel.length} game${sel.length===1?"":"s"}<span class="pf-sub">${note}</span></h3></div></div>
     <div class="seg wide">${views.map(([v,l])=>`<button class="${PF.view===v?"on":""}" data-pfv="${v}">${l}</button>`).join("")}</div>
     ${sel.length?`<div class="pf-grid">${cards.map(card).join("")}</div><div class="pf-sub2">FG ${fga?Math.round(fg/fga*100)+"%":"–"} · 3PT ${tpa?Math.round(tpm/tpa*100)+"%":"–"} (${r1(tpa/sel.length)} attempts a game)${PF.view==="season"&&rows.cur.length?` · ${rows.cur.filter(r=>DD_K.filter(k=>(r[k]||0)>=10).length>=2).length} double doubles`:""}</div>`:`<div class="pf-empty">No games in this view.</div>`}</section>`}
 
-function logHTML(rows){const st=PF.st,yn=YN[st],g=PF.key?SUG[+PF.key.slice(1)]:null,L=lineFor(st,g?g.l:null),combo=!["Points","Rebounds","Assists","3-Pointers","Steals","Blocks"].includes(st);
+function logHTML(rows){const st=PF.st,yn=YN[st],g=PF.key?SUG[+PF.key.slice(1)]:null,L=lineFor(st,PF.altL!=null?PF.altL:g?g.l:null),combo=!["Points","Rebounds","Assists","3-Pointers","Steals","Blocks"].includes(st);
   const list=rows.cur.slice(0,PF.logN);if(!list.length)return"";
   const hi=k=>(STAT_COMP[st]||[]).length===1&&STAT_COMP[st][0]===k?"hot":"";
   return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Actual results</div><h3>Game log</h3></div></div>
-    <div class="pf-tw"><table class="pf-log"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th class="${hi("pts")}">PTS</th><th class="${hi("reb")}">REB</th><th class="${hi("ast")}">AST</th><th class="${hi("tpm")}">3PM</th><th class="${hi("stl")}">STL</th><th class="${hi("blk")}">BLK</th>${combo?`<th class="hot">${esc(STAT[st]||st)}</th>`:""}</tr></thead><tbody>
+    <div class="pf-tw"><table class="pf-log"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th class="${hi("pts")}">PTS</th><th class="${hi("reb")}">REB</th><th class="${hi("ast")}">AST</th><th class="${hi("tpm")}">3PM</th><th class="${hi("stl")}">STL</th><th class="${hi("blk")}">BLK</th><th>TO</th>${combo?`<th class="hot">${esc(STAT[st]||st)}</th>`:""}</tr></thead><tbody>
     ${list.map(r=>{const v=valOf(r,st),cls=L==null||v==null?"":v>L?"o":v<L?"u":"";
       return`<tr><td>${new Date(r.t).toLocaleDateString([], {month:"numeric",day:"numeric"})}</td><td>${r.home?"vs":"@"} ${esc(ab2(r.opp))}</td><td class="res ${r.res==="W"?"w":"l"}">${esc(r.res)} ${esc(r.score)}</td><td>${Math.round(r.min)}</td>
-      <td class="${hi("pts")} ${hi("pts")?cls:""}">${r.pts??"–"}</td><td class="${hi("reb")} ${hi("reb")?cls:""}">${r.reb??"–"}</td><td class="${hi("ast")} ${hi("ast")?cls:""}">${r.ast??"–"}</td><td class="${hi("tpm")} ${hi("tpm")?cls:""}">${r.tpm??"–"}${r.tpa!=null?`<small>/${r.tpa}</small>`:""}</td><td class="${hi("stl")} ${hi("stl")?cls:""}">${r.stl??"–"}</td><td class="${hi("blk")} ${hi("blk")?cls:""}">${r.blk??"–"}</td>
+      <td class="${hi("pts")} ${hi("pts")?cls:""}">${r.pts??"–"}</td><td class="${hi("reb")} ${hi("reb")?cls:""}">${r.reb??"–"}</td><td class="${hi("ast")} ${hi("ast")?cls:""}">${r.ast??"–"}</td><td class="${hi("tpm")} ${hi("tpm")?cls:""}">${r.tpm??"–"}${r.tpa!=null?`<small>/${r.tpa}</small>`:""}</td><td class="${hi("stl")} ${hi("stl")?cls:""}">${r.stl??"–"}</td><td class="${hi("blk")} ${hi("blk")?cls:""}">${r.blk??"–"}</td><td>${r.tov??"–"}</td>
       ${combo?`<td class="hot ${cls}">${yn?(v>=(st==="Double Double"?2:3)?"Yes":"No"):v??"–"}</td>`:""}</tr>`}).join("")}</tbody></table></div>
     ${rows.cur.length>10?`<button class="pf-more" data-pflog="1">${PF.logN>10?"Show fewer":rows.cur.length>20?"Show last 20":"Show all "+rows.cur.length}</button>`:""}</section>`}
 
@@ -128,7 +138,7 @@ window.renderProfile=function(keep){const el=document.getElementById("prof");if(
   const chips=ms.length?`<div class="pf-mk">${ms.map(({x,i})=>{const g=SUG[i];return`<button class="${"p"+i===PF.key?"on":""}" data-pfk="p${i}"><span>${STAT_LBL[x.st]||x.st}</span><b>${YN[x.st]?"Yes":g.l}</b></button>`}).join("")}</div>`
     :`<div class="pf-mk">${["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast"].map(s=>`<button class="${PF.st===s?"on":""}" data-pfs="${s}"><span>${STAT_LBL[s]}</span><b>stats</b></button>`).join("")}</div>`;
   el.innerHTML=`<div class="pf-in">
-    <div class="pf-bar"><button class="pf-back" data-pfclose="1" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</button><span class="pf-tt">Player</span></div>
+    <div class="pf-bar"><button class="pf-back" data-pfclose="1" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</button><span class="pf-tt">Player</span>${window.SLF?`<button class="pf-star ${SLF.isF(PF.name)?"on":""}" data-pffollow="1" aria-pressed="${SLF.isF(PF.name)}">${SLF.isF(PF.name)?"★ Following":"☆ Follow"}</button>`:""}</div>
     <header class="pf-hero" style="--c1:${c1};--c2:${c2}">
       <div class="pf-av">${avatar(PF.name,PF.tm,"pf-j")}</div>
       <div class="pf-id"><div class="eyebrow">${esc(ab)}${who.pos?" · "+esc(who.pos):""}${who.jersey?" · #"+esc(who.jersey):""}</div><h2>${esc(PF.name)}</h2>
@@ -136,7 +146,7 @@ window.renderProfile=function(keep){const el=document.getElementById("prof");if(
     </header>
     <div class="pf-status">${statusHTML()}</div>
     ${chips}
-    <div id="pfBody">${window.liveForPlayer&&liveForPlayer(PF.name)||""}${propPanel()}
+    <div id="pfBody">${window.liveForPlayer&&liveForPlayer(PF.name)||""}${propPanel()}${altsHTML()}
     ${!PF.id?`<div class="pf-empty">Stats aren't available for this player right now. Profiles load stats for players on tonight's slate.</div>`
       :!R||R.loading?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading his game log from ESPN…</span></div>`
       :R.err?`<div class="pf-empty">Couldn't reach ESPN for his game log. Pull down to refresh, or try again in a minute.</div>`
@@ -150,8 +160,10 @@ document.addEventListener("click",e=>{const pf=e.target.closest("[data-prof]");
   if(pf&&!e.target.closest("#prof")&&!e.target.closest("[data-track]")){e.preventDefault();e.stopImmediatePropagation();openProfile(Object.fromEntries(new URLSearchParams(pf.dataset.prof)));return}
   if(!e.target.closest("#prof"))return;const t=e.target.closest("button");if(!t)return;const d=t.dataset;
   if(d.pfclose){closeProfile();return}
-  if(d.pfk){PF.key=d.pfk;PF.st=PROPS[+d.pfk.slice(1)].st;PF.anim=true;renderProfile(true);return}
-  if(d.pfs){PF.st=d.pfs;PF.anim=true;renderProfile(true);return}
+  if(d.pffollow){const on=SLF.toggle(PF.name,PF.tm);renderProfile(true);if(window.toast)toast(on?`Following ${PF.name}. Injury changes for him will show on this phone.`:`Stopped following ${PF.name}`);return}
+  if(d.pfalt!=null){const v=+d.pfalt;PF.altL=PF.altL===v?null:v;PF.anim=true;renderProfile(true);return}
+  if(d.pfk){PF.altL=null;PF.key=d.pfk;PF.st=PROPS[+d.pfk.slice(1)].st;PF.anim=true;renderProfile(true);return}
+  if(d.pfs){PF.altL=null;PF.st=d.pfs;PF.anim=true;renderProfile(true);return}
   if(d.pfr){PF.range=d.pfr==="opp"?"opp":+d.pfr;PF.anim=true;renderProfile(true);return}
   if(d.pfv){PF.view=d.pfv;renderProfile(true);return}
   if(d.pflog){PF.logN=PF.logN>10?10:20;renderProfile(true);return}},true);

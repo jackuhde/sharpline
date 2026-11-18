@@ -179,7 +179,8 @@ function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.ope
 /* replace only the children whose markup changed; fall back to a full swap when the set or order of keyed blocks changes */
 function patchKeyed(box,html){const t=document.createElement("div");t.innerHTML=html;const nw=[...t.children],old=[...box.children];
   if(nw.length!==old.length||nw.some((n,i)=>n.className!==old[i].className||n.dataset.k!==old[i].dataset.k)){box.innerHTML=html;return}
-  nw.forEach((n,i)=>{if(n.outerHTML!==old[i].outerHTML)old[i].replaceWith(n)})}
+  /* avatars carry a fresh SVG id on every render, so ignore those ids when deciding what changed */
+  const sig=h=>h.replace(/\bj\d+\b/g,"j");nw.forEach((n,i)=>{if(sig(n.outerHTML)!==sig(old[i].outerHTML))old[i].replaceWith(n)})}
 function render(){renderList();if(LV.open)renderGame(true);if(window.PF&&PF.open)renderProfile(true)}
 function openGame(id){lastGame="";const g0=document.getElementById("lg");if(g0)g0._sig="";LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   history.pushState({sl:"lg"},"");renderGame();poll(true)}

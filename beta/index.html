@@ -167,6 +167,21 @@ body.pf-lock{overflow:hidden}
 .lv-plays li{display:flex;gap:8px;align-items:baseline;padding:8px 12px;border-top:1px solid var(--line);font:600 12.5px/1.35 Archivo}.lv-plays li:first-child{border-top:0}
 .lv-plays li span{flex:none;font:700 10.5px JetBrains Mono,monospace;color:var(--dim);width:58px}.lv-plays li b{margin-left:auto;font:800 11.5px JetBrains Mono,monospace;color:var(--mute)}.lv-plays li.sc{color:var(--ink)}.lv-plays li.sc b{color:var(--acc2)}
 .lv-inprof{border-color:rgba(255,77,77,.35)}
+
+/* followed players, recently viewed, injury alerts */
+.sl-follow{margin:0 0 14px;display:grid;gap:8px}.sl-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sl-h{font:800 10px Archivo;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:4px}
+.sl-fc{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:999px;padding:6px 11px;font:600 12px Archivo;cursor:pointer}
+.sl-fc .star{font-style:normal;color:var(--acc)}.sl-fc em{font-style:normal;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.08)}
+.sl-fc em.lv-out,.sl-fc em.lv-doubt{color:#ff6b6b}.sl-fc em.lv-quest,.sl-fc em.lv-dtd{color:#f5b942}
+.sl-clr{border:0;background:none;color:var(--dim);font:600 11px Archivo;cursor:pointer;text-decoration:underline}
+.sl-note{font-size:10.5px;color:var(--dim)}
+.sl-al{display:grid;gap:6px}.sl-ai{display:flex;align-items:center;gap:10px;border:1px solid rgba(245,185,66,.35);background:rgba(245,185,66,.08);border-radius:12px;padding:8px 10px;font-size:12.5px}
+.sl-ai span{flex:1}.sl-ai small{color:var(--dim);font-size:10.5px}.sl-ai button{border:0;background:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1}
+.pf-star{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:999px;padding:6px 12px;font:700 12px Archivo;cursor:pointer}
+.pf-star.on{border-color:var(--acc);color:var(--acc)}
+.pf-alt{display:grid;gap:6px}.pf-alt button{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.03));color:var(--tx);border-radius:10px;padding:8px 10px;font:600 12.5px Archivo;cursor:pointer;text-align:left}
+.pf-alt button.on{border-color:var(--acc)}.pf-alt b{font-family:"JetBrains Mono",monospace}.pf-alt small{color:var(--dim);font-size:11px}
 </style>
 <style>
 :root{
@@ -658,6 +673,7 @@ html,body{overscroll-behavior-y:none}
   <section class="view" id="v-props">
     <div class="ph"><div class="eyebrow">Player props</div><h1>Every Prop, Over or Under</h1>
       <p>Most lines are fair. Enter your book's price on a row to check it.</p></div>
+    <div id="slFollow"></div>
     <div class="chips" id="propChips"></div>
     <div id="propList"></div>
   </section>
@@ -714,8 +730,9 @@ html,body{overscroll-behavior-y:none}
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
 <script src="live.js?v=1795000002"></script>
-<script src="profile.js?v=1795100001"></script>
-<script src="livegame.js?v=1795100007"></script>
+<script src="profile.js?v=1795200001"></script>
+<script src="follow.js?v=1795200001"></script>
+<script src="livegame.js?v=1795200001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1433,6 +1450,7 @@ function allPropItems(){
   CUST.forEach(C=>L.push({key:"c"+C.id,g:C.g,st:C.st,tm:C.tm,name:C.p,line:C.l,books:C.fo?0:1,html:()=>custRowHTML(C)}));
   return L}
 function renderProps(){
+  {const fs=document.getElementById("slFollow");if(fs&&window.SLF)fs.innerHTML=SLF.strip()}
   const af=document.getElementById("addForm");if(af&&!af.dataset.init){af.innerHTML=addFormHTML();af.dataset.init=1}
   const items=allPropItems(),inGame=items.filter(x=>propGame==="all"||x.g==propGame);
   const stats=STAT_ORDER.filter(st=>inGame.some(x=>x.st===st)).concat([...new Set(inGame.map(x=>x.st))].filter(st=>!STAT_ORDER.includes(st)));
@@ -1666,7 +1684,7 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
     const pB=fetchData().then(d=>{if(d.version&&d.version!==DATA_VERSION){applyData(d)}res.board="ok"}).catch(()=>res.board="fail");
     const pO=DATA_DATE?SharpLive.scoreboard(DATA_DATE).then(list=>{LIVE.ev=mapEvents(list);LIVE.oddsTs=Date.now();res.odds="ok"}).catch(()=>res.odds="fail"):Promise.resolve();
     const needInj=manual||Date.now()-LIVE.injTs>5*60000;
-    const pI=needInj?SharpLive.injuries().then(m=>{LIVE.inj=m;LIVE.injTs=Date.now();res.inj="ok"}).catch(()=>res.inj="fail"):Promise.resolve(res.inj="cached");
+    const pI=needInj?SharpLive.injuries().then(m=>{LIVE.inj=m;LIVE.injTs=Date.now();res.inj="ok";if(window.SLF)SLF.checkInj()}).catch(()=>res.inj="fail"):Promise.resolve(res.inj="cached");
     await Promise.all([pB,pO,pI]);
     try{await loadRosters()}catch(e){console.warn("roster",e)}
     try{res.props=await loadProps(manual)}catch(e){res.props="fail"}
