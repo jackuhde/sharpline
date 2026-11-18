@@ -1,0 +1,24 @@
+<!doctype html><meta charset=utf-8><body style="font:12px monospace;background:#fff;color:#000"><pre id=o>loading</pre><script>
+const o=document.getElementById("o");o.textContent="";const log=s=>o.textContent+=s+"\n";
+const C="https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
+const J=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(r.status);return r.json()};
+(async()=>{
+ const sb=await J("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard");
+ for(const e of sb.events){const c=e.competitions[0];log(`EV ${e.id} ${e.shortName} ${c.status.type.state} ${c.status.displayClock} Q${c.status.period} ${c.competitors.map(x=>x.team.abbreviation+" "+x.score).join(" ")} odds:${JSON.stringify((c.odds||[])[0]?{d:c.odds[0].details,ou:c.odds[0].overUnder}:null)}`)}
+ const live=sb.events.find(e=>e.competitions[0].status.type.state==="in")||sb.events[0];const id=live.id;log("\nUSING "+id+" "+live.shortName);
+ try{const od=await J(`${C}/events/${id}/competitions/${id}/odds`);log("odds providers: "+od.items.map(i=>i.provider&&i.provider.id+":"+i.provider.name+" details="+i.details+" ou="+i.overUnder+" spread="+i.spread).join(" | "));
+   for(const it of od.items.slice(0,3)){log(" keys "+Object.keys(it).join(","));if(it.current)log(" current "+JSON.stringify(it.current).slice(0,300));}}catch(e){log("odds ERR "+e)}
+ for(const p of ["100","58","1004","200"]){try{const m=await J(`${C}/events/${id}/competitions/${id}/odds/${p}/history/0/movement?limit=50`);log(`movement ${p}: count ${m.count} `+JSON.stringify(m.items.slice(0,3)).slice(0,500))}catch(e){log(`movement ${p} ERR ${e}`)}}
+ try{const pb=await J(`${C}/events/${id}/competitions/${id}/odds/100/propBets?lang=en&region=us&limit=400`);
+   const latest=pb.items.map(x=>x.lastUpdated).sort().slice(-5);log(`\npropBets count ${pb.count}; newest updates ${latest.join(",")}`);
+   const pts=pb.items.filter(x=>x.type&&x.type.id==="1").slice(0,12).map(x=>(x.athlete.$ref.match(/athletes\/(\d+)/)||[])[1]+" "+x.odds.total.value+" "+x.odds.american.value+" upd "+x.lastUpdated);log(pts.join("\n"));
+   log("sample keys "+Object.keys(pb.items[0]).join(","));
+ }catch(e){log("propBets ERR "+e)}
+ try{const s=await J(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${id}`);log("\nsummary keys "+Object.keys(s).join(","));
+   log("plays "+(s.plays||[]).length+" last: "+JSON.stringify((s.plays||[]).slice(-2).map(p=>[p.text,p.clock&&p.clock.displayValue,p.period&&p.period.number,p.awayScore,p.homeScore])));
+   log("pickcenter "+JSON.stringify(s.pickcenter||[]).slice(0,600));log("odds "+JSON.stringify(s.odds||[]).slice(0,300));
+   const bx=s.boxscore&&s.boxscore.players&&s.boxscore.players[0];log("box labels "+JSON.stringify(bx&&bx.statistics[0].labels));log("box first "+JSON.stringify(bx&&bx.statistics[0].athletes[0]).slice(0,400));
+   log("team stats "+JSON.stringify(s.boxscore.teams[0].statistics.map(x=>x.label+":"+x.displayValue)).slice(0,500));
+ }catch(e){log("summary ERR "+e)}
+})();
+</script>
