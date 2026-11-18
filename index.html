@@ -184,7 +184,7 @@ body.pf-lock{overflow:hidden}
 .pf-alt button.on{border-color:var(--acc)}.pf-alt b{font-family:"JetBrains Mono",monospace}.pf-alt small{color:var(--dim);font-size:11px}
 .gh-live{font-style:normal;color:#ff5d5d;font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.gh-note{font-size:12px;color:var(--dim);padding:8px 12px;border:1px dashed var(--line);border-radius:10px;margin:6px 0 8px}.gh-note .lnk{border:0;background:none;color:var(--acc);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
 /* account */
-.acct{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:grid;gap:10px}
+.acct{margin:4px 0 16px;padding-bottom:16px;border-bottom:1px solid var(--line);display:grid;gap:10px}
 .acct-row{display:flex;justify-content:space-between;align-items:center;gap:10px}.acct-row small{display:block;color:var(--dim);font-size:11.5px;margin-top:2px}
 .acct-row button,.acct-b button{border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:10px;padding:9px 14px;font:700 13px Archivo;cursor:pointer}
 .acct-b{display:flex;gap:8px}.acct-b button[data-mode=in]{background:var(--acc);color:#111;border-color:var(--acc)}
@@ -727,8 +727,8 @@ html,body{overscroll-behavior-y:none}
 </div></div>
 <div class="sheet" id="setSheet"><div class="sheet-bg" data-setclose="1"></div><div class="sheet-in">
   <div class="sheet-h"><div><div class="eyebrow">Sharpline</div><h2>Settings</h2></div><button class="x" data-setclose="1">×</button></div>
-  <div id="setBody"></div>
   <div id="acctBox"></div>
+  <div id="setBody"></div>
 </div></div>
 <nav class="nav">
   <button data-v="top" class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z"/></svg>Top List</button>
@@ -742,7 +742,7 @@ html,body{overscroll-behavior-y:none}
 <script src="live.js?v=1795000002"></script>
 <script src="profile.js?v=1795200001"></script>
 <script src="follow.js?v=1795200003"></script>
-<script src="sync.js?v=1795300002"></script>
+<script src="sync.js?v=1795300003"></script>
 <script src="livegame.js?v=1795200001"></script>
 <script>
 
@@ -1390,7 +1390,7 @@ function renderSettings(){const sel=(id,opts,v)=>`<select id="${id}">${opts.map(
   <button class="go2" data-setsave="1">Save settings</button>
   <div class="sgp" style="margin-top:22px"><label>Your data</label>
     <div class="addall"><button class="addbtn" data-clrday="1">Clear today's entries</button><button class="addbtn" data-clrbets="1" style="color:var(--under)">Delete all tracked bets</button><button class="addbtn" data-csv="1">Export bets (CSV)</button></div>
-    <div class="sh">Everything is stored on this phone. Screenshots are read on the phone and never saved or uploaded.</div></div>
+    <div class="sh">${window.SLSync&&SLSync.state.user?"Tracked bets and settings sync to your account and stay on this phone.":"Everything is stored on this phone."} Screenshots are read on the phone and never saved or uploaded.</div></div>
   <div class="sgp"><label>About the numbers</label><div class="sh" style="font-size:12.5px">Game lines and player props come live from DraftKings (through ESPN's free feeds) every few minutes, for every player DraftKings posts. Season and last-10 averages come from each player's ESPN game log. A research pass about every hour adds other books, prediction markets and injury notes. Board research updated ${SNAP_TIME}. Grades: S 8%+ expected return (at most 3 a night), A 3%+, B 1%+, C about break-even, D and F mean the posted price is worse than fair. Estimates are estimates, not guarantees, and Pass is a normal answer. For 21+ only where legal. If betting stops being fun, call or text 1-800-GAMBLER.</div></div>`}
 function saveSettings(){const v=id=>document.getElementById(id).value;
   BOOK=(v("setBook").trim()||"Fliff").slice(0,24);SET.book=BOOK;SET.minEdge=+v("setEdge");SET.minConf=v("setConf");const u=+v("setUnit");if(u>0){UNIT=u;LS.set("sl_unit",UNIT)}
