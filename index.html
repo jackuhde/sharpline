@@ -1692,7 +1692,12 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
   if(manual&&Date.now()-LIVE.last<15000){toast(`Up to date · refreshed ${ago(LIVE.last)}`);return}
   setRefreshing(true);const before=snapshotEV();
   LIVE.busy=(async()=>{const res={board:null,odds:null,inj:null,graded:0};
-    const pB=fetchData().then(d=>{if(d.version&&d.version!==DATA_VERSION){applyData(d)}res.board="ok"}).catch(()=>res.board="fail");
+    const pB=fetchData().then(async d=>{
+      /* a new day, or today's research arriving after an ESPN-built board: reload so every view starts from the new slate */
+      if(d.date>=etToday()&&(d.date>DATA_DATE||(BOARD_SRC==="espn"&&d.version))){location.reload();return}
+      if(d.date<etToday()&&DATA_DATE<etToday()&&etHour()>=4){const t=await todayBoard(d);if(t!==d){location.reload();return}}
+      if(d.date===DATA_DATE&&BOARD_SRC==="research"&&d.version&&d.version!==DATA_VERSION)applyData(d);
+      res.board="ok"}).catch(()=>res.board="fail");
     const pO=DATA_DATE?SharpLive.scoreboard(DATA_DATE).then(list=>{LIVE.ev=mapEvents(list);LIVE.oddsTs=Date.now();res.odds="ok"}).catch(()=>res.odds="fail"):Promise.resolve();
     const needInj=manual||Date.now()-LIVE.injTs>5*60000;
     const pI=needInj?SharpLive.injuries().then(m=>{LIVE.inj=m;LIVE.injTs=Date.now();res.inj="ok";if(window.SLF)SLF.checkInj()}).catch(()=>res.inj="fail"):Promise.resolve(res.inj="cached");
@@ -1749,14 +1754,32 @@ function applyData(d){
 let STALE=false;
 function staleCheck(d){const el=document.getElementById("stale");const today=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
   const age=d.version?(Date.now()-new Date(d.version))/36e5:99;let msg="";
-  if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted each morning.`;
+  if(BOARD_SRC==="espn")msg=`Today's research notes haven't posted yet. Games, DraftKings lines, props and projections below are live from ESPN and DraftKings; other-book prices and written notes will appear when the research runs.`;
+  else if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted each morning.`;
   else if(age>5)msg=`Lines were last checked ${Math.round(age)} hours ago. Prices may have moved, so confirm before betting.`;
   STALE=!!msg;if(el)el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
 async function fetchData(){const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 const SPLASH_MIN=1900,bootStart=Date.now();
 function hideSplash(){const el=document.getElementById("splash");if(!el)return;setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),600)},Math.max(0,SPLASH_MIN-(Date.now()-bootStart)))}
+/* The morning research writes data.json. If it hasn't posted today's board (or failed to), build today's slate
+   straight from ESPN: games, tip times and DraftKings game lines. Player props, season averages and projections
+   then load live from DraftKings and ESPN as usual; only the research notes and other-book prices are missing. */
+let BOARD_SRC="research";
+function etToday(){return new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
+function etHour(){return+new Date().toLocaleString("en-US",{timeZone:"America/New_York",hour:"numeric",hour12:false})%24}
+async function todayBoard(d){const today=etToday();BOARD_SRC="research";if(!d||d.date>=today||etHour()<4)return d;
+  let list;try{list=await SharpLive.scoreboard(today)}catch(e){return d}if(!list||!list.length)return d;
+  const am=v=>v==null?null:v,nv=(a,b)=>{try{const p=devig(a,b);return p&&p[0]>0?[+p[0].toFixed(3),+p[1].toFixed(3)]:null}catch(e){return null}};
+  const games=list.map(e=>{const o=e.odds,mk=[];
+    if(o&&o.ml.away!=null&&o.ml.home!=null)mk.push({k:"Moneyline",a:e.awayAb,b:e.homeAb,q:[{bk:"DraftKings",a:o.ml.away,b:o.ml.home}],fair:nv(o.ml.away,o.ml.home)?{src:"DraftKings no-vig",p:nv(o.ml.away,o.ml.home)}:null});
+    if(o&&o.spread.home!=null){const hs=o.spread.home,as=o.spread.away??-hs,sg=v=>(v>0?"+":"")+v;
+      mk.push({k:"Spread "+Math.abs(hs),a:e.awayAb+" "+sg(as),b:e.homeAb+" "+sg(hs),q:[{bk:"DraftKings",a:am(o.spread.awayOdds),b:am(o.spread.homeOdds)}],fair:o.spread.awayOdds!=null&&o.spread.homeOdds!=null?{src:"DraftKings no-vig",p:nv(o.spread.awayOdds,o.spread.homeOdds)}:null})}
+    if(o&&o.total.line!=null)mk.push({k:"Total "+o.total.line,a:"Over",b:"Under",q:[{bk:"DraftKings",a:am(o.total.over),b:am(o.total.under)}],fair:o.total.over!=null&&o.total.under!=null?{src:"DraftKings no-vig",p:nv(o.total.over,o.total.under)}:null});
+    return{tip:e.date,away:e.away,home:e.home,move:"",notes:[],mk,verdict:"",src:[["ESPN scoreboard","https://www.espn.com/nba/scoreboard"]]}});
+  BOARD_SRC="espn";const now=new Date().toISOString();
+  return{version:now,date:today,asof:"",games,props:[],sug:[],lines:[],top:[],proj:[],projSrc:{}}}
 async function boot(){
-  try{const d=await fetchData();applyData(d);renderAll();hideSplash()}
+  try{const d=await todayBoard(await fetchData());applyData(d);renderAll();hideSplash()}
   catch(e){console.error(e);document.getElementById("when").innerHTML="<b>Offline</b>couldn't load lines";document.getElementById("when").title=String(e&&e.stack||e).slice(0,300);
     document.getElementById("topList").innerHTML=`<div class="empty"><b>Couldn't load tonight's lines</b>Check your connection and reopen Sharpline.</div>`;hideSplash();return}
   refreshAll();
