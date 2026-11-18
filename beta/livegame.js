@@ -21,7 +21,7 @@ async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted
   try{try{LV.sb=await SharpLive.scoreboard(DATA_DATE);LV.sbTs=Date.now();LV.sbOk=true}catch(e){LV.sbOk=false}
     const live=LV.sb.filter(e=>e.state==="in"),now=Date.now();
     await Promise.all(live.map(async e=>{const G=gameOf(e.id),isOpen=LV.open===e.id;
-      const jobs=[SharpLive.liveOdds(e.id).then(o=>{if(o){recLine(e.id,o);G.odds=o}G.oddsTs=Date.now()}).catch(()=>{})];
+      const jobs=[!G.preOddsTried&&(G.preOddsTried=1,SharpLive.preOdds(e.id).then(o=>{G.preOdds=o}).catch(()=>{G.preOddsTried=0})),SharpLive.liveOdds(e.id).then(o=>{if(o){recLine(e.id,o);G.odds=o}G.oddsTs=Date.now()}).catch(()=>{})];
       if(isOpen||now-G.boxTs>BOX_BG)jobs.push(SharpLive.box(e.id).then(b=>{G.box=b;G.boxTs=Date.now();G.boxOk=true}).catch(()=>{G.boxOk=false}));
       if(isOpen||now-G.propsFetched>PROPS_BG||force)jobs.push(SharpLive.liveProps(e.id).then(r=>{mergeProps(e.id,r);G.propsTs=Date.now();G.propsOk=true}).catch(()=>{G.propsOk=false}).finally(()=>{G.propsFetched=Date.now()}));
       if(!G.pre)jobs.push(SharpLive.fetchProps(e.id,100,1).then(r=>{G.pre={};r.forEach(m=>{G.pre[m.ath+"|"+m.st]=m})}).catch(()=>{}));
@@ -113,7 +113,7 @@ function renderList(){const el=document.getElementById("liveBody");if(!el)return
 /* ---------- game view ---------- */
 function moveChart(k,pre,mk){const h=(HIST[k]||[]).filter(p=>p.l!=null);const pts=[];if(pre&&pre.l!=null)pts.push({lbl:"Pregame",l:pre.l});if(mk.lOpen!=null)pts.push({lbl:"Live open",l:mk.lOpen});
   h.forEach(p=>pts.push({lbl:new Date(p.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}),l:p.l,o:p.o,u:p.u}));if(pts.length<2)return`<div class="lv-nomove">No movement recorded yet. Sharpline records changes while this screen is open.</div>`;
-  const ls=pts.map(p=>p.l),mn=Math.min(...ls),mx=Math.max(...ls),W=320,H=90,pad=14,x=i=>pad+i*(W-2*pad)/(pts.length-1),y=l=>mx===mn?H/2:H-pad-(l-mn)/(mx-mn)*(H-2*pad);
+  const ls=pts.map(p=>p.l),mn=Math.min(...ls),mx=Math.max(...ls),W=320,H=70,pad=12,x=i=>pad+i*(W-2*pad)/(pts.length-1),y=l=>mx===mn?H/2:H-pad-(l-mn)/(mx-mn)*(H-2*pad);
   let d="";pts.forEach((p,i)=>{d+=i?`H${x(i)}V${y(p.l)}`:`M${x(0)} ${y(p.l)}`});
   const changes=[];for(let i=1;i<h.length;i++){const a=h[i-1],b=h[i];if(a.l!==b.l)changes.push(`<li><b>Line</b> ${a.l} → ${b.l}<span>${new Date(b.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</span></li>`);else if(a.o!==b.o||a.u!==b.u)changes.push(`<li><b>Price</b> O ${fmtAm(a.o)} / U ${fmtAm(a.u)} → O ${fmtAm(b.o)} / U ${fmtAm(b.u)}<span>${new Date(b.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</span></li>`)}
   return`<svg class="lv-move" viewBox="0 0 ${W} ${H}"><path d="${d}"/>${pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.l)}" r="3.5"><title>${esc(p.lbl)}: ${p.l}${p.o!=null?` (O ${fmtAm(p.o)} / U ${fmtAm(p.u)})`:""}</title></circle>`).join("")}
@@ -135,14 +135,14 @@ function propRow(id,k,mk,pre){const m=model(id,mk),f=fresh(id,mk),st=mk.gone?"su
 function boxTable(G,teamId){const ps=Object.values(G.box.players).filter(p=>p.teamId===teamId).sort((a,b)=>(b.starter-a.starter)||(b.min-a.min));
   return`<div class="pf-tw"><table class="pf-log lv-box"><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th></tr></thead><tbody>
   ${ps.map(p=>`<tr class="${p.dnp?"dnp":""}"><td><span class="pfn" ${pfAttr({n:p.name})}>${esc(p.name)}</span></td><td>${p.dnp?"DNP":Math.round(p.min)}</td><td>${p.pts??"–"}</td><td>${p.reb??"–"}</td><td>${p.ast??"–"}</td><td>${p.tpm??"–"}</td><td>${p.stl??"–"}</td><td>${p.blk??"–"}</td><td>${p.to??"–"}</td><td class="${(p.pf||0)>=5?"neg":""}">${p.pf??"–"}</td></tr>`).join("")}</tbody></table></div>`}
-function linesTable(e,G){const o=G.odds,gi=SNAP.findIndex(S=>nick(S.home)===nick(e.home)),pre=gi>=0?LIVE.ev[gi]&&LIVE.ev[gi].odds:null;
+function linesTable(e,G){const o=G.odds,gi=SNAP.findIndex(S=>nick(S.home)===nick(e.home)),pre=G.preOdds||null;
   const row=(lbl,p,op,cur,extra)=>`<tr><td>${lbl}</td><td>${p??"–"}</td><td>${op??"–"}</td><td><b>${cur??"–"}</b>${extra?`<small>${extra}</small>`:""}</td></tr>`;
-  const sg=v=>v==null?null:(v>0?"+":"")+v;
-  return`<div class="pf-tw"><table class="pf-log lv-lines"><thead><tr><th>Market</th><th>Pregame</th><th>Live open</th><th>Live now</th></tr></thead><tbody>
-    ${row("Total",pre&&pre.total.line,o&&o.total.open,o&&o.total.line,o?`O ${fmtAm(o.total.over)} / U ${fmtAm(o.total.under)}`:"")}
-    ${row(ab2(e.homeAb)+" spread",pre&&sg(pre.spread.home),o&&sg(o.spread.homeOpen),o&&sg(o.spread.home),o?fmtAm(o.spread.homeOdds):"")}
-    ${row(ab2(e.homeAb)+" moneyline",pre&&fmtAm(pre.ml.home),o&&fmtAm(o.ml.homeOpen),o&&fmtAm(o.ml.home),"")}
-    ${row(ab2(e.awayAb)+" moneyline",pre&&fmtAm(pre.ml.away),o&&fmtAm(o.ml.awayOpen),o&&fmtAm(o.ml.away),"")}</tbody></table></div>
+  const sg=v=>v==null?null:(v>0?"+":"")+v,oc=(a,b)=>b==null?null:a!=null&&a!==b?`${a} → ${b}`:b;
+  return`<div class="pf-tw"><table class="pf-log lv-lines"><thead><tr><th>Market</th><th>Pregame open → close</th><th>Live open</th><th>Live now</th></tr></thead><tbody>
+    ${row("Total",pre&&oc(pre.total.open,pre.total.line),o&&o.total.open,o&&o.total.line,o?`O ${fmtAm(o.total.over)} / U ${fmtAm(o.total.under)}`:"")}
+    ${row(ab2(e.homeAb)+" spread",pre&&oc(sg(pre.spread.homeOpen),sg(pre.spread.home)),o&&sg(o.spread.homeOpen),o&&sg(o.spread.home),o?fmtAm(o.spread.homeOdds):"")}
+    ${row(ab2(e.homeAb)+" moneyline",pre&&oc(pre.ml.homeOpen!=null?fmtAm(pre.ml.homeOpen):null,fmtAm(pre.ml.home)),o&&fmtAm(o.ml.homeOpen),o&&fmtAm(o.ml.home),"")}
+    ${row(ab2(e.awayAb)+" moneyline",pre&&oc(pre.ml.awayOpen!=null?fmtAm(pre.ml.awayOpen):null,fmtAm(pre.ml.away)),o&&fmtAm(o.ml.awayOpen),o&&fmtAm(o.ml.away),"")}</tbody></table></div>
     ${o?moveChart(e.id+"|total",pre?{l:pre.total.line}:null,{lOpen:o.total.open,l:o.total.line}).replace("No movement recorded yet.","No total-line movement recorded yet."):`<div class="lv-nomove">DraftKings has no live game line posted right now (it may be suspended).</div>`}`}
 function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.open)return;const st0=el.scrollTop,e=LV.sb.find(x=>x.id===LV.open);if(!e)return;const G=gameOf(e.id);
   const[,ca]=team(e.away),[,ch]=team(e.home),wp=G.box&&G.box.winProb;

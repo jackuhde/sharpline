@@ -104,6 +104,8 @@ function parseLiveOdds(j){if(!j||!j.provider)return null;const A=j.awayTeamOdds|
   return{book:j.provider.name||"DraftKings Live",spread:{home:sp(cur(H))??num(j.spread),away:sp(cur(A)),homeOdds:am(cur(H).spread),awayOdds:am(cur(A).spread),homeOpen:sp(opn(H)),awayOpen:sp(opn(A))},
     ml:{home:num(H.moneyLine)??am(cur(H).moneyLine),away:num(A.moneyLine)??am(cur(A).moneyLine),homeOpen:am(opn(H).moneyLine),awayOpen:am(opn(A).moneyLine)},
     total:{line:num(j.overUnder),over:num(j.overOdds),under:num(j.underOdds),open:num(((((j.open||{}).total)||{}).american)||((((j.open||{}).total)||{}).alternateDisplayValue))}}}
+/* DraftKings pregame game lines (provider 100): after tip-off "current" holds the closing line */
+async function preOdds(eventId){try{return parseLiveOdds(await getJSON(`${CORE}/events/${eventId}/competitions/${eventId}/odds/100`,10000))}catch(e){if(/404/.test(String(e)))return null;throw e}}
 async function liveOdds(eventId){try{return parseLiveOdds(await getJSON(`${CORE}/events/${eventId}/competitions/${eventId}/odds/200`,10000))}catch(e){if(/404/.test(String(e)))return null;throw e}}
 async function propBets(eventId){return fetchProps(eventId,100,4)}
 
@@ -165,6 +167,6 @@ function grade(spec,game,bx){if(!spec||!game)return null;
     const v=keys.reduce((a,k)=>a+p[k],0);return{res:cmp(v,spec.line,spec.side),detail:`${p.name} ${v} ${spec.stat.toLowerCase()} vs ${spec.line}`}}
   return null}
 
-root.SharpLive={liveProps,liveOdds,parseLiveOdds,parseAltLines,fetchProps,gameMinLeft,norm,scoreboard,injuries,box,roster,parseRoster,propBets,parsePropBets,gamelog,parseGamelog,gamelogRows,parseGamelogRows,rosterIds,parseRosterIds,PROP_TYPES,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
+root.SharpLive={liveProps,liveOdds,preOdds,parseLiveOdds,parseAltLines,fetchProps,gameMinLeft,norm,scoreboard,injuries,box,roster,parseRoster,propBets,parsePropBets,gamelog,parseGamelog,gamelogRows,parseGamelogRows,rosterIds,parseRosterIds,PROP_TYPES,parseScoreboard,parseInjuries,parseBox,grade,STAT_SUM};
 })(typeof window!=="undefined"?window:globalThis);
 if(typeof module!=="undefined")module.exports=globalThis.SharpLive||window.SharpLive;
