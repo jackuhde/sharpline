@@ -82,14 +82,16 @@ function gameCard(e){const G=gameOf(e.id),o=G.odds,n=Object.values(G.props).filt
       <span>${n?`<b>${n}</b> live player markets`:G.propsFetched?"No live player markets":"Loading markets"}</span>${v?`<span class="lv-val">${v} with potential value</span>`:""}</div>
     ${G.box?`<div class="lv-perf">${topPerf(e.id)}</div>`:""}
     <div class="lv-upd">Odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)}</div></button>`}
+let lastList="",lastGame="";
 function renderList(){const el=document.getElementById("liveBody");if(!el)return;
   const live=LV.sb.filter(e=>e.state==="in"),pre=LV.sb.filter(e=>e.state==="pre"),post=LV.sb.filter(e=>e.state==="post");
-  el.innerHTML=feedBar()+(!LV.sbTs?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Checking for games in progress…</span></div>`:
+  const html=feedBar()+(!LV.sbTs?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Checking for games in progress…</span></div>`:
     (live.length?`<div class="lv-h">In progress <em>${live.length}</em></div>${live.map(gameCard).join("")}`
       :`<div class="pf-empty"><b style="color:var(--ink)">No games in progress right now.</b> Live scores, live lines and live player props appear here once a game tips off. ${pre.length?`Next tip: ${esc(ab2(pre[0].awayAb))} @ ${esc(ab2(pre[0].homeAb))} at ${tipLocal(pre[0])}.`:""}</div>`)+
     (pre.length?`<div class="lv-h">Up next</div><div class="lv-mini">${pre.map(e=>`<div><span>${esc(ab2(e.awayAb))} @ ${esc(ab2(e.homeAb))}</span><b>${tipLocal(e)}</b></div>`).join("")}</div>`:"")+
     (post.length?`<div class="lv-h">Final</div><div class="lv-mini">${post.map(e=>`<div><span>${esc(ab2(e.awayAb))} ${e.awayScore} @ ${esc(ab2(e.homeAb))} ${e.homeScore}</span><b>Final</b></div>`).join("")}</div>`:""))+
     `<p class="pf-foot">Live lines and live player props are DraftKings' in-game markets as published through ESPN. Projections are Sharpline's model. Bet only after confirming the price at your book; live prices change in seconds.</p>`;
+  if(html!==lastList){el.innerHTML=html;lastList=html}
   const nb=document.querySelector('.nav [data-v="live"]');if(nb)nb.classList.toggle("haslive",live.length>0)}
 
 /* ---------- game view ---------- */
@@ -144,7 +146,7 @@ function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.ope
     body=`<div class="lv-h">Game lines</div>${linesTable(e,G)}
       ${tA&&tH?`<div class="lv-h">Team stats</div><div class="pf-tw"><table class="pf-log lv-ts"><thead><tr><th>${esc(ab2(e.awayAb))}</th><th></th><th>${esc(ab2(e.homeAb))}</th></tr></thead><tbody>${ks.filter(k=>tA.stats[k]!=null).map(k=>`<tr><td>${esc(tA.stats[k])}</td><td>${esc(k)}</td><td>${esc(tH.stats[k])}</td></tr>`).join("")}</tbody></table></div>`:""}
       ${G.box&&G.box.plays.length?`<div class="lv-h">Recent plays</div><ul class="lv-plays">${G.box.plays.slice(0,15).map(p=>`<li class="${p.score?"sc":""}"><span>Q${p.period} ${esc(p.clock)}</span>${esc(p.text)}<b>${p.away}-${p.home}</b></li>`).join("")}</ul>`:""}`}
-  el.innerHTML=`<div class="pf-in"><div class="pf-bar"><button class="pf-back" data-lvclose="1"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Live</button><span class="pf-tt">${e.state==="in"?`<span class="lv-live">Live</span>`:esc(statusTxt(e))}</span></div>
+  const html=`<div class="pf-in"><div class="pf-bar"><button class="pf-back" data-lvclose="1"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Live</button><span class="pf-tt">${e.state==="in"?`<span class="lv-live">Live</span>`:esc(statusTxt(e))}</span></div>
     <header class="lv-sb" style="--ca:${ca};--ch:${ch}"><div class="lv-sbt">${teamTag(e.awayAb,e.away)}<b class="sc">${e.awayScore}</b><span>${esc(e.away)}</span></div>
       <div class="lv-sbc"><b>${esc(statusTxt(e))}</b>${wp!=null?`<div class="lv-wp" title="ESPN win probability"><i style="width:${Math.round((1-wp)*100)}%"></i></div><small>${esc(ab2(e.awayAb))} ${Math.round((1-wp)*100)}% · ${esc(ab2(e.homeAb))} ${Math.round(wp*100)}% (ESPN)</small>`:""}</div>
       <div class="lv-sbt r">${teamTag(e.homeAb,e.home)}<b class="sc">${e.homeScore}</b><span>${esc(e.home)}</span></div></header>
@@ -152,9 +154,9 @@ function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.ope
     <div class="seg wide lv-tabs">${tabs.map(([v,l])=>`<button class="${LV.tab===v?"on":""}" data-lvt="${v}">${l}</button>`).join("")}</div>
     <div class="lv-body">${body}</div>
     <p class="pf-foot">Live markets are DraftKings in-game lines via ESPN. "Projected final" is Sharpline's model: current stats plus his usual per-minute production over the minutes he's expected to play from here. Movement is only what this phone recorded while open.</p></div>`;
-  if(keep)el.scrollTop=st0}
+  if(html===lastGame&&keep)return;lastGame=html;el.innerHTML=html;if(keep)el.scrollTop=st0}
 function render(){renderList();if(LV.open)renderGame(true);if(window.PF&&PF.open)renderProfile(true)}
-function openGame(id){LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
+function openGame(id){lastGame="";LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   history.pushState({sl:"lg"},"");renderGame();poll(true)}
 function hideGame(){LV.open=null;const el=document.getElementById("lg");el.classList.add("out");if(!(window.PF&&PF.open))document.body.classList.remove("pf-lock");setTimeout(()=>{el.classList.remove("on","out");el.innerHTML=""},260)}
 window.addEventListener("popstate",()=>{if(LV.open&&!(history.state&&history.state.sl==="lg")&&!(window.PF&&PF.open))hideGame()});
