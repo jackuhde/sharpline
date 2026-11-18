@@ -3,7 +3,7 @@
    The publishable key below is meant to be public; row level security (supabase/setup.sql)
    lets each signed-in person read and write only their own row. Without sign-in, nothing leaves the phone. */
 (function(){
-  const CFG={url:"https://hdrdqlffprorqhmlkywg.supabase.co",key:""};   // key: Project Settings > API Keys > publishable
+  const CFG={url:"https://hdrdqlffprorqhmlkywg.supabase.co",key:"sb_publishable_Os4l69ROP_ApbQsp8kaXuw_RoUXVQ8x"};   // key: Project Settings > API Keys > publishable
   const LIB="vendor/supabase-2.119.1.js";
   const KEYS=["sl_bets","sl_unit","sl_set","sl_follow","sl_recent","sl_alerts"];
   const META="sl_sync_meta";   // {key: last local change time, _synced: last successful sync, _uid}
