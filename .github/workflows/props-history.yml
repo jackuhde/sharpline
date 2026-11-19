@@ -23,7 +23,7 @@ jobs:
         run: |
           git config user.name "sharpline-bot"
           git config user.email "sharpline-bot@users.noreply.github.com"
-          git add data/props-history.json model.json
+          git add data/props-history.json data/alts-history.json model.json
           git diff --cached --quiet && exit 0
           git commit -m "Update prop line history and refit the prop model"
           git pull --rebase -q origin main
