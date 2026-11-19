@@ -1549,6 +1549,7 @@ function saveSettings(){const v=id=>document.getElementById(id).value;
   LS.set("sl_set",SET);Object.keys(SAVED).forEach(k=>syncFind(k));document.getElementById("setSheet").classList.remove("on");renderAll();toast("Settings saved")}
 
 /* ---------- top list ---------- */
+function needAm(p,e){let a=toAm(p/(1+Math.max(e,.005)));a=Math.ceil(a);if(a>-100&&a<100)a=a<0?100:-100;for(let i=0;i<40&&evOf(p,a)<e;i++){a=a<0?(a+1>-100?100:a+1):a+1}return a}
 function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!=="l",sgn=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
   const tm=x.tm?team(x.tm)[0]:"",op=x.opp?team(x.opp)[0]:"",home=G&&x.tm&&nick(x.tm)===nick(G.home);
   const sub=isProp&&tm?`${tm} ${home?"vs":"@"} ${op} · ${STAT_LBL[x.st]||x.st} · ${tipT(G)}`:`${G?mu(G)+" · "+tipT(G):""}`;
@@ -1568,7 +1569,7 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
   return`<div class="top${watch?" lean":""}" data-key="${x.key}"><div class="rank">${n}</div>${freshTag(x.fresh)}
     <div class="kind">${gradeTag(gradeNow(x.base),"md")} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
     <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${esc2(x.head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${esc2(sub)}</div></div></div>
-    <div style="margin-top:10px"><span class="pick n">${watch?`${x.book} ${fmtAm(x.price)} now · worth it at ${fmtAm(toAm(x.p/(1+Math.max(SET.minEdge,.005))))} or better`:`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
+    <div style="margin-top:10px"><span class="pick n">${watch?`${x.book} ${fmtAm(x.price)} now · needs ${fmtAm(needAm(x.p,SET.minEdge))} or better to qualify`:`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
     <div class="stats">${cell("Sharpline",pct(x.p))}${cell("Price implies",pct(x.imp))}${cell("Expected value",sgn(x.ev),x.ev>=0?"var(--over)":"var(--under)")}</div>
     <div class="stats s2">${cell("Projection",x.proj!=null?x.proj:"–")}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
     ${det}
@@ -1770,13 +1771,24 @@ function buildProps(){PROPS=BOARD.props.map(x=>({...x,q:x.q.slice()}));SUG=BOARD
   add.sort((a,b)=>a.x.g-b.x.g||a.x.tm.localeCompare(b.x.tm)||a.x.p.localeCompare(b.x.p)||statRank(a.x.st)-statRank(b.x.st));
   add.forEach(a=>{PROPS.push(a.x);SUG.push(a.s)});remapKeys()}
 /* your entered odds, saved finds and tracked bets are keyed by list position; when props are added, move them with their player */
+/* your entered odds, saved finds and tracked bets are keyed by list position; when the list changes, move them with their
+   player and stat. Anything whose prop isn't in the list right now (props not loaded yet, or pulled by DraftKings) is
+   parked by player and stat, never deleted, and comes back when the prop does. */
 function remapKeys(){const prev=LS0("sl_pid",{d:"",ids:[]}),now=PROPS.map(pid);
-  if(prev.d===DATA_DATE&&prev.ids.length&&prev.ids.join()!==now.join()){const at={};now.forEach((id,i)=>{if(at[id]==null)at[id]=i});
+  const orph=LS0("sl_orph",{d:"",m:{}});if(orph.d!==DATA_DATE){orph.d=DATA_DATE;orph.m={}}
+  const at={};now.forEach((id,i)=>{if(at[id]==null)at[id]=i});let dirty=false;
+  if(prev.d===DATA_DATE&&prev.ids.length&&prev.ids.join()!==now.join()){
     const mv=k=>{if(!/^p\d+$/.test(k))return k;const id=prev.ids[+k.slice(1)];return id!=null&&at[id]!=null?"p"+at[id]:null};
-    const re=obj=>{const out={};Object.keys(obj).forEach(k=>{const n=mv(k);if(n){out[n]=obj[k];if(out[n]&&out[n].key===k)out[n].key=n}});Object.keys(obj).forEach(k=>delete obj[k]);Object.assign(obj,out)};
-    re(EDV);re(SAVED);LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED);
+    const re=(obj,slot)=>{const out={};Object.keys(obj).forEach(k=>{const n=mv(k);if(n){out[n]=obj[k];if(out[n]&&out[n].key===k)out[n].key=n}
+        else{const id=prev.ids[+k.slice(1)];if(id!=null){(orph.m[id]=orph.m[id]||{})[slot]=obj[k];dirty=true}}});
+      Object.keys(obj).forEach(k=>delete obj[k]);Object.assign(obj,out)};
+    re(EDV,"edv");re(SAVED,"saved");dirty=true;
     let ch=0;BETS.forEach(b=>{if(b.date===DATA_DATE&&/^p\d+$/.test(b.key)){const n=mv(b.key);if(n&&n!==b.key){b.key=n;ch=1}}});if(ch)saveBets()}
-  LS.set("sl_pid",{d:DATA_DATE,ids:now})}
+  Object.keys(orph.m).forEach(id=>{if(at[id]==null)return;const k="p"+at[id],o=orph.m[id];
+    if(o.edv&&!EDV[k])EDV[k]=o.edv;if(o.saved&&!SAVED[k]){SAVED[k]={...o.saved,key:k}}delete orph.m[id];dirty=true});
+  if(dirty){LS.set("sl_edv",EDV);LS.set("sl_saved",SAVED)}LS.set("sl_orph",orph);
+  /* an empty list (props still loading) never replaces the saved positions */
+  if(now.length||prev.d!==DATA_DATE)LS.set("sl_pid",{d:DATA_DATE,ids:now})}
 /* averages: the board's researched numbers, replaced by the player's own ESPN game log when it has loaded */
 function buildProj(){PROJ=BOARD.proj.map(x=>({...x}));
   Object.keys(LIVE.logs).forEach(id=>{const L=LIVE.logs[id],who=LIVE.ids[id];if(!L||!who)return;const s=L.season,t=L.l10;
