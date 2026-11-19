@@ -52,21 +52,21 @@ const open=evs.filter(({e})=>e.competitions[0].status.type.state==="pre");
 await pool(open,3,async({e,t,w})=>{const L=await propLines(e.id);if(Object.keys(L).length)lines.games[e.id]={w,t,at:new Date().toISOString(),l:L}});
 /* closing DraftKings spread (home, negative = home favored) and total, from the core odds feed; once per game */
 const sbById={};evs.forEach(({e})=>sbById[e.id]=e);
-await pool(Object.values(games).filter(g=>g.sp==null||g.ven==null),3,async g=>{
+await pool(Object.values(games).filter(g=>g.sp==null||g.ven==null||g.venFix!==2),3,async g=>{
   if(g.sp==null){const o=await j(`${C}/events/${g.id}/competitions/${g.id}/odds/100`);if(o&&o.spread!=null){g.sp=+o.spread;g.tot=o.overUnder!=null?+o.overUnder:null}}
-  if(g.ven==null){const sum=await j(`${S}/summary?event=${g.id}`);const gi=sum&&sum.gameInfo;const v=gi&&gi.venue;
-    g.ven=v?{n:v.fullName,c:v.address&&v.address.city,s:v.address&&v.address.state,in:v.indoor?1:0}:{};
+  if(g.ven==null||g.venFix!==2){const sum=await j(`${S}/summary?event=${g.id}`);const gi=sum&&sum.gameInfo;const v=gi&&gi.venue;const sv=((sbById[g.id]||{}).competitions||[{}])[0].venue||{};
+    g.ven=v||sv.fullName?{n:(v&&v.fullName)||sv.fullName,c:(v&&v.address&&v.address.city)||(sv.address&&sv.address.city),s:(v&&v.address&&v.address.state)||(sv.address&&sv.address.state),in:sv.indoor||(v&&v.indoor)?1:0}:{};g.venFix=2;g.wx=undefined;
     if(gi&&gi.weather)g.wx0={t:gi.weather.temperature,d:gi.weather.displayValue||"",g:gi.weather.gust||null}}});
 /* weather at kickoff for outdoor games (Open-Meteo: free, no key). Wind and rain matter for passing and kicking. */
 const geo={};async function geocode(c,st){const k=c+"|"+st;if(geo[k]!==undefined)return geo[k];
-  const r=await j(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(c)}&count=10&country=US`);const hit=r&&(r.results||[]).find(x=>!st||x.admin1&&x.admin1.toLowerCase().startsWith(String(st).toLowerCase().slice(0,4)))||(r&&r.results||[])[0];
+  const r=await j(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(c)}&count=10&countryCode=US`);const hit=r&&(r.results||[]).find(x=>!st||x.admin1&&x.admin1.toLowerCase().startsWith(String(st).toLowerCase().slice(0,4)))||(r&&r.results||[])[0];
   return geo[k]=hit?[hit.latitude,hit.longitude]:null}
 const ST={AL:"Alabama",AZ:"Arizona",CA:"California",CO:"Colorado",FL:"Florida",GA:"Georgia",IL:"Illinois",IN:"Indiana",LA:"Louisiana",MA:"Massachusetts",MD:"Maryland",MI:"Michigan",MN:"Minnesota",MO:"Missouri",NC:"North Carolina",NJ:"New Jersey",NV:"Nevada",NY:"New York",OH:"Ohio",PA:"Pennsylvania",TN:"Tennessee",TX:"Texas",WA:"Washington",WI:"Wisconsin"};
 async function weather(g){if(!g.ven||g.ven.in||!g.ven.c)return null;const ll=await geocode(g.ven.c,ST[g.ven.s]||g.ven.s);if(!ll)return null;
   const day=g.d.slice(0,10),past=Date.parse(g.d)<Date.now()-2*864e5;
   const url=past?`https://archive-api.open-meteo.com/v1/archive?latitude=${ll[0]}&longitude=${ll[1]}&start_date=${day}&end_date=${day}&hourly=wind_speed_10m,precipitation,temperature_2m&wind_speed_unit=mph&temperature_unit=fahrenheit&timezone=UTC`
     :`https://api.open-meteo.com/v1/forecast?latitude=${ll[0]}&longitude=${ll[1]}&hourly=wind_speed_10m,precipitation,temperature_2m&wind_speed_unit=mph&temperature_unit=fahrenheit&timezone=UTC&forecast_days=10`;
-  const r=await j(url);if(!r||!r.hourly)return null;const hr=g.d.slice(0,13);const i=r.hourly.time.findIndex(t=>t.startsWith(hr));if(i<0)return null;
+  const r=await j(url);if(!r||!r.hourly){if(!past)console.log("forecast failed",g.ven.c,url.slice(0,160));return null}const hr=g.d.slice(0,13);const i=r.hourly.time.findIndex(t=>t.startsWith(hr));if(i<0){if(!past)console.log('forecast hour missing',hr,r.hourly.time[0],r.hourly.time.at(-1));return null}
   const sl=k=>r.hourly[k].slice(i,i+3);const avg=a=>a.reduce((x,y)=>x+(y||0),0)/a.length;
   return{wind:Math.round(avg(sl("wind_speed_10m"))),rain:Math.round(sl("precipitation").reduce((x,y)=>x+(y||0),0)*10)/10,temp:Math.round(avg(sl("temperature_2m"))),fc:past?0:1}}
 await pool(Object.values(games).filter(g=>g.wx===undefined),3,async g=>{g.wx=await weather(g)});
