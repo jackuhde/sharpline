@@ -807,6 +807,7 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
+<script src="rank.js?v=1795700001"></script>
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
@@ -1145,13 +1146,11 @@ function topItems(){
   topItems.verify=pool.filter(c=>c.ev>=SET.minEdge&&(c.fresh.lv==="stale"||c.inj));
   const ok=pool.filter(c=>c.ev>0&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj),Q=ok.filter(c=>c.ev>=SET.minEdge&&passConf(c.conf)).sort((a,b)=>b.ev-a.ev);
   topItems.hidden=ok.filter(c=>c.ev>=SET.minEdge&&!passConf(c.conf)).length;
-  const MAX=10,cap=SET.perPlayer==="1x"?1:+SET.perPlayer||1,gcap=+SET.perGame||99,out=[],nP={},nG={},taken=new Set();
-  const add=c=>{out.push(c);taken.add(c.base);nP[c.ath]=(nP[c.ath]||0)+1;nG[c.gi]=(nG[c.gi]||0)+1};
-  topItems.qual=Q;topItems.held={};
-  for(const c of Q){if(out.length>=MAX)break;if((nP[c.ath]||0)>=cap){topItems.held[c.base]="capP";continue}if((nG[c.gi]||0)>=gcap){topItems.held[c.base]="capG";continue}add(c)}
-  for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap)continue;delete topItems.held[c.base];add(c)}
-  if(SET.perPlayer==="1")for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base))continue;
-    if(c.ev>=Math.max(.05,2*SET.minEdge)&&c.conf&&c.conf.lv==="High"){const first=out.find(o=>o.ath===c.ath);c.corr=first?first.head:null;add(c)}}
+  /* selection rules live in rank.js (selectTop) so they can be tested on their own */
+  Q.forEach(c=>{c.confLv=c.conf&&c.conf.lv});
+  const SEL=SLRank.selectTop(Q.map(c=>({...c,conf:c.confLv})),{max:10,perPlayer:SET.perPlayer,perGame:SET.perGame,minEdge:SET.minEdge});
+  const byBase=Object.fromEntries(Q.map(c=>[c.base,c])),out=SEL.out.map(o=>{const c=byBase[o.base];if(o.corr){const first=SEL.out.find(x=>x.ath===o.ath&&x.base!==o.base);c.corr=first?byBase[first.base].head:null}return c}),taken=new Set(out.map(c=>c.base));
+  topItems.qual=Q;topItems.held=SEL.held;
   /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
   const shown=new Set(out.map(c=>c.ath));topItems.watch=out.length>=5?[]:ok.concat(pool.filter(c=>c.ev<=0&&c.ev>-.03&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj&&c.parts))
     .filter(c=>!taken.has(c.base)&&c.parts).sort((a,b)=>b.ev-a.ev).filter(c=>!shown.has(c.ath)&&(shown.add(c.ath),true)).slice(0,Math.min(5,8-out.length));
