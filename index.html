@@ -274,6 +274,8 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .top .face{display:flex;align-items:center;gap:10px}
 .top .face svg,.top .face .logo{width:40px;height:40px;flex:none}
 .top .pick{white-space:normal;line-height:1.3}
+.stats.s2{margin-top:8px}.tscan{margin:0 4px 12px;font-size:12px}
+.tdet{grid-column:2;margin-top:10px;font:600 13px/1.5 Archivo;color:var(--mute)}.tdet summary{cursor:pointer;color:var(--acc2);font-weight:800}.tdet p{margin:8px 0}.tdet ul{margin:0;padding-left:18px}.tdet li{margin:4px 0}.tdet b{color:var(--ink)}
 .stats{grid-column:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .st{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
 .st .k{font:800 9px Archivo;letter-spacing:1.2px;color:var(--mute);text-transform:uppercase}
@@ -861,7 +863,7 @@ let LINES=[];
 let TOP=[];
 
 /* ---------- your settings (this phone only). Filters change what you see, never Sharpline's grades. ---------- */
-const SET=Object.assign({book:"Fliff",minEdge:.02,minConf:"Any"},LS0("sl_set",{}));
+const SET=Object.assign({book:"Fliff",minEdge:.02,minConf:"Any",perPlayer:"1",perGame:"3"},LS0("sl_set",{}));
 let BOOK=SET.book||"Fliff";
 const poss=n=>/s$/i.test(n)?n+"'":n+"'s";
 const CONF_RANK={Low:0,Medium:1,High:2};
@@ -957,7 +959,7 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
       else if(q1){pO=q1.o!=null?imp(q1.o)-.02:1-(imp(q1.u)-.02);l0=q1.l;out.mktSrc=q1.src+" one side only";out.mk1=1}}
     else{const C=custOf(i);if(!C.fo){pO=devig(C.o,C.u)[0];l0=C.l;out.mktSrc=C.bk+" "+fmtAm(C.o)+"/"+fmtAm(C.u)}}
     if(pO!=null){const po=shiftP(pO,l0,L,sdFor(st,l0));out.mkt=adj(isOver(best.lbl)?po:1-po)}
-    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,MDx=PROPS[i]&&propModel(PROPS[i],L),po=MDx?MDx.p:pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
+    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,MDx=PROPS[i]&&propModel(PROPS[i],L),po=MDx?MDx.pm+catK(PROPS[i].st)*(MDx.p-MDx.pm):pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
     else{const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}}
     if(k==="c")out.basis=custOf(i).fo?"projection only (no other book)":"market price you entered";
     else{const priced=PROPS[i].q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null);out.basis=out.mk1===2?"market price":out.mk1===1?"one-sided or thin market price":priced?"market price":SUG[i].proj!=null?"blend: 70% book line, 30% projection":"book line only (50/50)"}
@@ -1061,35 +1063,61 @@ function nameOf(key){const k=key[0],i=+key.slice(1);if(k==="c"){const C=custOf(i
 /* a researched spot only stands if tonight's projection picks the same side at the same line */
 function topAgrees(x){if(x.k!=="p")return true;const g=SUG[x.i];if(!g.pt)return true;const w=x.pick.split(" "),side=/^Over/.test(w[0])?"o":"u";return g.s===side&&+w[1]===g.l}
 const topP=x=>x.k==="p"&&SUG[x.i].pt?SUG[x.i].p:x.p;
+/* ================= Top List ranking (reworked Nov 19, 2026) =================
+   Every DraftKings prop Sharpline's backtested model can price is a candidate: one row per player and stat, at the
+   line DraftKings posts (or your book's line and odds when you entered them), on the side the model prefers at the
+   best price available. Each candidate is ranked by expected value after an accuracy adjustment for its category:
+   the season backtest measured, out of sample, how much of the model's move away from DraftKings' price actually
+   showed up in results for each stat (model.json catK), and only that share of the edge is counted.
+   A bet qualifies with that adjusted EV at or above your minimum edge, your confidence filter, a current price,
+   and no injury question on the player. Ranking is by bets, not players: the list fills one prop per player and
+   at most 3 per game first; if slots remain, other games fill in, and a second prop from the same player is only
+   added when its edge is exceptional (2x your minimum and 5%+, High confidence), labeled as correlated.
+   Nothing is added to fill space: if few bets qualify, the list is short and says so. */
+const CAT_K_DEF=.8;
+const catK=st=>{const k=PM_META&&PM_META.catK&&PM_META.catK[st];return k==null?CAT_K_DEF:k};
+const catRec=st=>PM_META&&PM_META.catRec&&PM_META.catRec[st]||null;
+function oppOf(x){const G=SNAP[x.g];if(!G)return"";return nick(x.tm)===nick(G.home)?G.away:G.home}
+function propCand(i){const x=PROPS[i],g=SUG[i],k="p"+i;if(!x||!g||!g.model||YN[x.st]||OUT.has(normN(x.p)))return null;
+  const fresh=freshOf(k);if(fresh.lv==="started")return null;
+  let side=g.s,p=g.p,price=g.bp,line=g.l,mine=false,book="DraftKings";
+  if(hasMine(k)){recHTML(k);const b=recBest[k];if(b&&!b.assumed){side=/^Over/.test(b.lbl)?"o":"u";p=b.p;price=b.o;line=b.L;mine=true;book=BOOK}}
+  if(price==null)return null;
+  /* g.p already counts only the share of the model's move that held up for this category (applyProjections) */
+  const MD=g.model,kk=catK(x.st),pmS=side==="o"?MD.pm:1-MD.pm,pA=p,pRawS=side==="o"?MD.p:1-MD.p;
+  const lbl=(side==="o"?"Over ":"Under ")+line,conf=baseConf(k,lbl,pA,price,line);
+  const q=x.q.find(q=>q.live&&q.l===line)||x.q.find(q=>q.l===line)||{};
+  return{src:mine?"saved":"live",key:k,base:k,ath:normN(x.p),name:x.p,tm:x.tm,opp:oppOf(x),gi:x.g,st:x.st,side,line,price,book,mine,
+    ev:evOf(pA,price),evRaw:line===g.l?evOf(pRawS,price):null,p:pA,pRaw:pRawS,pm:pmS,imp:imp(price),kk,proj:g.proj,conf,fresh,parts:MD.parts,hits:MD.hits,n10:MD.n,
+    inj:x.live&&x.live.lv!=="out"?x.live.txt:null,mates:x.mates,lOpen:q.lOpen??null,oOpen:q.oOpen??null,uOpen:q.uOpen??null,
+    head:`${x.p} ${lbl} ${STAT[x.st]||x.st}`,why:g.why}}
 function topItems(){
-  const items=[];
-  TOP.forEach((x,n)=>{const base=x.k+x.i;if(SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;
-    const lv=topLive(x);if(lv===false)return;const bp=lv?lv.bp:x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);
-    const cond=!lv&&/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(topP(x),price),p:topP(x),price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:lv?`DraftKings ${fmtAm(bp)} now · fair ${fmtAm(toAm(topP(x)))}`:x.cond,why:x.why})});
-  /* the strongest live-priced props (A or S at DraftKings' current price: 4%+ EV and High confidence), best one per player */
-  const have=new Set(items.map(x=>x.base)),bestBy={};
-  PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||have.has(k)||SAVED[k]||hasMine(k)||OUT.has(normN(x.p)))return;const ev=evOf(g.p,g.bp);if(ev<.04)return;
-    const lbl=YN[x.st]?(g.s==="o"?"Over 0.5":"Under 0.5"):(g.s==="o"?"Over ":"Under ")+g.l,conf=baseConf(k,lbl,g.p,g.bp,g.l);if(!conf||conf.lv!=="High")return;
-    const it={src:"live",key:k,base:k,ev,p:g.p,price:g.bp,conf,head:`${x.p} ${YN[x.st]?(g.s==="o"?"Yes":"No")+" "+STAT_LBL[x.st].toLowerCase():propPick(i)}`,cond:`DraftKings ${fmtAm(g.bp)} now · fair ${fmtAm(toAm(g.p))}`,why:g.why};
-    const n=normN(x.p);if(!bestBy[n]||bestBy[n].ev<ev)bestBy[n]=it});
-  Object.values(bestBy).forEach(it=>items.push(it));
-  Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,conf:S.conf,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl+(S.key[0]!=="l"?" "+(STAT[N.stat]||N.stat):""),cond:`Your price: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
-  topItems.verify=[];items.forEach(x=>{x.fresh=freshOf(x.base)});
-  items.forEach(x=>{if(x.ev>0&&!x.assumed&&(x.fresh.lv==="stale"||(x.base[0]==="p"&&PROPS[+x.base.slice(1)].live&&PROPS[+x.base.slice(1)].live.lv==="out")))topItems.verify.push(x)});
-  const ok=items.filter(x=>x.ev>0&&!x.assumed&&x.fresh.lv!=="stale"&&x.fresh.lv!=="started"&&!topItems.verify.includes(x));topItems.hidden=ok.filter(x=>!(x.ev>=SET.minEdge&&passConf(x.conf))).length;
-  return ok.filter(x=>x.ev>=SET.minEdge&&passConf(x.conf)).sort((a,b)=>b.ev-a.ev).slice(0,10)}
-/* Best available props when there are few or no priced edges: the model's strongest sides at DraftKings'
-   current price, one per player, games not started. Labeled as leans with their real (often negative) difference
-   and the price that would make each a 2% edge, so they are never presented as edges. */
-function leanItems(skip,n){const by={};
-  PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||skip.has(k)||SAVED[k]||OUT.has(normN(x.p))||YN[x.st])return;
-    const f=freshOf(k);if(f.lv==="started"||f.lv==="stale")return;if(x.live&&x.live.lv==="out")return;
-    if(!g.model)return; /* only the backtested model ranks here */
-    if(hasMine(k)){recHTML(k);const b=recBest[k];if(!b||b.assumed)return;const nm=normN(x.p);
-      if(!by[nm]||by[nm].ev<b.ev)by[nm]={key:k,base:k,ev:b.ev,p:b.p,price:b.o,mine:1,lbl:b.lbl,fresh:f,head:`${x.p} ${b.lbl} ${STAT[x.st]||x.st}`,need:toAm(b.p/1.02),why:g.why};return}
-    const ev=evOf(g.p,g.bp),nm=normN(x.p);if(g.p<.5)return;
-    if(!by[nm]||by[nm].ev<ev)by[nm]={key:k,base:k,ev,p:g.p,price:g.bp,fresh:f,head:`${x.p} ${propPick(i)}`,need:toAm(g.p/1.02),why:g.why}});
-  return Object.values(by).sort((a,b)=>b.ev-a.ev||b.p-a.p).slice(0,n)}
+  const pool=[];PROPS.forEach((x,i)=>{const c=propCand(i);if(c)pool.push(c)});
+  const have=new Set(pool.map(c=>c.base));
+  /* other sources keep their own numbers: researched spots (game lines, props the model can't price) and your saved finds on custom rows or lines */
+  TOP.forEach((x,n)=>{const base=x.k+x.i;if(have.has(base)||SAVED[base]||!topAgrees(x))return;const E=EDV[base];if(E&&E.a&&E.b)return;
+    const lv=topLive(x);if(lv===false)return;const bp=lv?lv.bp:x.bp!==undefined?x.bp:(x.k==="p"?SUG[x.i].bp:LINES[x.i].bp);if(bp==null||(!lv&&/^only if/i.test(x.cond||"")))return;
+    const N=nameOf(base);have.add(base);pool.push({src:"built",n,key:"t"+n,base,ath:x.k==="p"?normN(N.name):"line:"+base,name:N.name,gi:N.g,st:N.stat,price:bp,book:lv?"DraftKings":"research",ev:evOf(topP(x),bp),p:topP(x),imp:imp(bp),conf:builtConf(x,bp),fresh:freshOf(base),head:x.head,why:x.why})});
+  Object.values(SAVED).forEach(S=>{if(have.has(S.key))return;if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);have.add(S.key);
+    pool.push({src:"saved",key:"f"+S.key,base:S.key,ath:S.key[0]==="l"?"line:"+S.key:normN(N.name),name:N.name,gi:N.g,st:N.stat,price:S.o,book:BOOK,mine:true,ev:S.ev,p:S.p,imp:imp(S.o),conf:S.conf,fresh:freshOf(S.key),head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl+(S.key[0]!=="l"?" "+(STAT[N.stat]||N.stat):""),why:S.why||""})});
+  /* coverage: what was scanned, and why anything couldn't be priced */
+  const live=PROPS.filter(x=>x.lp&&!YN[x.st]),gi=new Set(live.map(x=>x.g));
+  topItems.scan={props:live.length,players:new Set(live.map(x=>normN(x.p))).size,games:gi.size,priced:pool.filter(c=>c.src!=="built"&&c.parts).length,
+    noLog:live.filter(x=>{const P=projOf(x.p);return!P||!P.g10||P.g10.length<3}).length,started:live.filter(x=>started(x.g)).length};
+  topItems.verify=pool.filter(c=>c.ev>=SET.minEdge&&(c.fresh.lv==="stale"||c.inj));
+  const ok=pool.filter(c=>c.ev>0&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj),Q=ok.filter(c=>c.ev>=SET.minEdge&&passConf(c.conf)).sort((a,b)=>b.ev-a.ev);
+  topItems.hidden=ok.filter(c=>c.ev>=SET.minEdge&&!passConf(c.conf)).length;
+  const MAX=10,cap=SET.perPlayer==="1x"?1:+SET.perPlayer||1,gcap=+SET.perGame||99,out=[],nP={},nG={},taken=new Set();
+  const add=c=>{out.push(c);taken.add(c.base);nP[c.ath]=(nP[c.ath]||0)+1;nG[c.gi]=(nG[c.gi]||0)+1};
+  for(const c of Q){if(out.length>=MAX)break;if((nP[c.ath]||0)>=cap||(nG[c.gi]||0)>=gcap)continue;add(c)}
+  for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap)continue;add(c)}
+  if(SET.perPlayer==="1")for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base))continue;
+    if(c.ev>=Math.max(.05,2*SET.minEdge)&&c.conf&&c.conf.lv==="High"){const first=out.find(o=>o.ath===c.ath);c.corr=first?first.head:null;add(c)}}
+  /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
+  const shown=new Set(out.map(c=>c.ath));topItems.watch=out.length>=5?[]:ok.concat(pool.filter(c=>c.ev<=0&&c.ev>-.03&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj&&c.parts))
+    .filter(c=>!taken.has(c.base)&&c.parts).sort((a,b)=>b.ev-a.ev).filter(c=>!shown.has(c.ath)&&(shown.add(c.ath),true)).slice(0,Math.min(5,8-out.length));
+  topItems.qualified=Q.length;
+  return out}
 function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
   const best={lbl,p:x.p,o:price,L:parseFloat(w[1]),push:0};return confFor(base,best,threeNums(base,best,m,true),false)}catch(e){return null}}
 /* board spots with no posted price: shown as a watch list, never ranked on a guessed -110 */
@@ -1348,7 +1376,7 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   if(pt.yn){const q=x.q.find(q=>q.o!=null);if(q&&pt.mMarket!=null)pO=Math.min(pt.mMarket+.07,Math.max(pt.mMarket-.07,pO))}
   const MD=pt.yn?null:propModel(x,g.l);g.model=MD;
   const bestAt=side=>{const lv=x.q.some(q=>q.live&&q.l===g.l&&(side==="o"?q.o:q.u)!=null);const pr=x.q.filter(q=>q.l===g.l&&(!lv||q.live)).map(q=>side==="o"?q.o:q.u).filter(v=>v!=null);return pr.length?pr.reduce((b,o)=>dec(o)>dec(b)?o:b,pr[0]):null};
-  let so;if(MD){pO=MD.p;g.capped=false;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}else so=pt.yn?pO>=.5:raw>=.5;
+  let so;if(MD){pO=MD.pm+catK(x.st)*(MD.p-MD.pm);MD.pAdj=pO;g.capped=false;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}else so=pt.yn?pO>=.5:raw>=.5;
   g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
   /* best posted price for the chosen side at this line */
   /* when DraftKings has a live price at this line, research prices from earlier in the day are out of date */
@@ -1361,6 +1389,7 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   if(MD){const sg2=v=>(v>0?"+":"−")+Math.abs(v*100).toFixed(1);
     g.why=`DraftKings' no-vig price makes Over ${g.l} ${pct1(MD.pm)}. Sharpline's model moves that to ${pct1(MD.p)}`+(MD.parts.length?`: ${MD.parts.slice(0,4).map(([v,t])=>`${t} (${sg2(v)})`).join("; ")}.`:".")+
+      (Math.abs(MD.pAdj-MD.p)>=.001?` Only ${Math.round(catK(x.st)*100)}% of that move is counted for ${STAT_LBL[x.st]||x.st}, the share that held up in the season backtest, so Over is ${pct1(MD.pAdj)}.`:"")+
       ` That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}. Averages-based projection: ${pt.m}.`+(g.why0?` Morning research said: ${g.why0}`:"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
     (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(g.p<.5?` DraftKings leans the other way, so this side only pays off at a long enough price (${fmtAm(toAm(g.p))} or better).`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
@@ -1504,6 +1533,9 @@ function renderSettings(){const sel=(id,opts,v)=>`<select id="${id}">${opts.map(
   <div class="sgp"><label>Your sportsbook</label><input id="setBook" value="${BOOK.replace(/"/g,"&quot;")}" placeholder="Fliff"><div class="sh">Used in labels like "Enter ${poss(BOOK)} odds". Grading works the same for any book.</div></div>
   <div class="sgp"><label>Top List: minimum edge</label>${sel("setEdge",[[.01,"1%"],[.02,"2% (default)"],[.03,"3%"],[.04,"4%"],[.06,"6%"]],SET.minEdge)}
     <div class="sh">Only bets with at least this expected return show on the Top List and get auto-added from scans.</div></div>
+  <div class="sgp"><label>Top List: props per player</label>${sel("setPP",[["1","One, unless a second is exceptional (default)"],["1x","One, strictly"],["2","Up to two"],["3","Up to three"]],SET.perPlayer)}
+    <div class="sh">Props from the same player tend to win or lose together, so the list spreads across players first.</div></div>
+  <div class="sgp"><label>Top List: bets per game before others fill in</label>${sel("setPG",[["2","2"],["3","3 (default)"],["4","4"],["99","No limit"]],SET.perGame)}</div>
   <div class="sgp"><label>Top List: minimum confidence</label>${sel("setConf",[["Any","Any"],["Medium","Medium or High"],["High","High only"]],SET.minConf)}
     <div class="sh">These are your filters. They hide bets but never change Sharpline's grade, edge or confidence.</div></div>
   <div class="sgp"><label>Default stake for tracked bets ($)</label><input id="setUnit" type="number" inputmode="decimal" value="${UNIT}"><div class="sh">Flat stakes. Sharpline never raises your stake after a loss.</div></div>
@@ -1513,40 +1545,45 @@ function renderSettings(){const sel=(id,opts,v)=>`<select id="${id}">${opts.map(
     <div class="sh">${window.SLSync&&SLSync.state.user?"Tracked bets and settings sync to your account and stay on this phone.":"Everything is stored on this phone."} Screenshots are read on the phone and never saved or uploaded.</div></div>
   <div class="sgp"><label>About the numbers</label><div class="sh" style="font-size:12.5px">Game lines and player props come live from DraftKings (through ESPN's free feeds) every few minutes, for every player DraftKings posts. Season and last-10 averages come from each player's ESPN game log. A research pass about every hour adds other books, prediction markets and injury notes. Board research updated ${SNAP_TIME}. Grades: S 8%+ expected return (at most 3 a night), A 3%+, B 1%+, C about break-even, D and F mean the posted price is worse than fair. Estimates are estimates, not guarantees, and Pass is a normal answer. For 21+ only where legal. If betting stops being fun, call or text 1-800-GAMBLER.</div></div>`}
 function saveSettings(){const v=id=>document.getElementById(id).value;
-  BOOK=(v("setBook").trim()||"Fliff").slice(0,24);SET.book=BOOK;SET.minEdge=+v("setEdge");SET.minConf=v("setConf");const u=+v("setUnit");if(u>0){UNIT=u;LS.set("sl_unit",UNIT)}
+  BOOK=(v("setBook").trim()||"Fliff").slice(0,24);SET.book=BOOK;SET.minEdge=+v("setEdge");SET.minConf=v("setConf");SET.perPlayer=v("setPP");SET.perGame=v("setPG");const u=+v("setUnit");if(u>0){UNIT=u;LS.set("sl_unit",UNIT)}
   LS.set("sl_set",SET);Object.keys(SAVED).forEach(k=>syncFind(k));document.getElementById("setSheet").classList.remove("on");renderAll();toast("Settings saved")}
 
 /* ---------- top list ---------- */
+function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!=="l",sgn=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+  const tm=x.tm?team(x.tm)[0]:"",op=x.opp?team(x.opp)[0]:"",home=G&&x.tm&&nick(x.tm)===nick(G.home);
+  const sub=isProp&&tm?`${tm} ${home?"vs":"@"} ${op} · ${STAT_LBL[x.st]||x.st} · ${tipT(G)}`:`${G?mu(G)+" · "+tipT(G):""}`;
+  const cell=(k,v,c)=>`<div class="st"><div class="k">${k}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div></div>`;
+  const rec=x.st&&catRec(x.st),mv=x.lOpen!=null&&x.line!=null&&x.lOpen!==x.line?`Line opened ${x.lOpen}, now ${x.line}.`:x.oOpen!=null&&x.side?`Price opened ${fmtAm(x.side==="o"?x.oOpen:x.uOpen)}, now ${fmtAm(x.side==="o"?x.price:x.price)}${x.mine?" at DraftKings":""}.`:"";
+  const det=x.parts?`<details class="tdet"><summary>Why Sharpline rates it</summary>
+      <p>${esc2(x.why)}</p>
+      <ul>
+        <li><b>Edge:</b> ${x.evRaw!=null?`the model's raw chance is ${pct1(x.pRaw)} (${sgn(x.evRaw)} EV at ${fmtAm(x.price)}). `:""}In the season backtest, ${Math.round(x.kk*100)}% of the model's moves away from DraftKings' price held up for ${STAT_LBL[x.st]||x.st}, so only that share is counted: ${pct1(x.p)} to win, ${sgn(x.ev)} EV.</li>
+        ${rec&&rec.n?`<li><b>${STAT_LBL[x.st]||x.st} track record:</b> the model's 2%+ EV picks in this category went ${Math.round(rec.hit*100)}% over ${rec.n} out-of-sample bets (${sgn(rec.roi)} ROI). Small sample.</li>`:""}
+        <li><b>Price:</b> ${x.mine?`your ${BOOK} odds ${fmtAm(x.price)}`:`DraftKings ${fmtAm(x.price)}, the best price posted for this side`}; it implies ${pct1(x.imp)} with the vig. ${mv}</li>
+        ${x.hits!=null?`<li><b>Recent form:</b> cleared ${x.line} in ${x.hits} of his last ${x.n10}.</li>`:""}
+        ${x.mates?`<li><b>Lineup:</b> ${esc2(x.mates.join(", "))} out tonight.</li>`:""}
+        <li><b>Freshness:</b> ${esc2(x.fresh.txt)}.</li>
+        ${x.corr?`<li><b>Same player:</b> also listed as ${esc2(x.corr)}. These tend to win or lose together.</li>`:""}
+      </ul></details>`:`<div class="why"><b style="color:var(--ink)">Why:</b> ${x.why||""}</div>`;
+  return`<div class="top${watch?" lean":""}" data-key="${x.key}"><div class="rank">${n}</div>${freshTag(x.fresh)}
+    <div class="kind">${gradeTag(gradeNow(x.base),"md")} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
+    <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${esc2(x.head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${esc2(sub)}</div></div></div>
+    <div style="margin-top:10px"><span class="pick n">${watch?`${x.book} ${fmtAm(x.price)} now · worth it at ${fmtAm(toAm(x.p/(1+Math.max(SET.minEdge,.005))))} or better`:`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
+    <div class="stats">${cell("Sharpline",pct(x.p))}${cell("Price implies",pct(x.imp))}${cell("Expected value",sgn(x.ev),x.ev>=0?"var(--over)":"var(--under)")}</div>
+    <div class="stats s2">${cell("Projection",x.proj!=null?x.proj:"–")}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
+    ${det}
+    <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"&&SAVED[x.base]?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}
 function renderTop(){
   const prevPos={};document.querySelectorAll("#topList .top[data-key]").forEach(el=>prevPos[el.dataset.key]=el.getBoundingClientRect().top);
-  const items=topItems();
-  document.getElementById("topList").innerHTML=items.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];
-    const d=x.src==="built"?(TOP[x.n].k==="p"?SUG[TOP[x.n].i]:LINES[TOP[x.n].i]):null;
-    return`<div class="top" data-key="${x.key}"><div class="rank">${n+1}</div>${freshTag(x.fresh)}
-      <div class="kind">${gradeTag(gradeNow(x.base),"md")} ${confTag(x.conf)} ${N.stat==="Moneyline"||N.stat==="Spread"||N.stat==="Total"?"Game line · "+N.stat:"Prop · "+N.stat} ${x.src==="saved"?'<span class="mine">Your find</span>':""}</div>
-      <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
-      <div style="margin-top:10px"><span class="pick ${x.src==="saved"?"o":"n"}">${x.cond}</span></div>
-      <div class="stats"><div class="st"><div class="k">Difference</div><div class="v" style="color:var(--over)">+${(x.ev*100).toFixed(1)}%</div></div>
-        <div class="st"><div class="k">Line gap</div><div class="v">${x.gap&&x.gap.d>0?"+"+x.gap.d+" pt":"–"}</div></div>
-        <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
-      <div class="why"><b style="color:var(--ink)">Why take it:</b> ${x.why}${x.assumed?" Difference shown assumes -110.":""}</div>
-      <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("");
-  {const L=items.length<5?leanItems(new Set(items.map(x=>x.base)),8-items.length):[];
-   if(!items.length&&!L.length)document.getElementById("topList").innerHTML=`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
-   if(L.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:${items.length?22:4}px 4px 8px">${items.length?"More to consider":"Best available tonight"}</div>
-    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player. In the season backtest, edges under 4% at DraftKings didn't reliably hold up, so a positive number below that is lower confidence. The rest aren't an edge at DraftKings yet; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
-    ${L.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];return`<div class="top lean" data-key="${x.key}"><div class="rank">${items.length+n+1}</div>${freshTag(x.fresh)}
-      <div class="kind">${gradeTag(gradeNow(x.base),"md")} <span class="lean-tag">${x.ev>=.02?"Lower confidence":"Lean"}</span> Prop · ${N.stat}</div>
-      <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
-      <div style="margin-top:10px"><span class="pick n">${x.mine?`${poss(BOOK)} ${x.lbl} at ${fmtAm(x.price)} (your odds) · fair ${fmtAm(toAm(x.p))}`:x.ev>=.02?`DraftKings ${fmtAm(x.price)} now · fair ${fmtAm(toAm(x.p))}`:`DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better`}</span></div>
-      <div class="stats"><div class="st"><div class="k">Model chance</div><div class="v">${Math.round(x.p*100)}%</div></div>
-        <div class="st"><div class="k">${x.mine?"At "+BOOK:"At DraftKings"}</div><div class="v" style="color:${x.ev>=0?"var(--over)":"var(--under)"}">${x.ev>=0?"+":""}${(x.ev*100).toFixed(1)}%</div></div>
-        <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
-      <div class="why"><b style="color:var(--ink)">Why:</b> ${x.why}</div>
-      <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}</div></div>`}).join("")}`)}
-  if(topItems.verify&&topItems.verify.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>{const N=nameOf(x.base);
-    return`<div class="vrow"><div><b>${x.head}</b><div class="sub">${x.base[0]==="p"&&PROPS[+x.base.slice(1)].live?PROPS[+x.base.slice(1)].live.txt:`Showed ${(x.ev*100).toFixed(1)}% when lines were checked at ${clock(boardTs())}. Prices may have moved since.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`}).join("")}</div>`);
-  if(topItems.hidden)document.getElementById("topList").insertAdjacentHTML("afterbegin",`<div class="hint" style="margin:0 4px 12px">${topItems.hidden} positive-edge bet${topItems.hidden===1?" is":"s are"} hidden by your settings (edge ${(SET.minEdge*100).toFixed(0)}%+${SET.minConf!=="Any"?", "+SET.minConf+" confidence+":""}). Their grades don't change. <button class="lnk" data-settings="1">Settings</button></div>`);
+  const items=topItems(),WL=topItems.watch||[],S=topItems.scan||{},box=document.getElementById("topList");
+  const scanTxt=S.props?`Scanned ${S.props} DraftKings props from ${S.players} players in ${S.games} game${S.games===1?"":"s"}. ${S.priced} priced by the model${S.noLog?`; ${S.noLog} not, because the player has fewer than 3 games or his game log hasn't loaded yet`:""}${S.started?`; ${S.started} in games that have started`:""}.`:"";
+  const head=`<div class="hint tscan">${scanTxt} ${items.length?`${topItems.qualified} bet${topItems.qualified===1?"":"s"} cleared ${(SET.minEdge*100).toFixed(0)}% expected value after the accuracy adjustment; showing the best ${items.length}, ${SET.perPlayer==="1x"?"one per player":SET.perPlayer==="1"?"one per player unless a second is exceptional":"up to "+SET.perPlayer+" per player"}.`:""}</div>`;
+  box.innerHTML=head+items.map((x,n)=>topCard(x,n+1,false)).join("");
+  if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets.${WL.length?" Closest to qualifying, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
+  if(!items.length&&!WL.length&&!S.props)box.innerHTML=`<div class="empty"><b>No priced props yet</b>DraftKings posts player props through the day. Scan screenshots or enter a book's odds meanwhile.</div>`;
+  if(topItems.verify&&topItems.verify.length)box.insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>
+    `<div class="vrow"><div><b>${esc2(x.head)}</b><div class="sub">${x.inj?esc2(x.inj):`Price from ${esc2(x.fresh.txt.toLowerCase())}. It may have moved.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`).join("")}</div>`);
+  if(topItems.hidden)box.insertAdjacentHTML("afterbegin",`<div class="hint" style="margin:0 4px 12px">${topItems.hidden} qualifying bet${topItems.hidden===1?" is":"s are"} hidden by your confidence filter. <button class="lnk" data-settings="1">Settings</button></div>`);
   renderDash();
   document.querySelectorAll("#topList .top[data-key]").forEach(el=>{const y0=prevPos[el.dataset.key];if(y0==null){if(Object.keys(prevPos).length)el.classList.add("enter");return}
     const dy=y0-el.getBoundingClientRect().top;if(Math.abs(dy)>2){el.style.transform=`translateY(${dy}px)`;el.style.transition="none";requestAnimationFrame(()=>{el.style.transition="transform .38s cubic-bezier(.2,.7,.2,1)";el.style.transform=""})}});
@@ -1658,6 +1695,7 @@ function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.t
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));window.scrollTo({top:0});
   if(v==="live"&&window.LiveUI){LiveUI.start();LiveUI.render();LiveUI.poll(true)}}
 document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.closest("[data-grade]"))return;if(e.target.closest(".ed input")||e.target.closest(".addp input,.addp select")||e.target.closest(".det input"))return;
+  {const tc=e.target.closest("#topList .top");if(tc&&!e.target.closest("button,a,input,details,[data-prof],.face")){const d=tc.querySelector("details.tdet");if(d){d.open=!d.open;return}}}
   const sb=e.target.closest("[data-sgn]");if(sb){const[k,f]=sb.dataset.sgn.split("|"),cur=sgnOf(k,f),nx=cur==="-"?"+":"-";(EDV[k]=EDV[k]||{})["s"+f]=nx;LS.set("sl_edv",EDV);sb.textContent=nx==="-"?"−":"+";sb.className="sgn "+(nx==="-"?"m":"p");updRec(k);syncLater(k);return}const jp=e.target.closest("[data-jump]");if(jp){jumpTo(jp.dataset.jump);return}
   if(e.target.closest("[data-oddsclose]")&&!e.target.closest("#oddsBody")){closeOdds();return}
   if(e.target.closest("[data-oddsclear]")){if(ODDS_KEY){const k=ODDS_KEY;["L","a","b"].forEach(f=>{if(EDV[k])delete EDV[k][f]});LS.set("sl_edv",EDV);openOdds(k);syncFind(k);renderTop();toast("Cleared. Back to DraftKings' price")}return}

@@ -19,11 +19,19 @@ const pred=(w,r)=>sg(w[0]+names.reduce((a,k,j)=>a+w[j+1]*F[k](r),0));
 function bets(list,f,thr){let n=0,pl=0,win=0;list.forEach(r=>{const p=f(r),eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)<thr)return;const W=side==="o"?r.over:1-r.over;n++;win+=W;pl+=W?dec(side==="o"?r.o:r.u)-1:-1});
   return{n,hit:n?+(win/n).toFixed(3):null,roi:n?+(pl/n).toFixed(3):null}}
 const dates=[...new Set(S.map(r=>r.d))].sort(),mid=dates[Math.floor(dates.length/2)];
+/* per prop category, out of sample: how much of the model's move away from DraftKings' price actually showed up in results (k),
+   and how the model's 2%+ EV picks did. Both halves are scored by a model fit on the other half. */
+const acc={};
 const test=[[r=>r.d<mid,r=>r.d>=mid,"first half → second half"],[r=>r.d>=mid,r=>r.d<mid,"second half → first half"]].map(([a,b,lbl])=>{const w=fit(S.filter(a)),te=S.filter(b);
+  te.filter(r=>!r.snap).forEach(r=>{const p=pred(w,r),A=acc[r.st]=acc[r.st]||{num:0,den:0,n:0,win:0,pl:0};const d=p-r.pm;A.num+=d*(r.over-r.pm);A.den+=d*d;
+    const eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)>=.02){const W=side==="o"?r.over:1-r.over;A.n++;A.win+=W;A.pl+=W?dec(side==="o"?r.o:r.u)-1:-1}});
   return{split:lbl,ev2:bets(te,r=>pred(w,r),.02),ev4:bets(te,r=>pred(w,r),.04)}});
+/* k is pulled halfway toward 0.8 because one month per category is a small sample, and never above 1 (results never inflate an edge) */
+const catK={},catRec={};Object.entries(acc).forEach(([st,A])=>{const raw=A.den?A.num/A.den:.8;catK[st]=+Math.max(.3,Math.min(1,.5*raw+.4)).toFixed(3);
+  catRec[st]={n:A.n,hit:A.n?+(A.win/A.n).toFixed(3):null,roi:A.n?+(A.pl/A.n).toFixed(3):null,raw:+raw.toFixed(3)}});
 /* the old app model for comparison: every pick it rated 3%+ EV at the closing price */
 const W=fit(S);
 const out={updated:new Date().toISOString(),games:games.length,lines:base.length,through:dates.at(-1),split:mid,
-  weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
+  catK,catRec,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
   overs:{n:base.length,hit:+(base.filter(r=>r.over).length/base.length).toFixed(3),fair:+(base.reduce((a,r)=>a+r.pm,0)/base.length).toFixed(3)}};
 fs.writeFileSync(OUT,JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1));
