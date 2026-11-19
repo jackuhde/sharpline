@@ -416,7 +416,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 /* tracker */
 .bn{display:block;font:700 11px Archivo;color:var(--acc2);margin-top:3px}
 .tsum .hint{font:600 12.5px/1.5 Archivo;color:var(--mute)}
-@media (max-width:440px){.hd .when{display:none!important}.hd .scanbtn{margin-left:auto!important}body .hd .sport+.when+.scanbtn,body .hd .sport~.scanbtn{margin-left:8px!important}}
+@media (max-width:600px){.hd .when{display:none!important}}@media (max-width:440px){.hd .when{display:none!important}.hd .scanbtn{margin-left:auto!important}body .hd .sport+.when+.scanbtn,body .hd .sport~.scanbtn{margin-left:8px!important}}
 .gear{margin-left:6px;width:36px;height:36px;border-radius:12px;background:var(--s2);border:1px solid var(--line2);display:grid;place-items:center;flex:none}
 .gear svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .dash{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
@@ -838,7 +838,7 @@ html,body{overscroll-behavior-y:none}
 
   <section class="view" id="v-lines">
     <div class="ph"><div class="eyebrow">Game lines</div><h1>Spreads, Totals, Moneylines</h1>
-      <p>Live DraftKings prices through ESPN<span class="nba-t">, checked against prediction markets where available</span>.</p></div>
+      <p>Live DraftKings prices through ESPN<span class="nba-t">, checked against prediction markets where available.</span><span class="nfl-t">, with each side's no-vig fair chance and opening number.</span></p></div>
     <details class="gcard xp" style="padding:14px"><summary class="eyebrow">Expert check · no influence today</summary>
       <p style="color:var(--mute);font:600 12.5px/1.55 Archivo;margin-top:6px">Outside picks move Sharpline's numbers only with a record graded at the prices the expert actually posted, time-stamped before the game. The weight grows with sample size, ROI measured against its own noise, closing-line value, recency and quarter-to-quarter consistency, and is capped at 15% so the market price always leads. Win rate alone counts for nothing, because 65% on heavy favorites can still lose money. Under 200 graded picks, a losing record, or no closing-line value means zero weight.</p>
       <div class="qrow"><span><b>Published picks (SportsLine, Covers, Dimers, Action and others)</b></span><span>0%</span></div>
@@ -901,7 +901,7 @@ html,body{overscroll-behavior-y:none}
 <script src="tracker2.js?v=1795900001"></script>
 <script src="recs.js?v=1795800001"></script>
 <script src="livegame.js?v=1795900001"></script>
-<script src="nfl.js?v=1795900002"></script>
+<script src="nfl.js?v=1795900003"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
