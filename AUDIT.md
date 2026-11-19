@@ -170,3 +170,8 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - Your bets (win %, straight vs parlay, profit, ROI, units, parlays by size, leg accuracy) are reported separately from Sharpline's prop predictions (every priced pregame prop the app rated, logged until tip and graded after the final: accuracy by stat, grade, probability bucket with expected vs actual, and by day). Pushes are excluded from accuracy. The prediction log only covers games this phone had loaded before tip.
 - Opponent vs position: built nightly by .github/workflows/dvp.yml from ESPN box scores (scripts/build-dvp.mjs → dvp.json). ESPN labels positions only G, F, C. Season and last-10 per-game totals allowed, league average, rank (1st = allows most). Context only; not added to projections.
 - Layout: content up to 1360px on desktop with two- and three-column grids for Top List, Lines, Props rows, Live cards and live props; tighter padding and larger touch targets on phones.
+
+## Nov 18, evening
+- Opponent vs position now counts only each team's five starters (ESPN box score `starter` flag), grouped by ESPN's G/F/C label. The build script refetches every game when its cache version changes.
+- Open tracked bets in an in-progress game show Sharpline's live chance to win, refreshed with every live poll (20s). Same-line DraftKings market: blended 35/65 with its no-vig price. Other lines: model alone, labeled. Parlays: product of pending legs when not same-game; same-game parlays get per-leg chances only. Live chances are not yet graded for calibration.
+- Live polling now runs on every tab whenever a game is in progress (was: only the Live tab or an open game). Pregame props cache cut from 8 to 2 minutes.
