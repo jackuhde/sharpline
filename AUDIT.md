@@ -57,3 +57,45 @@ The threshold was not lowered and the list was not padded.
 - One book. Real line shopping needs a paid odds API (none set up; not added without approval).
 - About one month of graded data. Steals and blocks samples are too small to trust.
 - NBA only.
+
+## NFL (added Nov 19 2026)
+
+**What the free feeds have.** ESPN's free NFL feeds provide:
+- weekly schedule with real game status, bye teams, records, and playoffs
+- DraftKings moneyline, spread and total, with opening numbers
+- every DraftKings player-prop line: passing, rushing, receiving, kicking, defense, anytime/first/2+ TD
+- team totals, halves and quarters
+- the injury report with dates
+- live and final box scores, including targets
+- live situation: possession, down and distance, field position, red zone
+- rosters and positions
+
+**What they don't have.** These are all missing, and nothing claims to use them:
+- prices on NFL props (lines only)
+- live in-game NFL odds
+- snap counts, air yards, aDOT, pressure rate, offensive-line grades
+- weather
+
+**Model (nfl-model.js).** The projection combines:
+- usage, weighted toward recent games
+- a shrink toward the posted line when the sample is small
+- the opponent's allowance to the player's position, shrunk by games played
+- a mild game-script adjustment from the spread and total
+
+It uses lognormal distributions for yards, Poisson for small counts, and normal for volume. A per-stat shrink factor is fitted out of sample.
+
+**Backtest (scripts/nfl-backtest.mjs).** It was run against 7,785 DraftKings prop lines that ESPN kept from 150 games this season. Each game is predicted from earlier games only, and each half of the season is scored by a k fitted on the other half.
+- Passing TDs: right side 57.7% of 130 picks.
+- Longest rush: 57.4% of 336.
+- Rush+rec yards: 60.2% of 133.
+- Passing yards, completions, attempts, rushing yards, receiving yards and receptions: no edge (k at or near 0), so they show "No lean".
+- Opponent and game-script adjustments made no measurable difference overall. They are kept but labeled.
+- Only stats at 54%+ on 100+ picks can reach the NFL Top List.
+
+**Why the NFL Top List needs prices.** No prices means no EV. Picks need a price you enter or scan before they rank. Until then, "Worth price-checking" shows the strongest trusted sides with the fair price.
+
+**Game lines.** These are shown at DraftKings with the no-vig fair chance. There is no team model, so there is no claimed edge.
+
+**Live.** Live uses ESPN's official status. In-game chances for tracked NFL bets come from the box score, time left and the pregame line. They are model only and not yet calibrated.
+
+**Data job.** Every 3 hours, .github/workflows/nfl.yml rebuilds data/nfl and reruns the backtest.
