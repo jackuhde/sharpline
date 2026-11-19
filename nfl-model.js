@@ -78,7 +78,9 @@ function project(I,id,st,ctx,DEF){const M=STATS[st];if(!M)return null;const pos=
   m=m*fo*fg;
   const cv=sd&&mean?Math.max(.5*(M.cv||.4),Math.min(1.6*(M.cv||.4),(used.length*(sd/mean)+4*(M.cv||.4))/(used.length+4))):(M.cv||.4);
   let pOver=null;
-  if(M.yn)pOver=1-Math.exp(-Math.max(.01,m));
+  /* touchdowns: no posted line to anchor to, so the rate is shrunk toward a typical rate for the position
+     (about 4 games' weight) and the chance is capped; anytime-TD chances are not backtested */
+  if(M.yn){const prior={RB:.38,WR:.3,TE:.2,QB:.1}[pos]||.15;const lam=(Math.min(used.length,10)*m+4*prior*fo*fg)/(Math.min(used.length,10)+4);m=lam;pOver=Math.min(.65,1-Math.exp(-Math.max(.01,lam)));parts.push(`touchdown rate shrunk toward a typical ${pos} (${prior}/game)`)}
   else if(L!=null){if(M.d==="pois")pOver=1-poisCdf(Math.floor(L),Math.max(.05,m));
     else if(M.d==="logn"){if(m<=0)pOver=0;else{const s2=Math.log(1+cv*cv),mu=Math.log(m)-s2/2;pOver=L<=0?1:1-Phi((Math.log(L)-mu)/Math.sqrt(s2))}}
     else pOver=1-Phi((L-m)/Math.max(.5,cv*m))}

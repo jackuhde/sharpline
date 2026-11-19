@@ -48,8 +48,12 @@ function parseEvent(e){const c=e.competitions[0],st=c.status.type,cs=c.competito
   const tm=x=>({id:x.team.id,ab:x.team.abbreviation,name:x.team.displayName,short:x.team.shortDisplayName,score:+x.score||0,rec:(x.records||[])[0]&&x.records[0].summary,color:"#"+(x.team.color||"444"),alt:"#"+(x.team.alternateColor||"888")});
   let odds=null;if(o){const ao=o.awayTeamOdds||{},ho=o.homeTeamOdds||{},m=String(o.details||"").match(/^([A-Z]{2,4})\s+([+-]?\d+(\.\d)?)$/);
     const hsp=m?(m[1]===H.team.abbreviation?+m[2]:-m[2]):/^(EVEN|PK)/i.test(o.details||"")?0:null;
-    odds={book:(o.provider&&o.provider.name)||"DraftKings",spread:hsp,total:num(o.overUnder),mlH:num(ho.moneyLine),mlA:num(ao.moneyLine),spH:num(ho.spreadOdds),spA:num(ao.spreadOdds),ov:num(o.overOdds),un:num(o.underOdds),
-      openSpread:o.open&&o.open.pointSpread?null:null}}
+    /* the scoreboard keeps prices under moneyline/pointSpread/total with open and close; the core odds feed uses team objects */
+    const cl=x=>(x&&(x.close||x.current))||{},op=x=>(x&&x.open)||{},ml=o.moneyline||{},ps=o.pointSpread||{},tt=o.total||{};
+    odds={book:(o.provider&&(o.provider.displayName||o.provider.name))||"DraftKings",spread:hsp??num(cl(ps.home).line),total:num(o.overUnder)??num(cl(tt.over).line),
+      mlH:num(cl(ml.home).odds)??num(ho.moneyLine),mlA:num(cl(ml.away).odds)??num(ao.moneyLine),spH:num(cl(ps.home).odds)??num(ho.spreadOdds),spA:num(cl(ps.away).odds)??num(ao.spreadOdds),
+      ov:num(cl(tt.over).odds)??num(o.overOdds),un:num(cl(tt.under).odds)??num(o.underOdds),
+      openSpread:num(op(ps.home).line),openTotal:num(op(tt.over).line),openMlH:num(op(ml.home).odds),openMlA:num(op(ml.away).odds)}}
   const sit=c.situation||null;
   return{id:e.id,date:e.date,state:st.state,completed:!!st.completed,detail:st.shortDetail||st.detail||"",name:st.name,period:+(c.status.period||0),clock:c.status.displayClock||"",clockSec:num(c.status.clock),
     home:tm(H),away:tm(A),odds,sit:sit&&{poss:sit.possession,dd:sit.downDistanceText||sit.shortDownDistanceText||"",yl:sit.possessionText||"",rz:!!sit.isRedZone,last:sit.lastPlay&&sit.lastPlay.text},
@@ -101,9 +105,9 @@ function allProps(){const out=[];N.events.forEach(e=>{const P=N.props[e.id];if(!
 
 /* ---------- game lines ---------- */
 function gameMarkets(e){const o=e.odds;if(!o)return[];const out=[];const dv=(a,b)=>a!=null&&b!=null?RK.devig(a,b):null;
-  const ml=dv(o.mlA,o.mlH);out.push({k:"ml",lbl:"Moneyline",a:{t:e.away,line:null,price:o.mlA,fair:ml&&ml[0]},b:{t:e.home,line:null,price:o.mlH,fair:ml&&ml[1]}});
-  const sp=dv(o.spA,o.spH);if(o.spread!=null)out.push({k:"sp",lbl:"Spread",a:{t:e.away,line:-o.spread,price:o.spA,fair:sp&&sp[0]},b:{t:e.home,line:o.spread,price:o.spH,fair:sp&&sp[1]}});
-  const tt=dv(o.ov,o.un);if(o.total!=null)out.push({k:"tot",lbl:"Total",a:{t:null,side:"o",line:o.total,price:o.ov,fair:tt&&tt[0]},b:{t:null,side:"u",line:o.total,price:o.un,fair:tt&&tt[1]}});
+  const ml=dv(o.mlA,o.mlH);out.push({k:"ml",lbl:"Moneyline",a:{t:e.away,line:null,price:o.mlA,fair:ml&&ml[0],open:o.openMlA},b:{t:e.home,line:null,price:o.mlH,fair:ml&&ml[1],open:o.openMlH}});
+  const sp=dv(o.spA,o.spH);if(o.spread!=null)out.push({k:"sp",lbl:"Spread",a:{t:e.away,line:-o.spread,price:o.spA,fair:sp&&sp[0],open:o.openSpread!=null?-o.openSpread:null},b:{t:e.home,line:o.spread,price:o.spH,fair:sp&&sp[1],open:o.openSpread}});
+  const tt=dv(o.ov,o.un);if(o.total!=null)out.push({k:"tot",lbl:"Total",a:{t:null,side:"o",line:o.total,price:o.ov,fair:tt&&tt[0],open:o.openTotal},b:{t:null,side:"u",line:o.total,price:o.un,fair:tt&&tt[1],open:o.openTotal}});
   return out}
 
 /* ---------- tracking and parlays (shared tracker) ---------- */
@@ -210,7 +214,7 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
 
 function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g);const f=N.f;
   let rows=L.filter(x=>(f.pos==="all"||x.pos===f.pos)&&(f.st==="all"||x.st===f.st)&&(!f.q||(x.name+" "+T(x.tid)[0]+" "+T(x.tid)[1]).toLowerCase().includes(f.q.toLowerCase()))&&(f.side==="all"||x.side===f.side||f.side==="priced"&&x.price!=null));
-  const so={gap:(a,b)=>(b.p??-1)-(a.p??-1),ev:(a,b)=>(b.ev??-9)-(a.ev??-9),line:(a,b)=>b.l-a.l,name:(a,b)=>a.name.localeCompare(b.name),stat:(a,b)=>STAT_ORDER.indexOf(a.st)-STAT_ORDER.indexOf(b.st)||(b.p??0)-(a.p??0)}[f.sort]||(()=>0);rows.sort(so);
+  const so={gap:(a,b)=>(trusted(b.st)?1:0)-(trusted(a.st)?1:0)||(b.p??-1)-(a.p??-1),ev:(a,b)=>(b.ev??-9)-(a.ev??-9),line:(a,b)=>b.l-a.l,name:(a,b)=>a.name.localeCompare(b.name),stat:(a,b)=>STAT_ORDER.indexOf(a.st)-STAT_ORDER.indexOf(b.st)||(b.p??0)-(a.p??0)}[f.sort]||(()=>0);rows.sort(so);
   const stats=STAT_ORDER.filter(s=>L.some(x=>x.st===s)),games=N.events;
   const ld=N.events.filter(e=>e.state==="pre"&&!N.props[e.id]).length;
   const row=x=>{const isY=x.yn;return`<div class="nf-tr" data-nfrow="${h(x.key)}"><div class="c-pl">${jersey(x.id,"sm")}<div><span class="nf-name" data-nfprof="${x.id}">${h(x.name)}</span>${x.inj?` <span class="inj inj-${x.inj.lv==="out"?"out":x.inj.lv==="doubt"?"doubt":"quest"}">${h(x.inj.st)}</span>`:""}<small>${h(x.posL)} · ${h(T(x.tid)[0])}${x.c?` ${x.c.side==="home"?"vs":"@"} ${h(T(x.c.opp)[0])}`:""}</small></div></div>
@@ -223,7 +227,7 @@ function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g)
     <div class="chiprow"><button class="chip ${f.g==="all"?"on":""}" data-nfg="all">All games</button>${games.map(e=>gameChip(e,f.g===e.id)).join("")}</div>
     <div class="chiprow">${["all","QB","RB","WR","TE","K"].map(p=>`<button class="chip s ${f.pos===p?"on":""}" data-nfpos="${p}">${p==="all"?"All positions":p}</button>`).join("")}</div>
     <div class="nf-ctl"><input type="search" id="nfq" placeholder="Search player or team" value="${h(f.q)}"><select id="nfst"><option value="all">All stats</option>${stats.map(s=>`<option value="${s}" ${f.st===s?"selected":""}>${h(LBL[s]||s)}</option>`).join("")}</select>
-      <select id="nfsort">${[["gap","Strongest model side"],["ev","Highest EV (priced)"],["stat","By stat"],["line","Line, high to low"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${f.sort===v?"selected":""}>${l}</option>`).join("")}</select>
+      <select id="nfsort">${[["gap","Strongest side, backtested stats first"],["ev","Highest EV (priced)"],["stat","By stat"],["line","Line, high to low"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${f.sort===v?"selected":""}>${l}</option>`).join("")}</select>
       <span class="seg sm">${[["all","Both"],["o","Overs"],["u","Unders"],["priced","Priced"]].map(([v,l])=>`<button class="${f.side===v?"on":""}" data-nfside="${v}">${l}</button>`).join("")}</span></div></div>
     <p class="hint">${rows.length} of ${L.length} lines. DraftKings lines via ESPN; no prices in the free feed, so EV appears once you enter or scan a price. ✓ = stat with a backtested edge.${ld?` Loading ${ld} more game${ld===1?"":"s"}…`:""}</p>
     <div class="nf-table"><div class="nf-tr nf-th"><div>Player</div><div>Stat</div><div>Line</div><div>Projection</div><div>Sharpline</div><div>EV</div><div>BT</div></div>${rows.slice(0,400).map(row).join("")||`<div class="empty"><b>No lines match</b>Try another filter or week.</div>`}</div>
@@ -232,7 +236,7 @@ function bar(x){if(!x.P||x.P.m==null)return"";const mx=Math.max(x.l,x.P.m)*1.25|
 
 function linesHTML(){const evs2=N.events;
   const card=e=>{const mk=gameMarkets(e),P=N.props[e.id];const tl=P?P.team:[];const st=e.state==="in"?`<em class="nf-lv">${h(e.detail)}</em>`:e.state==="post"?`<em>Final</em>`:`<em>${new Date(e.date).toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</em>`;
-    const side=(m,S,s)=>`<div class="nf-ms"><span>${S.t?h(S.t.ab)+" ":""}${m.k==="tot"?(S.side==="o"?"Over ":"Under "):""}${S.line!=null?`<b>${S.line>0&&m.k==="sp"?"+":""}${S.line}</b>`:""}</span><b class="nf-price">${am(S.price)}</b><small>fair ${pc1(S.fair)}${S.price!=null&&S.fair!=null?` · EV ${evs(RK.ev(S.fair,S.price))}`:""}</small>${e.state==="pre"&&S.price!=null?`<span class="nf-ba"><button class="lnk" data-nflt="${e.id}|${m.k}|${s}">Track</button><button class="lnk" data-nflp="${e.id}|${m.k}|${s}">Parlay</button></span>`:""}</div>`;
+    const side=(m,S,s)=>`<div class="nf-ms"><span>${S.t?h(S.t.ab)+" ":""}${m.k==="tot"?(S.side==="o"?"Over ":"Under "):""}${S.line!=null?`<b>${S.line>0&&m.k==="sp"?"+":""}${S.line}</b>`:""}</span><b class="nf-price">${am(S.price)}</b><small>${S.open!=null?`opened ${S.open>0&&m.k!=="tot"?"+":""}${S.open} · `:""}fair ${pc1(S.fair)}${S.price!=null&&S.fair!=null?` · EV ${evs(RK.ev(S.fair,S.price))}`:""}</small>${e.state==="pre"&&S.price!=null?`<span class="nf-ba"><button class="lnk" data-nflt="${e.id}|${m.k}|${s}">Track</button><button class="lnk" data-nflp="${e.id}|${m.k}|${s}">Parlay</button></span>`:""}</div>`;
     const tg={};tl.forEach(x=>{const k=x.per+" "+x.mk;(tg[k]=tg[k]||[]).push(x)});
     return`<div class="nf-game"><div class="nf-gh">${logo(e.away.id)}<div><b>${h(e.away.short)}</b><small>${h(e.away.rec||"")}</small></div><span class="nf-at">${e.state==="pre"?"@":`${e.away.score}–${e.home.score}`}</span><div><b>${h(e.home.short)}</b><small>${h(e.home.rec||"")}</small></div>${logo(e.home.id)}${st}</div>
       ${mk.length?`<div class="nf-mk">${mk.map(m=>`<div class="nf-mr"><div class="nf-ml">${m.lbl}</div>${side(m,m.a,"a")}${side(m,m.b,"b")}</div>`).join("")}</div><div class="nf-src">${h(e.odds.book)} via ESPN ${fresh(N.sbTs)} · fair = DraftKings' price with the vig removed, so EV at DraftKings is the vig. Sharpline has no NFL team model, so it shows no edge on game lines.</div>`:`<div class="hint">No DraftKings game line posted.</div>`}
