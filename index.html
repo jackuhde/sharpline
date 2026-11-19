@@ -1077,6 +1077,7 @@ function topItems(){
 function leanItems(skip,n){const by={};
   PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||skip.has(k)||SAVED[k]||OUT.has(normN(x.p))||YN[x.st])return;
     const f=freshOf(k);if(f.lv==="started"||f.lv==="stale")return;if(x.live&&x.live.lv==="out")return;
+    if(!g.model)return; /* only the backtested model ranks here */
     const ev=evOf(g.p,g.bp),nm=normN(x.p);if(g.p<.5)return;
     if(!by[nm]||by[nm].ev<ev)by[nm]={key:k,base:k,ev,p:g.p,price:g.bp,fresh:f,head:`${x.p} ${propPick(i)}`,need:toAm(g.p/1.02),why:g.why}});
   return Object.values(by).sort((a,b)=>b.ev-a.ev||b.p-a.p).slice(0,n)}
@@ -1521,7 +1522,7 @@ function renderTop(){
   {const L=items.length<5?leanItems(new Set(items.map(x=>x.base)),8-items.length):[];
    if(!items.length&&!L.length)document.getElementById("topList").innerHTML=`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
    if(L.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:${items.length?22:4}px 4px 8px">${items.length?"More to consider":"Best available tonight"}</div>
-    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player. A positive number at DraftKings that still isn't on the main list means lower confidence, usually because his averages and the market disagree. The rest aren't an edge at DraftKings yet; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
+    <div class="hint" style="margin:0 4px 10px">${items.length?"":"No bet clears your edge setting at DraftKings' current prices yet. "}These are the model's strongest sides, one per player. In the season backtest, edges under 4% at DraftKings didn't reliably hold up, so a positive number below that is lower confidence. The rest aren't an edge at DraftKings yet; each shows the price where it becomes one. Check ${poss(BOOK)} line, or scan it, and it grades automatically.</div>
     ${L.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];return`<div class="top lean" data-key="${x.key}"><div class="rank">${items.length+n+1}</div>${freshTag(x.fresh)}
       <div class="kind">${gradeTag(gradeFor(x.base,x.ev,false),"md")} <span class="lean-tag">${x.ev>=.02?"Lower confidence":"Lean"}</span> Prop · ${N.stat}</div>
       <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
