@@ -65,4 +65,6 @@ b=P("SGP\nPatrick Mahomes Over 275.5 Pass Yds -115\nTravis Kelce Over 65.5 Rec Y
 b=P("Justin Jefferson over 8.5 targets -120");L=L0(b);t("targets not modeled",L&&L.stat==="tgt"&&L.notModeled,L);
 b=P("Lakers\nSpread -4\n-110",{image:1});L=L0(b);t("team then spread line",L&&L.mk==="spread"&&L.team.ab==="LAL"&&L.line===-4&&L.odds===-110,b);
 b=P("Jalen Brunson 025.5 pts -120");L=L0(b);t("OCR o read as 0",L&&L.side==="over"&&L.line===25.5,L);
+b=P("Chiefs -3.5 -110\nKalshi Jayson Tatum 25+ points YES 45 cents\nLakers -4 -110");t("book only on the line that names it (text)",b.length===3&&b[0].book===null&&b[1].book==="Kalshi"&&b[2].book===null,b.map(x=>x.book));
+b=P("FanDuel\nTatum o26.5 pts -115\nBrown o5.5 reb -120");t("book line on its own applies to the block",b.every(x=>x.book==="FanDuel"),b.map(x=>x.book));
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

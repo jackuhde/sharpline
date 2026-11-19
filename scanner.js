@@ -39,6 +39,7 @@ function nbaEval(key,L,side,odds){const v={L};if(side==="under"||side==="b")v.b=
 function nbaGameInfo(A,gi){const G=SNAP[gi];A.gi=gi;A.game=mu(G);A.tip=G.tip;const st=started(gi),e=typeof evFor==="function"?evFor(gi):null;
   A.checks.push(st?{ok:e&&e.state==="post"?false:null,t:e&&e.state==="post"?"Final. This bet is already decided":`Underway${e&&e.detail?": "+e.detail:""}. Pregame prices no longer apply`}:{ok:true,t:`${mu(G)} · tips ${tipT(G)}`});return st}
 function nbaProp(leg){const A={sport:"nba",checks:[],market:{rows:[]},an:null};
+  if(!leg.player){A.cands=(leg.cands||[]).filter(c=>c.sport==="nba");A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NBA players match. Pick one in review`:"No player name in the submission"});return A}
   const m=SB.matchName(leg.player||"",nbaNames());
   if(!m||!m.x){A.cands=m?m.cands:[];A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NBA players match. Pick one`:`"${leg.player}" isn't on tonight's NBA board or in Sharpline's player list`});return A}
   const name=m.x.p,fp=leg.stat?findProp(name,leg.stat):null,pj=projOf(name);const X=fp&&fp.key[0]==="p"?PROPS[+fp.key.slice(1)]:null;
@@ -103,7 +104,8 @@ function verdict(R){const rel=R.rel=reliability(R);
   R.vt=explain(R)}
 function explain(R){const a=R.A.an,need=pc(R.implied),got=pc(R.p);let s=`Sharpline gives this ${got}. At ${am(R.odds)}${R.pm?" (contract plus fee)":""} it needs ${need} to break even, `;
   s+=R.ev>=0?`so the price pays more than the chance warrants: about ${evs(R.ev)} per dollar on average.`:`so the price is too short: about ${evs(R.ev)} per dollar on average.`;
-  if(a&&a.proj!=null&&R.leg.line!=null&&R.leg.side){const above=a.proj>R.leg.line;if((R.leg.side==="over")===above&&R.ev<0)s+=` The projection (${Math.round(a.proj*10)/10}) is on your side of ${R.leg.line}, but that's not enough at this price.`}
+  if(a&&a.marketOnly)s+=` For this stat the backtest found no edge in Sharpline's projection, so the chance is DraftKings' line carried to your number; the projection (${Math.round(a.proj*10)/10}) is shown for reference only.`;
+  else if(a&&a.proj!=null&&R.leg.line!=null&&R.leg.side){const above=a.proj>R.leg.line;if((R.leg.side==="over")===above&&R.ev<0)s+=` The projection (${Math.round(a.proj*10)/10}) is on your side of ${R.leg.line}, but that's not enough at this price.`}
   if(R.v==="neu"&&R.ev>=.02)s+=" The number looks good, but the estimate isn't reliable enough to call it favorable.";
   return s}
 
@@ -170,18 +172,18 @@ function marketHTML(R){const A=R.A,M=A.market||{},L=R.leg;let rows=M.rows||[];
   if(M.open!=null&&M.dkL!=null&&M.open!==M.dkL)notes.push(`DraftKings opened at ${M.open}, now ${M.dkL}.`);
   if(best&&R.ev!=null)notes.push(best.ev>R.ev+.003?`Best price now: ${h(best.book)} ${best.line} at ${am(L.side==="under"?best.under:best.over)} (${evs(best.ev)}${best.line!==L.line?", a different line":""}). That's ${((best.ev-R.ev)*100).toFixed(1)} points of EV better than the submitted price.`:"No book on the board beats the submitted price right now.");
   else if(!priced.length&&rows.length)notes.push("No other book's price for this side is in the free feeds, so there's no line shopping for it.");
-  if(R.A.an&&R.A.an.pDK!=null)notes.push(`At DraftKings' ${M.dkL}, Sharpline's chance for your side would be ${pc(R.A.an.pDK)}.`);
+  if(R.A.an&&R.A.an.pDK!=null&&!R.A.an.marketOnly)notes.push(`At DraftKings' ${M.dkL}, Sharpline's chance for your side would be ${pc(R.A.an.pDK)}.`);
   if(M.upd)notes.push(`Line updated ${typeof M.upd==="number"?ago(M.upd):h(M.upd)}.`);
   return t+notes.map(n=>`<p class="sc-p">${n}</p>`).join("")}
 function analysisHTML(R){const a=R.A.an||{};if(R.p==null)return`<p class="sc-p dim">${h(a.none||"No probability: "+(R.A.checks.find(c=>c.ok===false)||{t:"not verified"}).t)}</p>`;
   const cells=[["Sharpline chance",pc(R.p)],["Implied by odds",R.implied!=null?pc(R.implied):"–"],["Difference",R.edge!=null?(R.edge>=0?"+":"−")+Math.abs(R.edge*100).toFixed(1)+" pts":"–"],["Expected value",evs(R.ev)]];
-  if(a.proj!=null)cells.push(["Projection",String(Math.round(a.proj*10)/10)]);cells.push(["Fair price",am(RK.fairAm(R.p))]);
+  if(a.proj!=null)cells.push([a.marketOnly?"Projection (reference)":"Projection",String(Math.round(a.proj*10)/10)]);cells.push(["Fair price",am(RK.fairAm(R.p))]);
   const rel=R.rel,relT=["Not graded","Low","Medium","High"][rel.lv];
   const extra=[];if(a.last&&a.last.length)extra.push(`Last ${a.last.length} games: ${a.last.join(", ")}`);if(a.hits!=null&&a.n)extra.push(`${a.hits} of ${a.n} games over DraftKings' line`);
   if(a.parts&&a.parts.length)extra.push("How the projection was built: "+a.parts.join("; "));if(a.why)extra.push(String(a.why).replace(/<[^>]+>/g,""));
   if(R.pm)extra.push(R.pm.note);if(a.push)extra.push(`Whole-number line: about ${pc0(a.push)} chance of a push, counted`);
   return`<div class="sc-nums">${cells.map(([l,v])=>`<div><b>${v}</b><i>${l}</i></div>`).join("")}</div>
-    <p class="sc-p"><b>Reliability: ${relT}.</b> ${h(rel.why.join("; "))}${rel.why.length?".":""} Source: ${h(a.model||"")}.</p>${extra.map(x=>`<p class="sc-p dim">${h(x)}</p>`).join("")}`}
+    <p class="sc-p"><b>Reliability: ${relT}.</b> ${h(rel.why.join("; "))}${rel.why.length?".":""} Source: ${h(a.marketOnly?"DraftKings' line moved to your number (projection not trusted for this stat)":a.model||"")}.</p>${extra.map(x=>`<p class="sc-p dim">${h(x)}</p>`).join("")}`}
 function actionsHTML(o,i){const R=o.R||o.legs[0],A=R.A,L=R.leg;const bt=[];
   if(o.b.kind!=="parlay"){if(A.sport==="nba"&&A.key&&A.key[0]!=="l"&&typeof pfKeyAttr==="function"){const at=pfKeyAttr(A.key);if(at)bt.push(`<button class="addbtn" ${at}>Profile</button>`)}
     if(A.sport==="nfl"&&A.athId)bt.push(`<button class="addbtn" data-scnfprof="${A.athId}">Profile</button>`);
@@ -213,7 +215,7 @@ function parlayHTML(o,i){const b=o.b;const legRows=o.legs.map((r,j)=>`<div class
     <section><h4>Legs as submitted, each graded on its own</h4><div class="sc-t sc-legs"><div class="th"><span>Leg</span><span>Odds</span><span>Chance</span><span>Implied</span><span>EV</span><span></span></div>${legRows}</div>
       ${o.best!=null?`<p class="sc-p">Strongest leg: ${h(pickTxt(o.legs[o.best].leg,o.legs[o.best].A))}. Weakest: ${h(pickTxt(o.legs[o.worst].leg,o.legs[o.worst].A))}.</p>`:""}
       ${b.pickem?`<p class="sc-p dim">Pick'em legs have no individual odds, so the leg EVs are blank. The entry is graded at its payout multiplier.</p>`:""}</section>
-    <section><h4>Whole parlay</h4><div class="sc-kv">${sum.map(([k,v])=>`<div><i>${k}</i><b>${h(v)}</b></div>`).join("")}</div>${b.payMismatch?`<p class="sc-p bad">The slip's payout doesn't match its odds.</p>`:""}${drop}</section>
+    <section><h4>Whole parlay</h4><div class="sc-kv">${sum.map(([k,v])=>`<div><i>${k}</i><b>${h(v)}</b></div>`).join("")}</div>${b.payMismatch?`<p class="sc-p bad">The slip's payout doesn't match its odds.</p>`:""}${b.parlayOdds!=null&&o.multAm!=null&&decA(b.parlayOdds)<decA(o.multAm)-.02?`<p class="sc-p">The slip pays ${am(b.parlayOdds)}; the legs multiplied would pay ${am(o.multAm)}. ${o.sameGame?"Books shorten same-game parlays because the legs are correlated.":"The book is paying less than its own leg prices combined."}</p>`:""}${drop}</section>
     <section class="sc-rec"><h4>Recommendation</h4><p class="sc-p"><b>${VLBL[o.v]}.</b> ${h(vt)}</p></section>${actionsHTML(o,i)}</article>`}
 function resultsHTML(){const R=S.res;if(!R)return"";const c=k=>R.filter(o=>(o.R||o).v===k&&!o.b.board).length;
   const ranked=R.filter(o=>!o.b.board&&(o.R?o.R.ev:o.ev)!=null).map(o=>({o,ev:o.R?o.R.ev:o.ev})).sort((a,b)=>b.ev-a.ev);

@@ -317,6 +317,7 @@ function invPhi(p){let lo=-8,hi=8;for(let i=0;i<60;i++){const m=(lo+hi)/2;M.Phi(
 const gameState=e=>e.state==="pre"?{ok:true,t:`Scheduled ${new Date(e.date).toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`}:e.state==="in"?{ok:null,t:`Underway: ${e.detail||"in progress"}. Pregame numbers no longer apply`}:{ok:false,t:`Final${e.detail?": "+e.detail:""}. This bet is already decided`};
 function eventOfTeam(tid){return N.events.find(x=>x.home.id===tid||x.away.id===tid)||null}
 function scanProp(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};const SBp=window.SharpBets;
+  if(!leg.player&&!leg.athId){A.cands=(leg.cands||[]).filter(c=>c.sport==="nfl");A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NFL players match. Pick one in review`:"No player name in the submission"});return A}
   let id=leg.athId;if(!id){const m=SBp.matchName(leg.player||"",scanNames());if(!m||!m.x){A.cands=m?m.cands:[];A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NFL players match "${leg.player||leg.ambName}". Pick one`:`No NFL player called "${leg.player}" on ESPN's rosters`});return A}id=m.x.id}
   const a=ath(id);if(!a){A.checks.push({ok:false,t:"Player not found"});return A}
   A.athId=id;A.player=a[0];A.pos=a[1];A.tid=a[2];A.checks.push({ok:true,t:`${a[0]} · ${a[1]} · ${T(a[2])[1]}`});
@@ -326,7 +327,7 @@ function scanProp(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};
   const inj=N.inj[id];if(inj)A.checks.push({ok:inj.lv==="out"?false:null,t:`Injury report: ${inj.st}${inj.txt?" · "+inj.txt:""}`});
   const st=leg.stat;if(!st){A.checks.push({ok:false,t:"Market not read"});return A}
   const yn=st==="td"||st==="td2"||st==="td1";const PL=N.props[e.id];const L=PL&&!yn?PL.lines[id+"|"+st]:null;const hasYN=yn&&PL&&PL.yn[st]&&PL.yn[st].has(id);
-  if(L){A.checks.push({ok:true,t:`DraftKings has this market: ${LBL[st]||st} ${L.l}`});A.market={rows:[{book:"DraftKings",line:L.l,over:null,under:null,note:"price not in ESPN's free feed"}],open:L.lo,upd:L.upd,dkL:L.l}}
+  if(L){A.checks.push({ok:true,t:`DraftKings has this market: ${LBL[st]||st} ${L.l}`});A.market={rows:[{book:"DraftKings",line:L.l,over:null,under:null,note:"price not in ESPN's free feed"}],open:L.lo,upd:L.upd?Date.parse(L.upd)||L.upd:null,dkL:L.l}}
   else if(hasYN){A.checks.push({ok:true,t:`DraftKings has ${LBL[st]||st} for him`});A.market={rows:[{book:"DraftKings",line:null,note:"price not in ESPN's free feed"}]}}
   else A.checks.push({ok:null,t:PL?`DraftKings has no ${LBL[st]||st} line for him this week`:"DraftKings props for this game haven't loaded"});
   if(st==="td1"||!M.STATS[st]&&!yn){A.an={none:`${LBL[st]||st} isn't something Sharpline models, so there's no probability for it`};return A}
@@ -339,7 +340,7 @@ function scanProp(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};
   if(!P||P.p==null){A.an={none:"Not enough games this season to model him"};return A}
   const pOver=P.p,side=leg.side;const sd=Math.max(.5,(P.cv||.4)*P.m);const far=L&&Math.abs(leg.line-L.l)>(M.STATS[st].d==="pois"?1:.6*sd);
   let pDK=null;if(L&&L.l!==leg.line){const Q=M.project(N.I,id,st,{...base,line:L.l,k:kOf(st)},N.DEF);if(Q&&Q.p!=null)pDK=side==="under"?1-Q.p:Q.p}
-  A.an={pOver,p:side==="under"?1-pOver:side==="over"?pOver:null,proj:P.m,n:P.n,hits:P.hits,last:P.last,parts:P.parts||[],trusted:trusted(st),bt:btNote(st),far,anchored:!!L,dkL:L&&L.l,pDK,model:"projection"};
+  A.an={pOver,p:side==="under"?1-pOver:side==="over"?pOver:null,proj:P.m,n:P.n,k:kOf(st),marketOnly:!!L&&kOf(st)<.05,hits:P.hits,last:P.last,parts:P.parts||[],trusted:trusted(st),bt:btNote(st),far,anchored:!!L,dkL:L&&L.l,pDK,model:"projection"};
   return A}
 function scanGame(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};const ab=(leg.team||leg.teams[0]||{}).ab;
   const tms=scanTeams();const tm=tms.find(x=>x.ab===ab)||tms.find(x=>(leg.teams[0]||{}).full&&x.full===leg.teams[0].full);

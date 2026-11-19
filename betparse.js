@@ -109,7 +109,7 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
     if(F.pureOdds){if(!fillBack("odds",F.odds[0].v,i))loose.push({v:F.odds[0].v,i,raw});return}
     if(PARLAY_RE.test(raw)&&!F.st&&!nameObj&&!F.teams.length){if(F.odds.length)loose.push({v:F.odds[F.odds.length-1].v,i,raw,par:1});return}
     const who=nameObj||(F.cands.length>1?{p:raw,sport:null,amb:true}:null);
-    const L=newLeg({raw:raw.trim(),_i:i,conv:F.conv,book});
+    const L=newLeg({raw:raw.trim(),_i:i,conv:F.conv,book:detectBook(raw)||book});
     /* player props */
     const st=F.st||(who||F.sides.length?null:null)||(who?null:stat);
     const pst=F.st||(nameObj?null:stat)||(nameObj&&!F.st?null:null);
@@ -179,7 +179,7 @@ function parse(input,ctx,opt){opt=opt||{};const lines=Array.isArray(input)?input
       const b={id:"b"+(++n),kind:"parlay",book:R.book,legs,parlayOdds:parOdds,stake:M.stake,toWin:M.toWin,payout:M.payout,mult:M.mult,pickem:pick,
         sgp:/same[\s-]*game|\bsgp\b/i.test(R.all),missing:[]};if(parOdds==null)b.missing.push("parlay odds");
       if(M.stake!=null&&M.toWin!=null&&parOdds!=null&&Math.abs(dec(parOdds)-(1+M.toWin/M.stake))>.06)b.payMismatch=true;bets.push(b)}
-    else sel.forEach(L=>{const b={id:"b"+(++n),kind:"single",book:R.book,legs:[L],stake:null,toWin:null,payout:null,missing:[]};
+    else sel.forEach(L=>{const b={id:"b"+(++n),kind:"single",book:opt.image?R.book:(detectBook(L.raw)||(R.legs.every(x=>!detectBook(x.raw))?R.book:null)),legs:[L],stake:null,toWin:null,payout:null,missing:[]};
       if(sel.length===1&&M.stake!=null){b.stake=M.stake;b.toWin=M.toWin;b.payout=M.payout;if(L.odds!=null&&M.toWin!=null&&Math.abs(dec(L.odds)-(1+M.toWin/M.stake))>.04)b.payMismatch=true}bets.push(b)});
     board.forEach(L=>bets.push({id:"b"+(++n),kind:"single",board:true,book:R.book,legs:[L],stake:null,missing:[]}))});
   bets.forEach(b=>{const k=b.legs.map(L=>[L.sport,norm(L.player),L.stat,L.mk,L.team&&L.team.ab,L.side,L.line,L.odds].join("|")).join("+");if(seen.has(k))b.dup=seen.get(k);else seen.set(k,b.id)});
