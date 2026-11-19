@@ -76,7 +76,7 @@ function withSides(m,o,u,lean){const sd=(p,price)=>price==null?null:{p,price,imp
   m.p=best==="o"?m.pO:1-m.pO;m.price=S?S.price:null;m.imp=S?S.imp:null;m.ev=S&&!m.oneSide?S.ev:null;return m}
 /* value verdict used everywhere in Live: positive, marginal, negative, or not enough to say */
 function verdict(m,isFresh){if(!m)return{k:"na",t:"No estimate"};if(!isFresh)return{k:"na",t:"Price not current"};if(m.oneSide||m.ev==null)return{k:"na",t:"Only one side posted"};
-  if(m.thin)return{k:"na",t:"Too few games to rate"};if(m.ev>=.03)return{k:"pos",t:"Good value"};if(m.ev>=0)return{k:"mid",t:"Marginal"};return{k:"neg",t:"Poor price"}}
+  if(m.thin)return{k:"na",t:"Too few games to rate"};if(m.ev>=.03)return{k:"pos",t:"Good value"};if(m.ev>=0)return{k:"mid",t:"Close to fair"};return{k:"neg",t:"Poor price"}}
 function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH&&!(mk.lag>LAG_MAX)}
 
 /* ---------- views ---------- */

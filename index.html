@@ -207,6 +207,17 @@ body.lv-busy .lv-feed .dot{animation:lvpulse .8s ease-in-out infinite}@keyframes
 .arch{margin:18px 0 6px;border:1px solid var(--line);border-radius:14px;padding:4px 12px}.arch summary{cursor:pointer;font:700 13px Archivo;color:var(--mute);padding:10px 0;list-style:none}.arch summary::before{content:"▸ ";}.arch[open] summary::before{content:"▾ "}.arch-in{padding-bottom:8px}
 .gh-st{font-style:normal;color:var(--mute);font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .mkt-t{margin-top:10px}.mkt-r{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;align-items:center}.mkt-r i{font-style:normal;font-family:"JetBrains Mono",monospace;font-weight:800}.mkt-r small{color:var(--mute);margin-left:4px}
+/* parlays and tracker */
+.addbtn.leg{margin-left:6px;opacity:.85}.addbtn.leg.in{opacity:1}
+#slipBar{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;z-index:40;display:none}#slipBar.on{display:block}
+#slipBar button{border:1px solid var(--acc);background:var(--s2,#1a1a1a);color:var(--ink);border-radius:999px;padding:9px 16px;font:700 13px Archivo;box-shadow:0 6px 24px rgba(0,0,0,.5);cursor:pointer}
+.slip-l{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.slip-l small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
+.slip-o{display:flex;gap:6px;align-items:center}.slip-o input{width:84px}.slip-sum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}.slip-sum small,.slip-sum label{display:block;font:700 10px Archivo;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}.slip-sum input{width:100%}
+.slip-b{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.legs{margin:8px 0 4px;border-left:2px solid var(--line);padding-left:10px;display:grid;gap:4px;font-size:12.5px}.legs>div{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.legs small{color:var(--mute)}
+.legs i.lg{font-style:normal;font-weight:900;width:14px;text-align:center}.lg.w{color:var(--over)}.lg.l{color:var(--under)}.lg.p,.lg.o{color:var(--mute)}.legs-s{color:var(--mute);font-size:11.5px;margin-top:2px}
+.tfilt{display:grid;gap:6px;margin-bottom:12px}.tfilt .chiprow{flex-wrap:wrap}.tf-sp{flex:1}.tf-sport{font:800 10px Archivo;letter-spacing:.08em;color:var(--mute);align-self:center;padding:0 6px}
+.tk-t.tk5 .tr{grid-template-columns:1.3fr .6fr .9fr .9fr .9fr}
 </style>
 <style>
 :root{
@@ -759,7 +770,8 @@ html,body{overscroll-behavior-y:none}
 <script src="profile.js?v=1795200001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795300003"></script>
-<script src="livegame.js?v=1795400001"></script>
+<script src="tracker2.js?v=1795400001"></script>
+<script src="livegame.js?v=1795400002"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1327,18 +1339,21 @@ let BETS=LS.get("sl_bets",[]),UNIT=LS.get("sl_unit",10);const SCANNED=new Set(),
 const saveBets=()=>LS.set("sl_bets",BETS);
 const baseOf=key=>key[0]==="t"?(TOP[+key.slice(1)].k+TOP[+key.slice(1)].i):key[0]==="f"?key.slice(1):key;
 const tracked=key=>{const b=baseOf(key);return BETS.some(x=>x.key===b&&x.date===DATA_DATE)};
-function addBtn(key){const on=tracked(key);return`<button class="addbtn ${on?"in":""}" data-track="${key}">${on?"✓ Tracked":"+ Track"}</button>`}
+function addBtn(key){const on=tracked(key),pl=window.TR2&&TR2.inSlip(key);return`<button class="addbtn ${on?"in":""}" data-track="${key}">${on?"✓ Tracked":"+ Track"}</button><button class="addbtn leg ${pl?"in":""}" data-pleg="${key}">${pl?"✓ In parlay":"+ Parlay"}</button>`}
 function trackBet(key){const base=baseOf(key);if(tracked(key)){go("track");return}
+  const R=betRec(key);if(!R)return;BETS.unshift(R);saveBets();renderAll();toast(R.odds==null?"Tracked. Add the odds you got in the Tracker":"Tracked")}
+/* one selection as a bet record: used for straight bets and for parlay legs */
+function betRec(key){const base=baseOf(key);
   const N=nameOf(base),G=SNAP[N.g],b=recBest[base],stat=base[0]!=="l"?" "+(STAT[N.stat]||N.stat):"";
   let rec;
   if(b&&!b.assumed)rec={pick:b.lbl+stat,odds:b.o,p:b.p,push:b.push||0,ev:b.ev,grade:b.grade,conf:b.conf&&b.conf.lv,src:SCANNED.has(base)?"screenshot":"your odds"};
   else{const lg=legOf(key);if(!lg){toast("Can't track this one");return}
     const bp=key[0]==="t"?(TOP[+key.slice(1)].bp??(base[0]==="p"?SUG[+base.slice(1)].bp:LINES[+base.slice(1)].bp)):base[0]==="p"?SUG[+base.slice(1)].bp:base[0]==="l"?LINES[+base.slice(1)].bp:null;
     rec={pick:lg.pick,odds:bp??null,p:lg.p,push:0,ev:bp!=null?evOf(lg.p,bp):null,grade:bp!=null?gradeFor(base,evOf(lg.p,bp),false):null,conf:null,src:"board"}}
+  if(!rec)return null;
   const lblRaw=b&&!b.assumed?b.lbl:(legOf(key)||{}).pick||"",Lx=b&&!b.assumed?b.L:parseFloat(lblRaw.split(" ")[1]);
   rec.spec=specFor(base,lblRaw,Lx);rec.home=G.home;rec.away=G.away;if(base[0]!=="l"){const X=base[0]==="p"?PROPS[+base.slice(1)]:custOf(+base.slice(1));if(X){rec.tm=X.tm;rec.ath=Object.keys(LIVE.ids).find(k=>normN(LIVE.ids[k].name)===normN(X.p))||null}}rec.ev=(LIVE.ev[N.g]||{}).id||null;
-  BETS.unshift({id:Date.now(),date:DATA_DATE,key:base,name:N.name,game:mu(G),tip:G.tip,mkt:N.stat,book:SCANNED.has(base)&&SCANBOOK[base]?SCANBOOK[base]:BOOK,stake:SCANSTAKE[base]||UNIT,res:null,...rec});
-  saveBets();renderAll();toast(rec.odds==null?"Tracked. Add the odds you got in the Tracker":"Tracked")}
+  return{id:Date.now(),type:"straight",date:DATA_DATE,key:base,name:N.name,game:mu(G),tip:G.tip,mkt:N.stat,book:SCANNED.has(base)&&SCANBOOK[base]?SCANBOOK[base]:BOOK,stake:SCANSTAKE[base]||UNIT,res:null,...rec,evid:rec.ev}}
 const profitOf=b=>b.odds==null?0:b.res==="W"?b.stake*(dec(b.odds)-1):b.res==="L"?-b.stake:0;
 const money=x=>(x<0?"−$":"$")+Math.abs(x).toFixed(2);
 function trackStats(list){const g=list.filter(b=>b.res&&b.res!=="V"&&b.odds!=null);
@@ -1354,13 +1369,13 @@ function calib(list){const g=list.filter(b=>(b.res==="W"||b.res==="L")&&b.p!=nul
   return{n:g.length,brier,bookB,bins}}
 function oddsBox(b){const sg=b.odds!=null&&b.odds<0?"-":"+";return`<div class="sg"><button type="button" class="sgn ${sg==="-"?"m":"p"}" data-tsgn="${b.id}">${sg==="-"?"−":"+"}</button><input type="number" inputmode="decimal" data-todds="${b.id}" value="${b.odds!=null?Math.abs(b.odds):""}" placeholder="110"></div>`}
 function renderTrack(){const box=document.getElementById("trackBox");if(!box)return;
-  const pend=BETS.filter(b=>!b.res),done=BETS.filter(b=>b.res);
+  const FL=window.TR2?TR2.filter(BETS):BETS,pend=FL.filter(b=>!b.res),done=FL.filter(b=>b.res);
   const bd=document.getElementById("badge");bd.style.display=pend.length?"":"none";bd.textContent=pend.length;
   if(!BETS.length){box.innerHTML=`<div class="empty"><b>No bets tracked yet</b>Tap "+ Track" on any prop, game line or Top List pick you place. Results build up here over time.</div>${unitHTML()}`;return}
-  const S=trackStats(BETS),C=calib(BETS);
+  const S=trackStats(FL),C=calib(FL.filter(b=>b.type!=="parlay"));
   const cell=(k,v,c)=>`<div class="st"><div class="k">${k}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div></div>`;
   const byM={};done.forEach(b=>{const m=["Moneyline","Spread","Total"].includes(b.mkt)?b.mkt:"Props · "+(STAT[b.mkt]||b.mkt);(byM[m]=byM[m]||[]).push(b)});
-  box.innerHTML=`
+  box.innerHTML=`${window.TR2?TR2.filterBar():""}
   <div class="tsum">
     <div class="stats">${cell("Record",`${S.W}-${S.L}${S.P?"-"+S.P:""}`)}${cell("Net",S.n?money(S.net):"–",S.net>0?"var(--over)":S.net<0?"var(--under)":"")}${cell("ROI",S.roi==null?"–":(S.roi>=0?"+":"")+(S.roi*100).toFixed(1)+"%",S.roi>0?"var(--over)":S.roi<0?"var(--under)":"")}</div>
     <div class="stats">${cell("Win rate",S.wr==null?"–":pct1(S.wr))}${cell("Break-even",S.be==null?"–":pct1(S.be))}${cell("Staked",S.n?money(S.staked):"–")}</div>
@@ -1368,7 +1383,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
   </div>
   ${pend.length?`<div class="eyebrow tk-h">Open bets · ${pend.length}</div><div class="list">${pend.map(b=>`<div class="tb" data-tid="${b.id}">
      <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}</div><div class="sub">${b.game} · ${b.mkt} · ${b.src}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
-     <div class="tb-in"><div><label>Odds you got</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
+     ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="tb-in"><div><label>${b.type==="parlay"?"Parlay odds you got":"Odds you got"}</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
      ${b.spec&&!b.noAuto?`<div class="hint" style="margin-top:8px">Grades itself when the game is final.</div>`:""}<div class="tb-res"><button data-res="${b.id}|W" class="w">Won</button><button data-res="${b.id}|L" class="l">Lost</button><button data-res="${b.id}|P">Push</button><button data-res="${b.id}|V">Void</button></div></div>`).join("")}</div>`:""}
   ${Object.keys(byM).length?`<div class="eyebrow tk-h">By market</div><div class="list tk-t">${Object.entries(byM).map(([m,l])=>{const x=trackStats(l);return`<div class="tr"><span>${m}</span><span>${x.W}-${x.L}${x.P?"-"+x.P:""}</span><span style="color:${x.net>0?"var(--over)":x.net<0?"var(--under)":"var(--mute)"}">${x.n?money(x.net):"–"}</span><span>${x.roi==null?"–":(x.roi>=0?"+":"")+(x.roi*100).toFixed(0)+"%"}</span></div>`}).join("")}</div>`:""}
   ${C?`<div class="eyebrow tk-h">Is Sharpline accurate?</div><div class="tsum">
@@ -1377,7 +1392,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
      <div class="list tk-t" style="margin-top:10px"><div class="tr th"><span>Estimate</span><span>Bets</span><span>Expected</span><span>Actual</span></div>${C.bins.filter(x=>x.n).map(x=>`<div class="tr"><span>${x.lb}</span><span>${x.n}</span><span>${pct(x.est)}</span><span>${pct(x.act)}</span></div>`).join("")}</div>
      <div class="hint" style="margin-top:8px">If "Actual" keeps landing well below "Expected", Sharpline is overconfident and its edges should be trusted less.</div></div>`:""}
   ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
-     <div class="sub">${b.auto?`<span class="autog">Auto-graded</span> ${b.gnote} · `:""}${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
+     ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="sub">${b.auto?`<span class="autog">Auto-graded</span> ${b.gnote} · `:""}${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
   ${unitHTML()}
   <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`}
 const unitHTML=()=>`<div class="tsum" style="margin-top:14px"><div class="f two"><div><label>Default stake for new bets ($)</label><input type="number" inputmode="decimal" data-unit="1" value="${UNIT}"></div><div class="hint" style="align-self:end">Flat stakes. Sharpline never raises your stake after a loss.</div></div></div>`;
@@ -1729,7 +1744,7 @@ function specFor(base,lbl,L){const k=base[0],i=+base.slice(1);
     const full=fullOfAbbr(w[0]);if(!full)return null;
     return Ln.m==="Moneyline"?{kind:"ml",team:full}:{kind:"sp",team:full,line:+w[1]}}
   return null}
-async function gradePending(){const pend=BETS.filter(b=>!b.res&&b.spec&&!b.noAuto);if(!pend.length)return 0;let n=0;
+async function gradePending(){const pend=BETS.filter(b=>!b.res&&b.spec&&!b.noAuto&&b.type!=="parlay");if(!pend.length)return 0;let n=0;
   const dates=[...new Set(pend.map(b=>b.date))];
   for(const d of dates){let list;try{list=await sbFor(d)}catch(e){continue}
     for(const b of pend.filter(x=>x.date===d)){const ev=list.find(e=>(b.ev&&e.id===b.ev)||(nick(e.home)===nick(b.home)&&nick(e.away)===nick(b.away)));if(!ev)continue;
@@ -1758,6 +1773,7 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
     try{res.props=await loadProps(manual)}catch(e){res.props="fail"}
     applyLiveOdds();buildProps();buildProj();applyInjuries();applyProjections();
     try{res.graded=await gradePending()}catch(e){}
+    if(window.TR2){try{TR2.logPreds()}catch(e){console.warn(e)}try{res.graded=(res.graded||0)+await TR2.gradeParlays()}catch(e){console.warn(e)}try{await TR2.gradePreds()}catch(e){console.warn(e)}}
     LIVE.okOdds=res.odds!=="fail";LIVE.okProps=res.props!=="fail";LIVE.okInj=res.inj!=="fail";LIVE.boardOk=res.board!=="fail";LIVE.last=Date.now();
     renderAll();flashChanges(before);renderLiveBar();return res})();
   try{const r=await LIVE.busy;if(manual||r.graded){const fails=[r.board==="fail"&&"board",r.odds==="fail"&&"live odds",r.props==="fail"&&"player props",r.inj==="fail"&&"injuries"].filter(Boolean);
