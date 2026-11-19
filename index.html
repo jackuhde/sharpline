@@ -1894,7 +1894,8 @@ function staleCheck(d){const el=document.getElementById("stale");const today=new
   if(BOARD_SRC==="espn")msg=`Today's research notes haven't posted yet. Games, DraftKings lines, props and projections below are live from ESPN and DraftKings; other-book prices and written notes will appear when the research runs.`;
   else if(d.date!==today)msg=`This board is for ${d.date}, not today. Lines below are old. A new board is posted each morning.`;
   else if(age>5)msg=`Lines were last checked ${Math.round(age)} hours ago. Prices may have moved, so confirm before betting.`;
-  STALE=!!msg;if(el)el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
+  /* an ESPN-built board is live, not old: the note only says the written research is missing, so it doesn't lower confidence */
+  STALE=!!msg&&BOARD_SRC!=="espn";if(el)el.innerHTML=msg?`<div class="warn" style="margin-top:10px">${msg}</div>`:""}
 async function fetchData(){const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 const SPLASH_MIN=1900,bootStart=Date.now();
 function hideSplash(){const el=document.getElementById("splash");if(!el)return;setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),600)},Math.max(0,SPLASH_MIN-(Date.now()-bootStart)))}
