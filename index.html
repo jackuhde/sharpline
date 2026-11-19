@@ -1625,7 +1625,7 @@ function slateVerdict(R,c){const days=PM_META&&PM_META.updated?(Date.now()-new D
   if(c.loaded<SNAP.length)return{k:"warn",t:"Data gap.",d:`DraftKings props loaded for ${c.loaded} of ${SNAP.length} games, so the list may be missing bets. Refresh, or check back closer to tip.`};
   if(c.modelable&&c.priced/c.modelable<.7)return{k:"warn",t:"Data gap.",d:`Only ${c.priced} of ${c.modelable} markets could be priced (missing game logs).`};
   const age=(Date.now()-(LIVE.propsTs||LIVE.oddsTs||Date.now()))/6e4;if(age>45)return{k:"warn",t:"Stale prices.",d:`Props were last refreshed ${Math.round(age)} minutes ago. Refresh before betting.`};
-  if(c.qual<5)return{k:"ok",t:"Thin slate.",d:"Data and model are working; DraftKings simply has few mispriced props tonight. That is normal on small slates."};
+  if(c.shown<5)return{k:"ok",t:"Thin slate.",d:`Data and model are working; DraftKings simply has few mispriced props tonight${c.qual>c.shown?`, and the ${c.qual} that clear the bar belong to ${c.shown} player${c.shown===1?"":"s"}`:""}. That is normal on small slates.`};
   return{k:"ok",t:"Normal slate.",d:"Data loaded for every game and the model is current."}}
 function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]||0,M=R.markets.length;
   const matched=M-n("unmatched")-n("dup"),pre=matched-n("started"),modelable=pre-n("yesno")-n("unsupported")-n("oneSided")-n("line2"),priced=modelable-n("noLog"),
@@ -1633,7 +1633,7 @@ function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]|
   const loaded=R.games.filter(g=>g.loaded).length,step=(lbl,v,note)=>`<div class="fn"><span>${lbl}</span><b>${v}</b>${note?`<small>${note}</small>`:""}</div>`;
   const tbl=(title,obj)=>`<div class="cv-t"><div class="cv-h">${title}</div><div class="cv-r cv-hd"><span></span><span>Markets</span><span>Priced</span><span>+EV</span><span>Qualified</span><span>Shown</span></div>${Object.entries(obj).sort((a,b)=>b[1].total-a[1].total).map(([k,b])=>`<div class="cv-r"><span>${esc2(STAT_LBL[k]||k)}</span><span>${b.total}</span><span>${b.priced}</span><span>${b.pos}</span><span>${b.qual}</span><span>${b.shown}</span></div>`).join("")}</div>`;
   const order=["shown","capP","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
-  const V=slateVerdict(R,{loaded,modelable,priced,qual});
+  const V=slateVerdict(R,{loaded,modelable,priced,qual,shown:shownN});
   return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b><div class="verdict v-${V.k}"><b>${V.t}</b> ${V.d}</div></summary>
     <div class="funnel">
       ${step("Games on the slate",SNAP.length,`${loaded} with DraftKings props loaded`)}
