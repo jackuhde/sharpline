@@ -24,4 +24,16 @@ const C=(base,ath,gi,ev,conf="High")=>({base,ath,gi,ev,conf});
 {const Q=[];for(let i=0;i<15;i++)Q.push(C("p"+i,"P"+i,i%5,.1-i*.001));const r=R.selectTop(Q,{perPlayer:"1x",perGame:3,max:10});
   t("max 10",r.out.length===10);t("rest held as capN",Object.values(r.held).filter(v=>v==="capN").length===5);}
 t("empty input gives empty list",R.selectTop([],{}).out.length===0);
+{const E=R.expertWeight,base={graded:true,n:1000,roi:.05,clv:.01,days:0,quarters:[.02,.03,-.01,.04]};
+  t("ungraded record gets 0",E({...base,graded:false}).w===0);
+  t("small sample gets 0",E({...base,n:43}).w===0);
+  t("no CLV gets 0",E({...base,clv:-.002}).w===0);
+  t("losing record gets 0",E({...base,roi:-.01}).w===0);
+  t("good record gets a small weight",E(base).w>0&&E(base).w<=.15);
+  t("bigger sample, more weight",E({...base,n:5000}).w>E(base).w);
+  t("stale record decays",E({...base,days:120}).w<E(base).w/5);
+  t("inconsistent record weighs less",E({...base,quarters:[.1,-.02,-.03,-.01]}).w<E(base).w);
+  t("weight never above 15%",E({...base,n:1e6,roi:.5}).w<=.15);
+  t("same source counted once",R.blendExperts(.5,[{src:"A",side:"o",rec:base},{src:"A",side:"o",rec:base}])===R.blendExperts(.5,[{src:"A",side:"o",rec:base}]));
+  t("no graded experts leaves market chance",R.blendExperts(.53,[{src:"X",side:"o",rec:{graded:false}}])===.53);}
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

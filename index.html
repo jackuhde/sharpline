@@ -757,13 +757,10 @@ html,body{overscroll-behavior-y:none}
   <section class="view" id="v-lines">
     <div class="ph"><div class="eyebrow">Game lines</div><h1>Spreads, Totals, Moneylines</h1>
       <p>Live DraftKings prices through ESPN, checked against prediction markets where available.</p></div>
-    <details class="gcard xp" style="padding:14px"><summary class="eyebrow">Expert check</summary>
-      <p style="color:var(--mute);font:600 12.5px/1.55 Archivo;margin-top:6px">Experts only move my lines in proportion to their tracked record: weight = picks ÷ (picks + 2,000). Today's published records, and the weight each one gets:</p>
-      <div class="qrow"><span><b>SportsLine model</b> · 30-13 on top spread picks</span><span>2% weight</span></div>
-      <div class="qrow"><span><b>Bang The Book</b> · 43-11, mostly heavy favorites</span><span>3% weight</span></div>
-      <div class="qrow"><span><b>Covers analyst (Walder)</b> · 10-17 top picks, -9.3 units</span><span>0% (losing record)</span></div>
-      <div class="qrow"><span><b>Dimers model</b> · no public graded record</span><span>0%</span></div>
-      <p style="color:var(--mute);font:600 12px/1.5 Archivo;margin-top:8px">None of them has enough graded picks to move a line more than a few tenths of a percent, so the sportsbook and prediction-market prices drive every number here.</p></details>
+    <details class="gcard xp" style="padding:14px"><summary class="eyebrow">Expert check · no influence today</summary>
+      <p style="color:var(--mute);font:600 12.5px/1.55 Archivo;margin-top:6px">Outside picks move Sharpline's numbers only with a record graded at the prices the expert actually posted, time-stamped before the game. The weight grows with sample size, ROI measured against its own noise, closing-line value, recency and quarter-to-quarter consistency, and is capped at 15% so the market price always leads. Win rate alone counts for nothing, because 65% on heavy favorites can still lose money. Under 200 graded picks, a losing record, or no closing-line value means zero weight.</p>
+      <div class="qrow"><span><b>Published picks (SportsLine, Covers, Dimers, Action and others)</b></span><span>0%</span></div>
+      <div class="hint" style="margin-top:6px">Their posted records aren't graded at the price each pick was released at, and there is no free feed that does it, so none qualifies. Every number on this page comes from DraftKings and prediction-market prices plus Sharpline's own model. Opinion is never mixed into those numbers.</div></details>
     <div id="lineList"></div>
   </section>
 
@@ -811,7 +808,7 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
-<script src="rank.js?v=1795700001"></script>
+<script src="rank.js?v=1795700002"></script>
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
@@ -1594,7 +1591,8 @@ function saveSettings(){const v=id=>document.getElementById(id).value;
 /* ---------- top list ---------- */
 function needAm(p,e){let a=toAm(p/(1+Math.max(e,.005)));a=Math.ceil(a);if(a>-100&&a<100)a=a<0?100:-100;for(let i=0;i<40&&evOf(p,a)<e;i++){a=a<0?(a+1>-100?100:a+1):a+1}return a}
 /* one color rule everywhere: green = positive EV past your minimum, amber = small or zero, red = negative */
-const evCls=v=>v==null?"ev-na":v>=SET.minEdge?"ev-pos":v>-.01?"ev-mid":"ev-neg";
+const r1=v=>Math.round(v*1000)/1000,fmtEv=v=>{const x=r1(v)*100;return(x>0?"+":x<0?"−":"")+Math.abs(x).toFixed(1)+"%"};
+const evCls=v=>v==null?"ev-na":r1(v)>=SET.minEdge?"ev-pos":r1(v)>-.01?"ev-mid":"ev-neg";
 function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!=="l",sgn=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
   const tm=x.tm?team(x.tm)[0]:"",op=x.opp?team(x.opp)[0]:"",home=G&&x.tm&&nick(x.tm)===nick(G.home);
   const sub=isProp&&tm?`${tm} ${home?"vs":"@"} ${op} · ${STAT_LBL[x.st]||x.st} · ${tipT(G)}`:`${G?mu(G)+" · "+tipT(G):""}`;
@@ -1619,13 +1617,24 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
     <div class="stats s2">${cell("Projection",x.proj!=null?x.proj:"–")}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
     ${det}
     <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"&&SAVED[x.base]?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}
+/* is a short list a quiet night, missing data, or the model not running as fitted? checked in that order of seriousness */
+function slateVerdict(R,c){const days=PM_META&&PM_META.updated?(Date.now()-new Date(PM_META.updated))/864e5:null;
+  if(!PM_META)return{k:"bad",t:"Model fallback.",d:"Tonight's fitted model file didn't load, so props are priced with built-in default weights. Treat every edge as unverified and refresh."};
+  if(days!=null&&days>3)return{k:"bad",t:"Model out of date.",d:`The model was last refit ${Math.floor(days)} days ago; the nightly job may have failed.`};
+  if(SNAP.length&&R.games.every(g=>g.state==="in"||g.state==="post"))return{k:"ok",t:"Slate underway.",d:"Every game has started, so pregame props are closed. Live prices are in Live."};
+  if(c.loaded<SNAP.length)return{k:"warn",t:"Data gap.",d:`DraftKings props loaded for ${c.loaded} of ${SNAP.length} games, so the list may be missing bets. Refresh, or check back closer to tip.`};
+  if(c.modelable&&c.priced/c.modelable<.7)return{k:"warn",t:"Data gap.",d:`Only ${c.priced} of ${c.modelable} markets could be priced (missing game logs).`};
+  const age=(Date.now()-(LIVE.propsTs||LIVE.oddsTs||Date.now()))/6e4;if(age>45)return{k:"warn",t:"Stale prices.",d:`Props were last refreshed ${Math.round(age)} minutes ago. Refresh before betting.`};
+  if(c.qual<5)return{k:"ok",t:"Thin slate.",d:"Data and model are working; DraftKings simply has few mispriced props tonight. That is normal on small slates."};
+  return{k:"ok",t:"Normal slate.",d:"Data loaded for every game and the model is current."}}
 function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]||0,M=R.markets.length;
   const matched=M-n("unmatched")-n("dup"),pre=matched-n("started"),modelable=pre-n("yesno")-n("unsupported")-n("oneSided")-n("line2"),priced=modelable-n("noLog"),
     avail=priced-n("out")-n("inj")-n("stale"),qual=n("shown")+n("capP")+n("capG")+n("capN");
   const loaded=R.games.filter(g=>g.loaded).length,step=(lbl,v,note)=>`<div class="fn"><span>${lbl}</span><b>${v}</b>${note?`<small>${note}</small>`:""}</div>`;
   const tbl=(title,obj)=>`<div class="cv-t"><div class="cv-h">${title}</div><div class="cv-r cv-hd"><span></span><span>Markets</span><span>Priced</span><span>+EV</span><span>Qualified</span><span>Shown</span></div>${Object.entries(obj).sort((a,b)=>b[1].total-a[1].total).map(([k,b])=>`<div class="cv-r"><span>${esc2(STAT_LBL[k]||k)}</span><span>${b.total}</span><span>${b.priced}</span><span>${b.pos}</span><span>${b.qual}</span><span>${b.shown}</span></div>`).join("")}</div>`;
   const order=["shown","capP","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
-  return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b></summary>
+  const V=slateVerdict(R,{loaded,modelable,priced,qual});
+  return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b><div class="verdict v-${V.k}"><b>${V.t}</b> ${V.d}</div></summary>
     <div class="funnel">
       ${step("Games on the slate",SNAP.length,`${loaded} with DraftKings props loaded`)}
       ${step("DraftKings player-prop markets",M,`one per player, stat and line, both sides counted once. Plus ${R.alts} one-sided milestone lines (like 25+ points), which are shown in profiles but can't be priced without the other side`)}
@@ -1680,7 +1689,7 @@ function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
     <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} ${SNAP[x.g]&&nick(x.tm)===nick(SNAP[x.g].home)?"vs":"@"} ${SNAP[x.g]?team(nick(x.tm)===nick(SNAP[x.g].home)?SNAP[x.g].away:SNAP[x.g].home)[0]:""} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
     ${(v=>`<div class="r"><span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>
       <span class="est"><b>${pct(v.p!=null?v.p:g.p)}</b> ${gradeTag(gradeNow(key))}</span>
-      ${v.price!=null?`<span class="evl ${evCls(v.ev)}">${v.mine?BOOK:"DK"} ${fmtAm(v.price)} · ${v.ev>=0?"+":""}${(v.ev*100).toFixed(1)}% EV</span>`:`<span class="evl ev-na">no two-sided price</span>`}</div>`)(rowVals(key))}
+      ${v.price!=null?`<span class="evl ${evCls(v.ev)}">${v.mine?BOOK:"DK"} ${fmtAm(v.price)} · ${fmtEv(v.ev)} EV</span>`:`<span class="evl ev-na">no two-sided price</span>`}</div>`)(rowVals(key))}
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div>${(v=>{if(g.bp==null||YN[x.st])return"";const dkEv=evOf(g.p,g.bp),im=imp(g.bp);const b=v.mine?recBest[key]:null;
         return`<div class="cmp"><div><span>DraftKings ${g.s==="o"?"Over":"Under"} ${g.l}</span><b>${fmtAm(g.bp)}</b><small>implies ${pct1(im)} · Sharpline ${pct1(g.p)} · edge ${((g.p-im)*100>=0?"+":"")+((g.p-im)*100).toFixed(1)} pts · EV ${(dkEv>=0?"+":"")+(dkEv*100).toFixed(1)}%</small></div>${b?`<div class="mine"><span>${BOOK} ${b.lbl} (your odds)</span><b>${fmtAm(b.o)}</b><small>implies ${pct1(imp(b.o))} · Sharpline ${pct1(b.p)} · EV ${(b.ev>=0?"+":"")+(b.ev*100).toFixed(1)}%${b.L!==g.l?` · <b style="color:var(--gold)">different line from DraftKings (${g.l})</b>`:""} · ${b.ev>dkEv?"better than DraftKings by "+((b.ev-dkEv)*100).toFixed(1)+" pts of EV":"worse than DraftKings by "+((dkEv-b.ev)*100).toFixed(1)+" pts of EV"}</small></div>`:""}</div>`})(rowVals(key))}<div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
       ${x.q.map(q=>`<div class="qrow"><span><b>${YN[x.st]?"Yes":q.l}</b> · ${[q.o!=null?(YN[x.st]?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.note||"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${q.url}" target="_blank" rel="noopener">${q.src}</a></div>`).join("")}

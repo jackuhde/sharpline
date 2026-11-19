@@ -42,6 +42,23 @@ function selectTop(Q,opts){const max=opts.max||10,cap=opts.perPlayer==="1x"?1:+o
     if(c.ev>=Math.max(.05,2*minE)&&c.conf==="High"){c.corr=true;add(c)}}
   Q.forEach(c=>{if(!taken.has(c.base)&&!held[c.base])held[c.base]="capN"});
   return{out,held}}
-const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop};
+/* How much an outside pick may move Sharpline's chance, 0 to 1.
+   Counts only picks graded at the price the expert actually posted, with time stamps before the game.
+   0 when: not independently graded, fewer than 200 graded picks, or no positive closing-line value.
+   Otherwise: sample  n/(n+2000)
+            × skill   min(1, z/3), z = ROI ÷ its standard error (about 1/sqrt(n) at -110)
+            × recency exp(-days since last graded pick / 60)
+            × consistency  share of the last 4 quarters with ROI above 0 (needs at least 2 quarters)
+   capped at 0.15, so the market price always carries most of the weight. Win rate alone is ignored:
+   65% on -400 favorites loses money. Sharpline also counts each pick once, even if several outlets repeat it. */
+function expertWeight(r){if(!r||!r.graded||!(r.n>=200))return{w:0,why:!r||!r.graded?"not independently graded at the prices taken":"fewer than 200 graded picks"};
+  if(!(r.clv>0))return{w:0,why:"no positive closing-line value"};
+  const z=r.roi*Math.sqrt(r.n);if(!(z>0))return{w:0,why:"losing or flat record"};
+  const q=r.quarters||[];if(q.length<2)return{w:0,why:"under two quarters of history"};
+  const w=Math.min(.15,r.n/(r.n+2000)*Math.min(1,z/3)*Math.exp(-(r.days||0)/60)*(q.filter(x=>x>0).length/q.length));
+  return{w,why:"graded record"}}
+/* blend: market chance moved toward the expert's side by the weight; each source counted once */
+function blendExperts(pMkt,picks){const seen=new Set();let p=pMkt;for(const k of picks||[]){if(!k||seen.has(k.src))continue;seen.add(k.src);const w=expertWeight(k.rec).w;if(w>0)p=p+w*((k.side==="o"?1:0)-p)*.1}return p}
+const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,expertWeight,blendExperts};
 root.SLRank=api;if(typeof module!=="undefined")module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
