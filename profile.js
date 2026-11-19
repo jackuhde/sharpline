@@ -84,6 +84,23 @@ function altsHTML(){if(PF.gi<0||!PF.id||YN[PF.st])return"";const P=LIVE.props&&L
     <div class="pf-alt">${alts.map(a=>`<button class="${PF.altL===a.l?"on":""}" data-pfalt="${a.l}"><span>Over <b>${a.l}</b> <small>(${a.l+.5}+)</small></span><span><b>${fmtAm(a.o)}</b> <small>implied ${Math.round(imp(a.o)*100)}%${hit(a.l)?" · hit "+hit(a.l):""}</small></span></button>`).join("")}</div>
     <div class="pf-sub2">One-sided prices, so Sharpline can't strip the vig or show EV on these. Hit rates are his actual results.</div></section>`}
 
+/* Opponent vs position: what tonight's opponent allows per game to players listed at his position (ESPN box scores,
+   built nightly into dvp.json). Context only: it is not added to the projection, which has no validated matchup term. */
+let DVP=null,DVPload=null;
+function loadDVP(){if(DVP||DVPload)return;DVPload=fetch("dvp.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{DVP=j||{};if(PF.open)renderProfile(true)}).catch(()=>{DVP={}})}
+function matchupHTML(){loadDVP();if(PF.gi<0)return"";const G=SNAP[PF.gi];if(!G)return"";const opp=G.home===PF.tm?G.away:G.home;
+  const who=PF.id&&LIVE.ids[PF.id]||{},raw=String(who.pos||"").toUpperCase(),pos=raw==="C"?"C":/^(G|PG|SG)$/.test(raw)?"G":/^(F|SF|PF)$/.test(raw)?"F":raw.includes("C")?"C":raw.includes("G")?"G":raw.includes("F")?"F":null;
+  const posName={G:"guards",F:"forwards",C:"centers"}[pos];
+  if(!DVP)return`<section class="pf-card pf-load"><i></i><i></i><i></i><span>Loading matchup data…</span></section>`;
+  const T=DVP.teams&&DVP.teams[opp];
+  if(!pos||!T)return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>Not available yet</h3></div></div><div class="pf-empty">${!pos?"ESPN doesn't list a position for him.":"Matchup stats haven't been built for this opponent yet."}</div></section>`;
+  const D=T[pos],L=DVP.league[pos],rows=[["pts","Points"],["reb","Rebounds"],["ast","Assists"],["tpm","3-pointers"],["stl","Steals"],["blk","Blocks"]];
+  const hot=STAT_COMP[PF.st]||[],ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+  const tone=r=>r<=8?"fav":r>=23?"unf":"";
+  return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>${esc(opp.split(" ").pop())} vs ${posName}<span class="pf-sub"> · ${T.gp} games this season</span></h3></div></div>
+    <div class="pf-tw"><table class="pf-log pf-dvp"><thead><tr><th>Allowed per game</th><th>Season</th><th>Rank</th><th>Last ${T.l10gp}</th><th>Rank</th><th>League avg</th></tr></thead><tbody>
+    ${rows.map(([k,l])=>`<tr class="${hot.includes(k)?"hot":""}"><td>${l}</td><td><b>${D.s[k]??"–"}</b></td><td class="${tone(D.sr[k])}">${ord(D.sr[k])}</td><td>${D.l10[k]??"–"}</td><td class="${tone(D.l10r[k])}">${ord(D.l10r[k])}</td><td>${L[k]}</td></tr>`).join("")}</tbody></table></div>
+    <div class="pf-sub2">Totals allowed to all ${posName} in a game, from ESPN box scores through ${esc(DVP.through)}. Rank 1st means the defense allows the most (friendliest matchup), 30th the least. ESPN lists positions only as guard, forward or center, so a point guard and a wing guard share a group, and minutes are not adjusted for role.${T.l10gp<10?"":" Ten games is a small sample; lean on the season column."} This is context only; it isn't added to Sharpline's projection.</div></section>`}
 function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
   let list=PF.range==="opp"?rows.all.filter(r=>r.opp===opp):rows.cur.slice(0,PF.range);
   list=list.filter(r=>valOf(r,st)!=null).slice(0,20).reverse();
@@ -150,7 +167,7 @@ window.renderProfile=function(keep){const el=document.getElementById("prof");if(
     ${!PF.id?`<div class="pf-empty">Stats aren't available for this player right now. Profiles load stats for players on tonight's slate.</div>`
       :!R||R.loading?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading his game log from ESPN…</span></div>`
       :R.err?`<div class="pf-empty">Couldn't reach ESPN for his game log. Pull down to refresh, or try again in a minute.</div>`
-      :chartHTML(rows)+avgsHTML(rows)+logHTML(rows)}
+      :chartHTML(rows)+avgsHTML(rows)+matchupHTML()+logHTML(rows)}
     <p class="pf-foot">Actual results come from ESPN box scores (regular season). Projections, chances and fair prices are Sharpline's model, not results.</p></div></div>`;
   if(keep)el.scrollTop=st0;
   if(PF.anim)requestAnimationFrame(()=>requestAnimationFrame(()=>{const c=el.querySelector(".pf-chart");if(c)c.classList.add("go")}));PF.anim=false};
