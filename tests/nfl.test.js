@@ -35,4 +35,5 @@ t("away +3 pushes? no: +4 covers",G.gradeSpec({kind:"sp",team:"2",line:4},B).res
 t("moneyline",G.gradeSpec({kind:"ml",team:"2"},B).res==="L");
 t("total over 43.5",G.gradeSpec({kind:"tot",line:43.5,side:"o"},B).res==="W");
 t("not final is ungraded",G.gradeSpec({kind:"ml",team:"1"},{...B,completed:false})===null);
+{const a=M.project(I,"10","rec",{line:4.5,k:0}),b=M.project(I,"10","rec",{line:4.5,evalLine:2.5,k:0});t("k=0 at DK line is 50%",Math.abs(a.p-.5)<1e-9);t("k=0 at a lower line follows the market shape, well above 50%",b.p>.65);}
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

@@ -102,8 +102,12 @@ function project(I,id,st,ctx,DEF){const M=STATS[st];if(!M)return null;const pos=
     else if(M.d==="logn"){if(m<=0)pOver=0;else{const s2=Math.log(1+cv*cv),mu=Math.log(m)-s2/2;pOver=Le<=0?1:1-Phi((Math.log(Le)-mu)/Math.sqrt(s2))}}
     else pOver=1-Phi((Le-m)/Math.max(.5,cv*m))}
   const hits=Le!=null&&!M.yn?vals.filter(v=>v>Le).length:null;
-  const k=ctx.k!=null?ctx.k:.4,pAdj=pOver==null?null:M.yn?pOver:.5+k*(pOver-.5);
-  return{n:used.length,m,m0,cv,pOver,p:pAdj,k,parts,hits,last:vals.slice(-5),fo,fg,L:Le,L0}}
+  /* the trust factor k pulls the model toward the market. At DraftKings' line the market is 50/50; at your book's number
+     the market's view is DraftKings' line carried over with the same shape (median at that line), not 50%. */
+  let pM=.5;if(!M.yn&&Le!=null&&L0!=null&&Le!==L0){if(M.d==="pois"){let lo=.01,hi=60;for(let i=0;i<50;i++){const md=(lo+hi)/2;(1-poisCdf(Math.floor(L0),md))<.5?lo=md:hi=md}pM=1-poisCdf(Math.floor(Le),(lo+hi)/2)}
+    else if(M.d==="logn"){const s2=Math.log(1+cv*cv);pM=Le<=0?1:1-Phi((Math.log(Le)-Math.log(Math.max(.01,L0)))/Math.sqrt(s2))}else pM=1-Phi((Le-L0)/Math.max(.5,cv*Math.max(m,L0)))}
+  const k=ctx.k!=null?ctx.k:.4,pAdj=pOver==null?null:M.yn?pOver:pM+k*(pOver-pM);
+  return{n:used.length,m,m0,cv,pOver,p:pAdj,pM,k,parts,hits,last:vals.slice(-5),fo,fg,L:Le,L0}}
 const r1=v=>Math.round(v*10)/10;
 /* which new factors are on; the backtest turns each off in turn and keeps only what improves out-of-sample results */
 const DEFAULT_F={snap:1,tgt:1,prs:1,wx:1,ogs:1};
