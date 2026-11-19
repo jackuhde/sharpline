@@ -175,3 +175,10 @@ Phase 4 (calibration) lives in the Tracker's "Is Sharpline accurate?" section an
 - Opponent vs position now counts only each team's five starters (ESPN box score `starter` flag), grouped by ESPN's G/F/C label. The build script refetches every game when its cache version changes.
 - Open tracked bets in an in-progress game show Sharpline's live chance to win, refreshed with every live poll (20s). Same-line DraftKings market: blended 35/65 with its no-vig price. Other lines: model alone, labeled. Parlays: product of pending legs when not same-game; same-game parlays get per-leg chances only. Live chances are not yet graded for calibration.
 - Live polling now runs on every tab whenever a game is in progress (was: only the Live tab or an open game). Pregame props cache cut from 8 to 2 minutes.
+
+## Nov 19: prop model rebuilt from a season backtest
+- Data: `data/props-history.json`, every DraftKings pregame prop (open and close) and box score for 222 games (Oct 20 to Nov 18), collected by `.github/workflows/props-history.yml` nightly.
+- Old model (season/L10 averages blended with the market): picks rated 3%+ EV went 48.7% and lost 6.0% at closing prices over 5,531 lines; its probabilities scored worse than DraftKings' own no-vig price (Brier .2499 vs .2470).
+- Market finding: Overs hit 47.5% vs 49.4% implied by DraftKings' no-vig price (17,902 lines). Fading players who cleared the line in 7+ of their last 10 was the strongest single signal.
+- New model: logistic regression on DraftKings' no-vig chance plus season and last-10 averages vs the line, last-10 hit rate, minutes trend, bench role, back-to-back, teammates out, stat type. Refit nightly (`scripts/props-model/fit.mjs` → `model.json`).
+- Out of sample: trained on the first half, tested on the second: +3.9% ROI at 2%+ EV (1,886 bets), +22.7% at 4%+ (389). Trained on the second half, tested on the first: −2.3% at 2%+, +1.7% at 4%+ (1,039). Mixed; one month of data. Strong tier now needs 4%+ EV.

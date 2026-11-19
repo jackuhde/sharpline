@@ -122,7 +122,7 @@ function parseGamelog(j){const names=j.names||[],ix=k=>names.indexOf(k);const ev
   const avg=list=>{const o={gp:list.length};K.forEach(k=>{const v=list.map(r=>r[k]).filter(x=>x!=null);o[k]=v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10:null});return o};
   /* double-double and triple-double rates, counted from the games themselves */
   const cnt=r=>["pts","reb","ast","stl","blk"].filter(k=>(r[k]||0)>=10).length;
-  const out={season:avg(rows),l10:rows.length>=3?avg(rows.slice(0,10)):null,dd:rows.filter(r=>cnt(r)>=2).length/rows.length,td:rows.filter(r=>cnt(r)>=3).length/rows.length,last:rows[0].t};
+  const out={season:avg(rows),l10:rows.length>=3?avg(rows.slice(0,10)):null,dd:rows.filter(r=>cnt(r)>=2).length/rows.length,td:rows.filter(r=>cnt(r)>=3).length/rows.length,last:rows[0].t,g10:rows.slice(0,10).map(r=>[r.t,r.min,r.pts,r.reb,r.ast,r.tpm,r.stl,r.blk])};
   return out}
 /* every regular-season game as a row (newest first), for player profiles: date, opponent, home/away, result, full line */
 function parseGamelogRows(j){const names=j.names||[],ix=k=>names.indexOf(k),ev=j.events||{};

@@ -795,7 +795,7 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
-<script src="live.js?v=1795000002"></script>
+<script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795300003"></script>
@@ -951,7 +951,7 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
       else if(q1){pO=q1.o!=null?imp(q1.o)-.02:1-(imp(q1.u)-.02);l0=q1.l;out.mktSrc=q1.src+" one side only";out.mk1=1}}
     else{const C=custOf(i);if(!C.fo){pO=devig(C.o,C.u)[0];l0=C.l;out.mktSrc=C.bk+" "+fmtAm(C.o)+"/"+fmtAm(C.u)}}
     if(pO!=null){const po=shiftP(pO,l0,L,sdFor(st,l0));out.mkt=adj(isOver(best.lbl)?po:1-po)}
-    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,po=pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
+    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,MDx=PROPS[i]&&propModel(PROPS[i],L),po=MDx?MDx.p:pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
     else{const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}}
     if(k==="c")out.basis=custOf(i).fo?"projection only (no other book)":"market price you entered";
     else{const priced=PROPS[i].q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null);out.basis=out.mk1===2?"market price":out.mk1===1?"one-sided or thin market price":priced?"market price":SUG[i].proj!=null?"blend: 70% book line, 30% projection":"book line only (50/50)"}
@@ -1301,20 +1301,57 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
   return{yn:1,m:null,mPlayer:rate,mMarket:pm,Lm:.5,w,why,mkt,disagree:rate!=null&&pm!=null&&Math.abs(rate-pm)>.2,
     pOver:()=>Math.min(.95,Math.max(.01,p))}}
 /* every board prop takes its pick, chance and tier from tonight's projection */
+/* ================= prop model (since Nov 19, 2026) =================
+   Fit on every DraftKings pregame prop line this season (scripts/props-model, refit nightly into model.json).
+   It starts from DraftKings' own no-vig chance at the same line and adjusts it with what the backtest showed matters:
+   Overs hit about 2 points less often than DraftKings prices them, players who have cleared the number in most of
+   their last 10 games are overpriced, and season and recent averages, minutes trend, bench role, back-to-backs and
+   teammates ruled out each shift it a little. The old average-based projection lost about 6% at closing prices in the
+   same backtest, so it is no longer used to pick sides when this model can run. */
+const PM_DEFAULT={b0:-0.1305,mkt:0.9254,gapS:0.071,gap10:0.0661,hot:-0.1103,bench:-0.0503,miss:0.1034,minTr:0.1122,b2b:0.0238,combo:-0.0265,count:0.0086};
+let PMW=PM_DEFAULT,PM_META=null;
+fetch("model.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.weights&&j.weights.mkt!=null){PMW=j.weights;PM_META=j;if(PROPS.length){applyProjections();renderAll()}}}).catch(()=>{});
+const etDay=t=>new Date(t).toLocaleDateString("en-CA",{timeZone:"America/New_York"});
+function propModel(x,L){const st=x.st,c=STAT_COMP[st];if(!c||YN[st]||L==null)return null;
+  const q=x.q.find(q=>q.live&&q.l===L&&q.o!=null&&q.u!=null)||x.q.find(q=>/draftkings/i.test(q.src||"")&&q.l===L&&q.o!=null&&q.u!=null);if(!q)return null;
+  const P=projOf(x.p);if(!P||!P.g10||P.g10.length<3||!P.min||c.some(k=>P[k]==null))return null;
+  const sum=r=>c.reduce((a,k)=>a+(r[k]||0),0),s=sum(P),s10=P.l10?sum(P.l10):s,sd=sdFor(st,L),cl=(v,a)=>Math.max(-a,Math.min(a,v));
+  const hits=P.g10.filter(r=>sum(r)>L).length,hr=hits/P.g10.length,min3=P.g10.slice(0,3).reduce((a,r)=>a+r.min,0)/Math.min(3,P.g10.length);
+  const yday=etDay(new Date(DATA_DATE+"T12:00:00Z").getTime()-864e5),b2b=!!P.g10[0].t&&etDay(P.g10[0].t)===yday;
+  const outMates=Object.values(LIVE.inj||{}).filter(j=>j.level==="out"&&nick(j.team)===nick(x.tm)&&normN(j.name)!==normN(x.p)&&((projOf(j.name)||{}).min||0)>=25).map(j=>j.name);
+  const pm=devig(q.o,q.u)[0],lgt=p=>Math.log(p/(1-p)),sg=z=>1/(1+Math.exp(-z)),W=PMW;
+  const f={mkt:lgt(Math.min(.97,Math.max(.03,pm))),gapS:cl((s-L)/sd,2),gap10:cl((s10-L)/sd,2),hot:hr-.5,bench:P.min<24?1:0,miss:Math.min(3,outMates.length),
+    minTr:cl(min3/P.min-1,.5),b2b:b2b?1:0,combo:c.length>1?1:0,count:COUNT_ST[st]?1:0};
+  const z=Object.keys(f).reduce((a,k)=>a+(W[k]||0)*f[k],W.b0||0),p=sg(z);
+  /* what moved it, in points of Over chance */
+  const d=k=>p-sg(z-(W[k]||0)*f[k]),r1=v=>Math.round(v*10)/10,parts=[];
+  const base=sg((W.b0||0)+(W.mkt||0)*f.mkt)-pm;if(Math.abs(base)>=.005)parts.push([base,"DraftKings Overs hit less often than priced"]);
+  const lab={gapS:`season average ${r1(s)}`,gap10:`last-10 average ${r1(s10)}`,hot:`cleared ${L} in ${hits} of his last ${P.g10.length} (books overprice streaks)`,bench:"bench minutes",
+    miss:`${outMates.join(", ")} out`,minTr:`minutes trend (${r1(min3)} last 3 vs ${r1(P.min)})`,b2b:"second night of a back-to-back",combo:"combo stat"};
+  Object.keys(lab).forEach(k=>{if(!f[k])return;const v=d(k);if(Math.abs(v)>=.005)parts.push([v,lab[k]])});parts.sort((a,b)=>Math.abs(b[0])-Math.abs(a[0]));
+  return{p,pm,q,parts,hits,n:P.g10.length}}
 function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
   const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}
   /* stay within 7 points of the books' no-vig chance at the same line: bigger gaps usually mean news the averages don't know yet */
   /* the side always follows the projection; the chance is then held near the market, so a side can show under 50% (only worth it at a long enough price) */
   const raw=pt.pOver(g.l);let pO=raw;g.capped=false;if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){pO=Math.min(pt.pm+.07,Math.max(pt.pm-.07,raw));g.capped=pO!==raw}
   if(pt.yn){const q=x.q.find(q=>q.o!=null);if(q&&pt.mMarket!=null)pO=Math.min(pt.mMarket+.07,Math.max(pt.mMarket-.07,pO))}
-  const so=pt.yn?pO>=.5:raw>=.5;g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
+  const MD=pt.yn?null:propModel(x,g.l);g.model=MD;
+  const bestAt=side=>{const lv=x.q.some(q=>q.live&&q.l===g.l&&(side==="o"?q.o:q.u)!=null);const pr=x.q.filter(q=>q.l===g.l&&(!lv||q.live)).map(q=>side==="o"?q.o:q.u).filter(v=>v!=null);return pr.length?pr.reduce((b,o)=>dec(o)>dec(b)?o:b,pr[0]):null};
+  let so;if(MD){pO=MD.p;g.capped=false;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}else so=pt.yn?pO>=.5:raw>=.5;
+  g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
   /* best posted price for the chosen side at this line */
   /* when DraftKings has a live price at this line, research prices from earlier in the day are out of date */
   const liveAt=x.q.some(q=>q.live&&q.l===g.l&&(so?q.o:q.u)!=null);
   const prices=x.q.filter(q=>q.l===g.l&&(!liveAt||q.live)).map(q=>so?q.o:q.u).filter(v=>v!=null);g.bp=prices.length?Math.max(...prices.map(o=>o)):undefined;
   if(g.bp!=null)g.bp=prices.reduce((b,o)=>dec(o)>dec(b)?o:b,prices[0]);
-  const ev=g.bp!=null?evOf(g.p,g.bp):null;g.t=ev==null?"pass":ev>=.03&&!pt.disagree?"strong":ev>=.008?"lean":"pass";
+  const ev=g.bp!=null?evOf(g.p,g.bp):null;
+  /* backtest: the model's edges held up from about 4% EV; the old average-based method had none, so it can only reach "lean" */
+  g.t=ev==null?"pass":MD?(ev>=.04?"strong":ev>=.02?"lean":"pass"):(ev>=.04&&!pt.disagree?"lean":"pass");
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
+  if(MD){const sg2=v=>(v>0?"+":"−")+Math.abs(v*100).toFixed(1);
+    g.why=`DraftKings' no-vig price makes Over ${g.l} ${pct1(MD.pm)}. Sharpline's model moves that to ${pct1(MD.p)}`+(MD.parts.length?`: ${MD.parts.slice(0,4).map(([v,t])=>`${t} (${sg2(v)})`).join("; ")}.`:".")+
+      ` That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}. Averages-based projection: ${pt.m}.`+(g.why0?` Morning research said: ${g.why0}`:"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
     (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(g.p<.5?` DraftKings leans the other way, so this side only pays off at a long enough price (${fmtAm(toAm(g.p))} or better).`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
 /* ---------- letter grades: S (best) to F ----------
@@ -1655,7 +1692,7 @@ const LIVE={ev:{},inj:{},injTs:0,oddsTs:0,okOdds:null,okInj:null,boardOk:null,la
    The researched board (data.json) covers the players previews write about. DraftKings posts every rotation player,
    so the app reads those directly and adds anything the board is missing. Averages come from each player's ESPN game log. */
 let BOARD={props:[],sug:[],proj:[]};
-{const c=LS0("sl_roster2",{d:"",ids:{}});LIVE.ids=c.ids||{};const g=LS0("sl_glog",{d:"",m:{}});LIVE.logs=g.m||{};LIVE.logsD=g.d}
+{const c=LS0("sl_roster2",{d:"",ids:{}});LIVE.ids=c.ids||{};const g=LS0("sl_glog2",{d:"",m:{}});LIVE.logs=g.m||{};LIVE.logsD=g.d}
 const pid=x=>x.g+"|"+normN(x.p)+"|"+x.st;
 function liveRow(r,G,gi){const e=LIVE.ev[gi]||{},moved=r.lOpen!=null&&r.lOpen!==r.l;
   return{l:r.l,o:r.o,u:r.u,src:"DraftKings (live)",url:e.id?`https://www.espn.com/nba/game/_/gameId/${e.id}`:"https://sportsbook.draftkings.com/leagues/basketball/nba",live:1,upd:r.upd,
@@ -1681,7 +1718,7 @@ function remapKeys(){const prev=LS0("sl_pid",{d:"",ids:[]}),now=PROPS.map(pid);
 function buildProj(){PROJ=BOARD.proj.map(x=>({...x}));
   Object.keys(LIVE.logs).forEach(id=>{const L=LIVE.logs[id],who=LIVE.ids[id];if(!L||!who)return;const s=L.season,t=L.l10;
     const e={p:who.name,ab:who.ab||"",pts:s.pts,reb:s.reb,ast:s.ast,tpm:s.tpm,stl:s.stl,blk:s.blk,gp:s.gp,dd:L.dd,td:L.td,min:s.min,
-      l10:t?{pts:t.pts,reb:t.reb,ast:t.ast,tpm:t.tpm,stl:t.stl,blk:t.blk}:null,l10min:t?t.min:null,src:`ESPN game log (${s.gp} games${t?`, last ${t.gp}`:""})`};
+      l10:t?{pts:t.pts,reb:t.reb,ast:t.ast,tpm:t.tpm,stl:t.stl,blk:t.blk}:null,l10min:t?t.min:null,g10:(L.g10||[]).map(r=>({t:r[0],min:r[1],pts:r[2],reb:r[3],ast:r[4],tpm:r[5],stl:r[6],blk:r[7]})),src:`ESPN game log (${s.gp} games${t?`, last ${t.gp}`:""})`};
     const i=PROJ.findIndex(x=>normN(x.p)===normN(who.name));if(i>=0)PROJ[i]=e;else PROJ.push(e)})}
 async function loadProps(force){const gis=Object.keys(LIVE.ev).filter(gi=>{const e=LIVE.ev[gi];return e&&e.id&&(e.state||"pre")==="pre"});
   if(!gis.length)return"none";if(!force&&Date.now()-LIVE.propsTs<2*60000)return"cached";
@@ -1701,7 +1738,7 @@ async function loadLogs(){if(LIVE.logsBusy)return LIVE.logsBusy;
   Object.values(LIVE.ids).length&&BOARD.props.forEach(x=>{const id=Object.keys(LIVE.ids).find(k=>normN(LIVE.ids[k].name)===normN(x.p));if(id&&!(id in LIVE.logs)&&!want.includes(id))want.push(id)});
   if(!want.length)return 0;
   LIVE.logsBusy=(async()=>{let n=0;for(let i=0;i<want.length;i+=6){await Promise.all(want.slice(i,i+6).map(id=>SharpLive.gamelog(id).then(v=>{LIVE.logs[id]=v||0;n++}).catch(()=>{})))}
-    LS.set("sl_glog",{d:DATA_DATE,m:LIVE.logs});return n})();
+    LS.set("sl_glog2",{d:DATA_DATE,m:LIVE.logs});return n})();
   try{return await LIVE.logsBusy}finally{LIVE.logsBusy=null}}
 const nick=n=>(n||"").trim().split(" ").pop().toLowerCase();
 const ago=ts=>{if(!ts)return"never";const m=Math.round((Date.now()-ts)/60000);return m<1?"just now":m<60?m+"m ago":Math.floor(m/60)+"h "+(m%60?m%60+"m ":"")+"ago"};
