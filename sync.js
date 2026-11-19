@@ -5,7 +5,7 @@
 (function(){
   const CFG={url:"https://hdrdqlffprorqhmlkywg.supabase.co",key:"sb_publishable_Os4l69ROP_ApbQsp8kaXuw_RoUXVQ8x"};   // key: Project Settings > API Keys > publishable
   const LIB="vendor/supabase-2.119.1.js";
-  const KEYS=["sl_bets","sl_unit","sl_set","sl_follow","sl_recent","sl_alerts"];
+  const KEYS=["sl_bets","sl_unit","sl_set","sl_follow","sl_recent","sl_alerts","sl_recs"];
   const META="sl_sync_meta";   // {key: last local change time, _synced: last successful sync, _uid}
   const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const S={on:!!CFG.key,sb:null,user:null,status:"",busy:false,err:""};
@@ -23,7 +23,7 @@
 
   /* lists that should combine on a first sync rather than one device overwriting the other */
   function union(a,b,id){const out=[],seen=new Set();[...(a||[]),...(b||[])].forEach(x=>{const k=id(x);if(!seen.has(k)){seen.add(k);out.push(x)}});return out}
-  const IDS={sl_bets:x=>x&&x.id,sl_follow:x=>x&&String(x.n).toLowerCase(),sl_recent:x=>x&&String(x.n).toLowerCase(),sl_alerts:x=>x&&(x.n+"|"+x.ts)};
+  const IDS={sl_recs:x=>x&&x.k,sl_bets:x=>x&&x.id,sl_follow:x=>x&&String(x.n).toLowerCase(),sl_recent:x=>x&&String(x.n).toLowerCase(),sl_alerts:x=>x&&(x.n+"|"+x.ts)};
 
   async function pull(){if(!S.user)return;S.busy=true;paint();
     try{const{data,error}=await S.sb.from("user_data").select("data").eq("user_id",S.user.id).maybeSingle();if(error)throw error;

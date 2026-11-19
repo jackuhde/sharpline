@@ -376,6 +376,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .tb-res .w{color:var(--over);border-color:rgba(46,230,166,.35)}.tb-res .l{color:var(--under);border-color:rgba(255,90,110,.35)}
 .rc{font:900 10px Archivo;padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:middle}
 .r-W{background:rgba(46,230,166,.15);color:var(--over)}.r-L{background:rgba(255,90,110,.15);color:var(--under)}.r-P,.r-V{background:var(--s3);color:var(--mute)}
+.tk-t .tr.rc6{grid-template-columns:minmax(0,1.5fr) repeat(5,minmax(0,1fr))}
 .tk-t .tr{display:grid;grid-template-columns:1.6fr .8fr 1fr .8fr;gap:6px;padding:10px 14px;border-top:1px solid var(--line);font:700 12.5px Archivo}
 .tk-t .tr:first-child{border-top:0}.tk-t .th{color:var(--mute);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
 /* shared */
@@ -811,8 +812,9 @@ html,body{overscroll-behavior-y:none}
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
-<script src="sync.js?v=1795300003"></script>
-<script src="tracker2.js?v=1795400002"></script>
+<script src="sync.js?v=1795700001"></script>
+<script src="tracker2.js?v=1795700001"></script>
+<script src="recs.js?v=1795700001"></script>
 <script src="livegame.js?v=1795500001"></script>
 <script>
 
@@ -1645,6 +1647,7 @@ function renderTop(){
   const scanTxt=S.props?`Scanned ${S.props} DraftKings props from ${S.players} players in ${S.games} game${S.games===1?"":"s"}. ${S.priced} priced by the model${S.noLog?`; ${S.noLog} not, because the player has fewer than 3 games or his game log hasn't loaded yet`:""}${S.started?`; ${S.started} in games that have started`:""}.`:"";
   const head=`<div class="hint tscan">${scanTxt} ${items.length?`${topItems.qualified} bet${topItems.qualified===1?"":"s"} cleared ${(SET.minEdge*100).toFixed(0)}% expected value after the accuracy adjustment; showing the best ${items.length}, ${SET.perPlayer==="1x"?"one per player":SET.perPlayer==="1"?"one per player unless a second is exceptional":"up to "+SET.perPlayer+" per player"}.`:""}</div>`;
   let REP=null;try{REP=slateReport(items);topItems.report=REP}catch(e){console.warn("report",e)}
+  try{window.SLRecs&&SLRecs.log(items)}catch(e){console.warn("recs",e)}
   box.innerHTML=head+coverageHTML(REP,items.length)+items.map((x,n)=>topCard(x,n+1,false)).join("");
   if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets.${WL.length?" Closest to qualifying, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
   if(!items.length&&!WL.length&&!S.props)box.innerHTML=`<div class="empty"><b>No priced props yet</b>DraftKings posts player props through the day. Scan screenshots or enter a book's odds meanwhile.</div>`;
@@ -1981,6 +1984,7 @@ async function refreshAll(opts={}){const manual=!!opts.manual;
     applyLiveOdds();buildProps();buildProj();applyInjuries();applyProjections();
     try{res.graded=await gradePending()}catch(e){}
     if(window.TR2){try{TR2.logPreds()}catch(e){console.warn(e)}try{res.graded=(res.graded||0)+await TR2.gradeParlays()}catch(e){console.warn(e)}try{await TR2.gradePreds()}catch(e){console.warn(e)}}
+    if(window.SLRecs){try{await SLRecs.grade()}catch(e){console.warn(e)}}
     LIVE.okOdds=res.odds!=="fail";LIVE.okProps=res.props!=="fail";LIVE.okInj=res.inj!=="fail";LIVE.boardOk=res.board!=="fail";LIVE.last=Date.now();
     renderAll();flashChanges(before);renderLiveBar();return res})();
   try{const r=await LIVE.busy;if(manual||r.graded){const fails=[r.board==="fail"&&"board",r.odds==="fail"&&"live odds",r.props==="fail"&&"player props",r.inj==="fail"&&"injuries"].filter(Boolean);

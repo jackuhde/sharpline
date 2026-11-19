@@ -21,8 +21,9 @@ function bets(list,f,thr){let n=0,pl=0,win=0;list.forEach(r=>{const p=f(r),eo=ev
 const dates=[...new Set(S.map(r=>r.d))].sort(),mid=dates[Math.floor(dates.length/2)];
 /* per prop category, out of sample: how much of the model's move away from DraftKings' price actually showed up in results (k),
    and how the model's 2%+ EV picks did. Both halves are scored by a model fit on the other half. */
-const acc={};
+const acc={},oos=[];
 const test=[[r=>r.d<mid,r=>r.d>=mid,"first half → second half"],[r=>r.d>=mid,r=>r.d<mid,"second half → first half"]].map(([a,b,lbl])=>{const w=fit(S.filter(a)),te=S.filter(b);
+  te.filter(r=>!r.snap).forEach(r=>{oos.push({st:r.st,y:r.over,p:pred(w,r),pm:r.pm,o:r.o,u:r.u})});
   te.filter(r=>!r.snap).forEach(r=>{const p=pred(w,r),A=acc[r.st]=acc[r.st]||{num:0,den:0,n:0,win:0,pl:0};const d=p-r.pm;A.num+=d*(r.over-r.pm);A.den+=d*d;
     const eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)>=.02){const W=side==="o"?r.over:1-r.over;A.n++;A.win+=W;A.pl+=W?dec(side==="o"?r.o:r.u)-1:-1}});
   return{split:lbl,ev2:bets(te,r=>pred(w,r),.02),ev4:bets(te,r=>pred(w,r),.04)}});
@@ -30,8 +31,18 @@ const test=[[r=>r.d<mid,r=>r.d>=mid,"first half → second half"],[r=>r.d>=mid,r
 const catK={},catRec={};Object.entries(acc).forEach(([st,A])=>{const raw=A.den?A.num/A.den:.8;catK[st]=+Math.max(.3,Math.min(1,.5*raw+.4)).toFixed(3);
   catRec[st]={n:A.n,hit:A.n?+(A.win/A.n).toFixed(3):null,roi:A.n?+(A.pl/A.n).toFixed(3):null,raw:+raw.toFixed(3)}});
 /* the old app model for comparison: every pick it rated 3%+ EV at the closing price */
+/* calibration and accuracy, out of sample at closing prices: Brier score and log loss for the model and for DraftKings'
+   no-vig price, by stat; the model's chance for the side it prefers against how often that side won; realized ROI by EV band */
+const ll=(y,p)=>{p=Math.min(.999,Math.max(.001,p));return-(y?Math.log(p):Math.log(1-p))};
+const score=list=>({n:list.length,brier:+(list.reduce((a,r)=>a+(r.p-r.y)**2,0)/list.length).toFixed(4),brierMkt:+(list.reduce((a,r)=>a+(r.pm-r.y)**2,0)/list.length).toFixed(4),
+  logloss:+(list.reduce((a,r)=>a+ll(r.y,r.p),0)/list.length).toFixed(4),loglossMkt:+(list.reduce((a,r)=>a+ll(r.y,r.pm),0)/list.length).toFixed(4)});
+const calib={all:score(oos),byStat:{},bins:[],evBands:[]};
+[...new Set(oos.map(r=>r.st))].forEach(st=>calib.byStat[st]=score(oos.filter(r=>r.st===st)));
+const sided=oos.map(r=>{const eo=evOf(r.p,r.o),eu=evOf(1-r.p,r.u),o=eo>=eu;return{p:o?r.p:1-r.p,y:o?r.y:1-r.y,ev:Math.max(eo,eu),price:o?r.o:r.u}});
+[[.45,.5],[.5,.52],[.52,.54],[.54,.56],[.56,.58],[.58,.6],[.6,.65],[.65,1]].forEach(([lo,hi])=>{const x=sided.filter(r=>r.p>=lo&&r.p<hi);if(x.length)calib.bins.push({lo,hi,n:x.length,pred:+(x.reduce((a,r)=>a+r.p,0)/x.length).toFixed(4),act:+(x.reduce((a,r)=>a+r.y,0)/x.length).toFixed(4)})});
+[[-1,0],[0,.02],[.02,.04],[.04,.06],[.06,1]].forEach(([lo,hi])=>{const x=sided.filter(r=>r.ev>=lo&&r.ev<hi);if(x.length)calib.evBands.push({lo,hi,n:x.length,expRoi:+(x.reduce((a,r)=>a+r.ev,0)/x.length).toFixed(4),roi:+(x.reduce((a,r)=>a+(r.y?dec(r.price)-1:-1),0)/x.length).toFixed(4)})});
 const W=fit(S);
 const out={updated:new Date().toISOString(),games:games.length,lines:base.length,through:dates.at(-1),split:mid,
-  catK,catRec,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
+  catK,catRec,calib,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
   overs:{n:base.length,hit:+(base.filter(r=>r.over).length/base.length).toFixed(3),fair:+(base.reduce((a,r)=>a+r.pm,0)/base.length).toFixed(3)}};
 fs.writeFileSync(OUT,JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1));

@@ -129,5 +129,5 @@ function accHTML(){const A=LSg("sl_pred_agg",{}),days=Object.keys(A).sort();cons
 window.TR2={_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
 setTimeout(()=>{paintSlip();
   /* add the performance and model-accuracy sections under the tracker */
-  const r0=window.renderTrack;if(typeof r0==="function")window.renderTrack=function(){r0();const box=document.getElementById("trackBox");if(box&&BETS.length)box.insertAdjacentHTML("beforeend",perfHTML(filter(BETS)));if(box)box.insertAdjacentHTML("beforeend",accHTML())}},0);
+  const r0=window.renderTrack;if(typeof r0==="function")window.renderTrack=function(){r0();const box=document.getElementById("trackBox");if(box&&BETS.length)box.insertAdjacentHTML("beforeend",perfHTML(filter(BETS)));if(box&&window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.html());if(box)box.insertAdjacentHTML("beforeend",accHTML());if(box&&window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.backtestHTML())}},0);
 })();

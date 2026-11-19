@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-19T15:07:48.240Z",
+ "updated": "2026-11-19T15:10:55.292Z",
  "games": 222,
  "lines": 17902,
  "through": "2026-11-18",
@@ -77,6 +77,182 @@
    "roi": 0.036,
    "raw": 0.915
   }
+ },
+ "calib": {
+  "all": {
+   "n": 17902,
+   "brier": 0.2469,
+   "brierMkt": 0.247,
+   "logloss": 0.6869,
+   "loglossMkt": 0.6871
+  },
+  "byStat": {
+   "Points": {
+    "n": 2506,
+    "brier": 0.2492,
+    "brierMkt": 0.2497,
+    "logloss": 0.6916,
+    "loglossMkt": 0.6925
+   },
+   "Assists": {
+    "n": 1821,
+    "brier": 0.2472,
+    "brierMkt": 0.247,
+    "logloss": 0.6876,
+    "loglossMkt": 0.6871
+   },
+   "Rebounds": {
+    "n": 2336,
+    "brier": 0.2461,
+    "brierMkt": 0.246,
+    "logloss": 0.6853,
+    "loglossMkt": 0.6852
+   },
+   "3-Pointers": {
+    "n": 2019,
+    "brier": 0.2468,
+    "brierMkt": 0.2455,
+    "logloss": 0.6868,
+    "loglossMkt": 0.6841
+   },
+   "Steals": {
+    "n": 772,
+    "brier": 0.2288,
+    "brierMkt": 0.2302,
+    "logloss": 0.6497,
+    "loglossMkt": 0.6528
+   },
+   "Blocks": {
+    "n": 363,
+    "brier": 0.2322,
+    "brierMkt": 0.2311,
+    "logloss": 0.6566,
+    "loglossMkt": 0.6544
+   },
+   "Pts+Ast": {
+    "n": 1895,
+    "brier": 0.2489,
+    "brierMkt": 0.2492,
+    "logloss": 0.691,
+    "loglossMkt": 0.6915
+   },
+   "Pts+Reb": {
+    "n": 2361,
+    "brier": 0.2483,
+    "brierMkt": 0.2492,
+    "logloss": 0.6898,
+    "loglossMkt": 0.6915
+   },
+   "Reb+Ast": {
+    "n": 1867,
+    "brier": 0.2494,
+    "brierMkt": 0.249,
+    "logloss": 0.6919,
+    "loglossMkt": 0.6911
+   },
+   "Pts+Reb+Ast": {
+    "n": 1962,
+    "brier": 0.2485,
+    "brierMkt": 0.2494,
+    "logloss": 0.6901,
+    "loglossMkt": 0.6919
+   }
+  },
+  "bins": [
+   {
+    "lo": 0.45,
+    "hi": 0.5,
+    "n": 2808,
+    "pred": 0.4818,
+    "act": 0.4647
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.52,
+    "n": 3093,
+    "pred": 0.5107,
+    "act": 0.4979
+   },
+   {
+    "lo": 0.52,
+    "hi": 0.54,
+    "n": 3736,
+    "pred": 0.53,
+    "act": 0.5185
+   },
+   {
+    "lo": 0.54,
+    "hi": 0.56,
+    "n": 3039,
+    "pred": 0.5492,
+    "act": 0.542
+   },
+   {
+    "lo": 0.56,
+    "hi": 0.58,
+    "n": 1588,
+    "pred": 0.5689,
+    "act": 0.5649
+   },
+   {
+    "lo": 0.58,
+    "hi": 0.6,
+    "n": 915,
+    "pred": 0.589,
+    "act": 0.576
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.65,
+    "n": 1148,
+    "pred": 0.6216,
+    "act": 0.6028
+   },
+   {
+    "lo": 0.65,
+    "hi": 1,
+    "n": 531,
+    "pred": 0.6788,
+    "act": 0.6554
+   }
+  ],
+  "evBands": [
+   {
+    "lo": -1,
+    "hi": 0,
+    "n": 12701,
+    "expRoi": -0.0293,
+    "roi": -0.0468
+   },
+   {
+    "lo": 0,
+    "hi": 0.02,
+    "n": 3207,
+    "expRoi": 0.0085,
+    "roi": -0.0115
+   },
+   {
+    "lo": 0.02,
+    "hi": 0.04,
+    "n": 1362,
+    "expRoi": 0.0289,
+    "roi": -0.0562
+   },
+   {
+    "lo": 0.04,
+    "hi": 0.06,
+    "n": 514,
+    "expRoi": 0.0484,
+    "roi": 0.0924
+   },
+   {
+    "lo": 0.06,
+    "hi": 1,
+    "n": 118,
+    "expRoi": 0.0677,
+    "roi": 0.025
+   }
+  ]
  },
  "weights": {
   "b0": -0.1305,
