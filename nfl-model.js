@@ -43,9 +43,12 @@ const grp=p=>/^(QB)$/.test(p)?"QB":/^(RB|FB)$/.test(p)?"RB":/^WR$/.test(p)?"WR":
 function index(S){const cols=S.cols;const P={},T={},games=S.games||[];
   games.forEach(g=>{const ht=g.h[0],at=g.a[0];
     [[ht,at,1,g.h[1],g.a[1]],[at,ht,0,g.a[1],g.h[1]]].forEach(([t,o,home,pf,pa])=>{(T[t]=T[t]||[]).push({gid:g.id,d:g.d,w:g.w,opp:o,home,pf,pa,sp:g.sp!=null?(home?g.sp:-g.sp):null,tot:g.tot})});
-    Object.entries(g.p).forEach(([id,r])=>{const v={};cols.forEach((c,i)=>v[c]=r[i+1]||0);const t=r[0],o=t===ht?at:ht;(P[id]=P[id]||[]).push({gid:g.id,d:g.d,w:g.w,t,opp:o,home:t===ht?1:0,v})})});
+    const wx=g.ven&&g.ven.in?null:g.wx||null;const tt={};Object.values(g.p).forEach(r=>{tt[r[0]]=(tt[r[0]]||0)+(r[cols.indexOf("tgt")+1]||0)});
+    Object.entries(g.p).forEach(([id,r])=>{const v={};cols.forEach((c,i)=>v[c]=r[i+1]||0);const t=r[0],o=t===ht?at:ht;(P[id]=P[id]||[]).push({gid:g.id,d:g.d,w:g.w,t,opp:o,home:t===ht?1:0,v,x:(g.x&&g.x[id])||{},wx,teamTgt:tt[t]||0})})});
   Object.values(P).forEach(a=>a.sort((x,y)=>x.d<y.d?-1:1));Object.values(T).forEach(a=>a.sort((x,y)=>x.d<y.d?-1:1));
-  return{S,P,T,pos:id=>grp((S.ath[id]||[])[1]||""),name:id=>(S.ath[id]||[])[0]||"",team:id=>(S.ath[id]||[])[2]||null}}
+  /* pressure each defense generated: share of the opposing QB's dropbacks under pressure (PFR via nflverse) */
+  const PR={};games.forEach(g=>{Object.entries(g.x||{}).forEach(([id,x])=>{if(x.prs==null)return;const r=g.p[id];if(!r)return;const o=r[0]===g.h[0]?g.a[0]:g.h[0];(PR[o]=PR[o]||[]).push({d:g.d,v:x.prs})})});
+  return{S,P,T,PR,pos:id=>grp((S.ath[id]||[])[1]||""),name:id=>(S.ath[id]||[])[0]||"",team:id=>(S.ath[id]||[])[2]||null}}
 
 /* what each defense allowed to each position group, per game, using only games before `before` */
 function defense(I,before){const D={},L={};const seen={};
@@ -68,14 +71,27 @@ function project(I,id,st,ctx,DEF){const M=STATS[st];if(!M)return null;const pos=
   const neff=Math.min(used.length,8),L=ctx.line;
   let m=L!=null&&!M.yn?(neff*m0+2*L)/(neff+2):m0;const parts=[`${used.length} games, recent-weighted ${r1(m0)}`];
   if(L!=null&&!M.yn)parts.push(`blended toward the line ${L} for sample size`);
-  let fo=1,fg=1;
-  if(M.opp&&ctx.opp){const D=(DEF||defense(I,ctx.before))(ctx.opp,pos,M.opp);fo=D.x;if(D.n)parts.push(`opponent allows ${r1((D.ra||1)*100)}% of league average to ${pos}s (${D.n} games, counted ${Math.round((fo-1)*100)}%)`)}
-  if(M.gs&&ctx.spread!=null&&ctx.total!=null){const imp=ctx.total/2-ctx.spread/2,ta=teamAvg(I,I.team(id),ctx.before);
+  let fo=1,fg=1;const F0=Object.assign({},DEFAULT_F,(ctx.use&&ctx.use[st])||{},ctx.f||{});
+  if(F0.ogs&&M.opp&&ctx.opp){const D=(DEF||defense(I,ctx.before))(ctx.opp,pos,M.opp);fo=D.x;if(D.n)parts.push(`opponent allows ${r1((D.ra||1)*100)}% of league average to ${pos}s (${D.n} games, counted ${Math.round((fo-1)*100)}%)`)}
+  if(F0.ogs&&M.gs&&ctx.spread!=null&&ctx.total!=null){const imp=ctx.total/2-ctx.spread/2,ta=teamAvg(I,I.team(id),ctx.before);
     if(M.gs==="pts"&&ta)fg=Math.max(.85,Math.min(1.15,1+.6*(imp/ta-1)));
     if(M.gs==="pass"&&ta)fg=Math.max(.92,Math.min(1.08,1+.3*(imp/ta-1)+.006*ctx.spread));
     if(M.gs==="rush")fg=Math.max(.92,Math.min(1.08,1-.008*ctx.spread));
     if(fg!==1)parts.push(`team implied ${r1(imp)} pts${ta?` vs ${r1(ta)} average`:""}, ${fg>1?"+":""}${Math.round((fg-1)*100)}% for game script`)}
-  m=m*fo*fg;
+  const F=F0;let fs=1,fw=1,fp=1;
+  /* role: snap share over his last 2 games vs his average this season (nflverse); a real change in role moves usage */
+  if(F.snap&&pos!=="QB"&&pos!=="K"){const sn=used.map(x=>x.x&&x.x.snap).filter(v=>v!=null);if(sn.length>=3){const rec=(sn.at(-1)+sn.at(-2))/2,avg=sn.reduce((a,b)=>a+b,0)/sn.length;
+    if(avg>.05&&/^(car|rYds|rRecYds|rec|recYds|td)$/.test(st)){fs=Math.max(.8,Math.min(1.2,Math.pow(rec/avg,.6)));if(Math.abs(fs-1)>=.02)parts.push(`snap share ${Math.round(rec*100)}% lately vs ${Math.round(avg*100)}% average (${fs>1?"+":""}${Math.round((fs-1)*100)}%)`)}}}
+  /* targets: recent target share x his team's usual targets x his yards per target, blended with the usage average */
+  if(F.tgt&&/^(rec|recYds)$/.test(st)){const tr=used.filter(x=>x.x&&x.x.ts!=null&&x.teamTgt>0);if(tr.length>=3){const w=tr.slice(-4);const ts=w.reduce((a,x)=>a+x.x.ts,0)/w.length;
+      const team=(I.T[I.team(id)]||[]).filter(x=>!ctx.before||x.d<ctx.before);const tAvg=tr.reduce((a,x)=>a+x.teamTgt,0)/tr.length;const tg=tr.reduce((a,x)=>a+x.v.tgt,0);
+      if(tg>=8){const per=st==="rec"?tr.reduce((a,x)=>a+x.v.rec,0)/tg:tr.reduce((a,x)=>a+x.v.recYds,0)/tg;const est=ts*tAvg*per;m=.5*m+.5*est;parts.push(`target share ${Math.round(ts*100)}% (last ${w.length}) of about ${r1(tAvg)} team targets at ${r1(per)} ${st==="rec"?"catches":"yards"} per target: ${r1(est)}`)}}}
+  /* pressure: how often this defense pressured QBs vs league (PFR via nflverse) */
+  if(F.prs&&pos==="QB"&&ctx.opp&&/^(pYds|cmp|pRYds|pTD)$/.test(st)&&I.PR){const all=[];Object.values(I.PR).forEach(a=>a.forEach(x=>{if(!ctx.before||x.d<ctx.before)all.push(x.v)}));const mine=(I.PR[ctx.opp]||[]).filter(x=>!ctx.before||x.d<ctx.before).map(x=>x.v);
+    if(mine.length>=3&&all.length>20){const lg=all.reduce((a,b)=>a+b,0)/all.length,dv=mine.reduce((a,b)=>a+b,0)/mine.length;const w=mine.length/(mine.length+6);fp=Math.max(.9,Math.min(1.1,1-.6*(dv-lg)*w));if(Math.abs(fp-1)>=.01)parts.push(`opponent pressures ${Math.round(dv*100)}% of dropbacks vs ${Math.round(lg*100)}% league (${fp>1?"+":""}${Math.round((fp-1)*100)}%)`)}}
+  /* weather at kickoff, outdoor games only (Open-Meteo): wind and rain cut passing and kicking */
+  if(F.wx&&ctx.wx&&/^(pYds|cmp|pRYds|recYds|rec|recLng|kPts|fgM|pTD)$/.test(st)){const w=ctx.wx.wind||0,rn=ctx.wx.rain||0;fw=Math.max(.8,1-.012*Math.max(0,w-12)-(rn>=1?.03:0));if(fw<.995)parts.push(`${w} mph wind${rn>=1?", rain":""} at kickoff (${Math.round((fw-1)*100)}%)`)}
+  m=m*fo*fg*fs*fp*fw;
   const cv=sd&&mean?Math.max(.5*(M.cv||.4),Math.min(1.6*(M.cv||.4),(used.length*(sd/mean)+4*(M.cv||.4))/(used.length+4))):(M.cv||.4);
   let pOver=null;
   /* touchdowns: no posted line to anchor to, so the rate is shrunk toward a typical rate for the position
@@ -89,12 +105,14 @@ function project(I,id,st,ctx,DEF){const M=STATS[st];if(!M)return null;const pos=
   const k=ctx.k!=null?ctx.k:.4,pAdj=pOver==null?null:M.yn?pOver:.5+k*(pOver-.5);
   return{n:used.length,m,m0,cv,pOver,p:pAdj,k,parts,hits,last:vals.slice(-5),fo,fg,L:Le,L0}}
 const r1=v=>Math.round(v*10)/10;
+/* which new factors are on; the backtest turns each off in turn and keeps only what improves out-of-sample results */
+const DEFAULT_F={snap:1,tgt:1,prs:1,wx:1,ogs:1};
 /* live: chance the bet still wins given what he has so far and the share of the game left */
 function liveChance(proj,cur,line,side,fracLeft,st){if(!proj||proj.m==null)return null;const M=STATS[st];const need=line-cur;
   if(need<0)return side==="o"?1:0;const rem=proj.m*Math.max(0,fracLeft);if(fracLeft<=0)return side==="o"?(cur>line?1:0):(cur<line?1:0);
   let pOver;if(M&&M.d==="pois"||(M&&M.yn))pOver=1-poisCdf(Math.floor(need),Math.max(.01,rem));
   else{const sd=Math.max(.5,(proj.cv||.5)*proj.m*Math.sqrt(Math.max(.02,fracLeft)));pOver=1-Phi((need-rem)/sd)}
   return side==="o"?pOver:1-pOver}
-const api={STATS,index,defense,project,liveChance,grp,teamAvg,Phi,poisCdf};
+const api={DEFAULT_F,STATS,index,defense,project,liveChance,grp,teamAvg,Phi,poisCdf};
 root.SLNFLModel=api;if(typeof module!=="undefined")module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

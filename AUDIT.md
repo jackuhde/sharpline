@@ -89,7 +89,7 @@ It uses lognormal distributions for yards, Poisson for small counts, and normal 
 - Longest rush: 57.4% of 336.
 - Rush+rec yards: 60.2% of 133.
 - Passing yards, completions, attempts, rushing yards, receiving yards and receptions: no edge (k at or near 0), so they show "No lean".
-- Opponent and game-script adjustments made no measurable difference overall. They are kept but labeled.
+- Correction: the first backtest had no closing spreads or totals saved for past games, so game script was never actually tested. With real closing lines (added Nov 19), opponent + game script is the biggest gain in the model; see below.
 - Only stats at 54%+ on 100+ picks can reach the NFL Top List.
 
 **Why the NFL Top List needs prices.** No prices means no EV. Picks need a price you enter or scan before they rank. Until then, "Worth price-checking" shows the strongest trusted sides with the fair price.
@@ -99,3 +99,33 @@ It uses lognormal distributions for yards, Poisson for small counts, and normal 
 **Live.** Live uses ESPN's official status. In-game chances for tracked NFL bets come from the box score, time left and the pregame line. They are model only and not yet calibrated.
 
 **Data job.** Every 3 hours, .github/workflows/nfl.yml rebuilds data/nfl and reruns the backtest.
+
+### New data and factor tests (Nov 19)
+
+**New data.**
+- From nflverse (free, open):
+  - snap share
+  - targets, target share and air-yard share
+  - QB pressure rate
+- From the ESPN core odds feed: closing spread and total.
+- From Open-Meteo (free, no key): kickoff weather for outdoor games. Domes come from ESPN's indoor flag.
+
+**How factors were tested.** Each factor was tested per stat out of sample, by comparing Brier score with and without it. A factor is switched on for a stat only where it saved at least 0.0002. The choice is stored in data/nfl/model.json (`use`) and refreshed with every rebuild.
+
+| Factor | Helped | Hurt / result | Status |
+|---|---|---|---|
+| Opponent + game script | Passing TDs, carries, rushing yards, rush+rec yards, completions, extra points | Kicking points and field goals | On where it helped |
+| Target share | Receptions | | On for receptions |
+| Snap share | Rushing yards | Carries, rush+rec yards | On for rushing yards only |
+| QB pressure | Passing TDs, slightly (below the bar) | | Off |
+| Weather | | Small loss (kicking, passing TDs) | Off in the model; shown on game cards as information |
+
+**Out-of-sample right-side rate after the final factor choice:**
+- Passing TDs: 60.1% of 163 picks.
+- Longest rush: 57.4% of 336.
+- Rush+rec yards: 56.6% of 152.
+- Everything else: below 54% or under 100 picks.
+
+**Caveat.** The factor choice and its score use the same season, which flatters these numbers somewhat. They need confirming on new weeks as they're added.
+
+**Your own line.** Entered or scanned prices can be at your book's line. The model prices that exact number. DraftKings' line still anchors the projection, and the app flags lines far from it as rough.
