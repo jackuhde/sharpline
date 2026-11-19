@@ -90,8 +90,11 @@ const pxKey=(eid,id,st,l)=>[eid,id,st,l].join("|");
 function evalProp(e,L){const st=L.st,id=L.ath,c=ctxFor(e,id);const inj=N.inj[id];
   const base={e,id,st,l:L.l,lo:L.lo,upd:L.upd,name:(ath(id)||[])[0]||"Player "+id,pos:posOf(id),posL:posLbl(id),tid:(ath(id)||[])[2],inj,key:pxKey(e.id,id,st,L.l)};
   if(!M.STATS[st]||M.STATS[st].yn)return{...base,why:"notModeled"};if(!c)return{...base,why:"noPlayer"};
-  const P=M.project(N.I,id,st,{opp:c.opp,line:L.l,spread:c.spread,total:c.total,k:kOf(st)},N.DEF);
+  /* your book may hang a different number: the model prices YOUR line; DraftKings' line still anchors the projection */
+  const px0=priceOf(base.key),myL=px0&&px0.L!=null&&px0.L!==L.l?px0.L:null;
+  const P=M.project(N.I,id,st,{opp:c.opp,line:L.l,evalLine:myL,spread:c.spread,total:c.total,k:kOf(st),wx:N.stats.next&&N.stats.next[e.id]&&N.stats.next[e.id].wx},N.DEF);
   if(!P||P.p==null)return{...base,c,why:"noHist",P};
+  if(myL!=null){base.dkL=L.l;base.l=myL;base.alt=1;const sd=Math.max(.5,(P.cv||.4)*P.m);base.far=Math.abs(myL-L.l)>(M.STATS[st].d==="pois"?1:.6*sd)}
   const side=P.p>=.5?"o":"u",p=side==="o"?P.p:1-P.p,px=priceOf(base.key);const price=px?(side==="o"?px.o:px.u):null;
   /* if a price was entered for the other side only, use that side */
   let s2=side,p2=p,pr2=price;if(px&&price==null){const os=side==="o"?"u":"o",op=os==="o"?px.o:px.u;if(op!=null){s2=os;p2=1-p;pr2=op}}
@@ -171,12 +174,23 @@ function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadSta
   return null}
 
 /* ---------- prices you enter ---------- */
-function oddsSheet(x){let el=document.getElementById("nfOdds");if(!el){el=document.createElement("div");el.id="nfOdds";el.className="sheet";document.body.appendChild(el)}
+let SHEET=null;
+function sheetPreview(){const x=SHEET,el=document.getElementById("nfLive");if(!x||!el||x.yn){if(el)el.textContent="";return}
+  const Lv=parseFloat(((document.getElementById("nfL")||{}).value||"").replace(",","."));const dk=x.dkL??x.l,L=isNaN(Lv)?dk:Lv;
+  const c=x.c,P=M.project(N.I,x.id,x.st,{opp:c.opp,line:dk,evalLine:L,spread:c.spread,total:c.total,k:kOf(x.st)},N.DEF);if(!P||P.p==null){el.textContent="";return}
+  const o=parseAm((document.getElementById("nfO")||{}).value),u=parseAm((document.getElementById("nfU")||{}).value);
+  const bits=[`At ${L}: Over ${pc1(P.p)} (fair ${am(RK.fairAm(P.p))}) · Under ${pc1(1-P.p)} (fair ${am(RK.fairAm(1-P.p))})`];
+  if(o!=null)bits.push(`Over EV ${evs(RK.ev(P.p,o))}`);if(u!=null)bits.push(`Under EV ${evs(RK.ev(1-P.p,u))}`);
+  const sd=Math.max(.5,(P.cv||.4)*P.m);if(L!==dk&&Math.abs(L-dk)>(M.STATS[x.st].d==="pois"?1:.6*sd))bits.push("far from DraftKings' line, so this is rougher");
+  el.textContent=bits.join(" · ")}
+function oddsSheet(x){SHEET=x;let el=document.getElementById("nfOdds");if(!el){el=document.createElement("div");el.id="nfOdds";el.className="sheet";document.body.appendChild(el)}
   const px=priceOf(x.key)||{};const yn=x.yn;
   el.innerHTML=`<div class="sheet-bg" data-nfclose="1"></div><div class="sheet-in"><div class="sheet-h"><div><div class="eyebrow">Your book's price</div><h2>${h(x.name)} · ${h(yn?(x.st==="td2"?"2+ TDs":"Anytime TD"):SHORT[x.st]+" "+x.l)}</h2></div><button class="x" data-nfclose="1">×</button></div>
-    <p class="sheet-p">DraftKings' NFL prop prices aren't in the free feed, so EV needs your book's numbers. Sharpline's chance: ${yn?`Yes ${pc1(x.p)}`:`Over ${pc1(x.side==="o"?x.p:1-x.p)} · Under ${pc1(x.side==="u"?x.p:1-x.p)}`} at ${x.l}.</p>
-    <div class="f two"><div><label>${yn?"Yes":"Over "+x.l}</label><input id="nfO" inputmode="text" placeholder="-115" value="${px.o!=null?am(px.o):""}"></div>${yn?"":`<div><label>Under ${x.l}</label><input id="nfU" inputmode="text" placeholder="-105" value="${px.u!=null?am(px.u):""}"></div>`}</div>
-    <div class="slip-b"><button class="ghost" data-nfclear="${h(x.key)}">Clear</button><button class="go2" data-nfsave="${h(x.key)}">Save price</button></div></div>`;el.classList.add("on");setTimeout(()=>{const i=document.getElementById("nfO");i&&i.focus()},50)}
+    <p class="sheet-p">DraftKings' NFL prop prices aren't in the free feed, so EV needs your book's numbers. If your book hangs a different number, type it in the line box and Sharpline prices that number instead.</p>
+    ${yn?"":`<div class="f one"><div><label>Your book's line (DraftKings: ${x.dkL??x.l})</label><input id="nfL" inputmode="decimal" placeholder="${x.dkL??x.l}" value="${px.L!=null?px.L:""}"></div></div>`}
+    <div class="f two"><div><label>${yn?"Yes":"Over"}</label><input id="nfO" inputmode="text" placeholder="-115" value="${px.o!=null?am(px.o):""}"></div>${yn?"":`<div><label>Under</label><input id="nfU" inputmode="text" placeholder="-105" value="${px.u!=null?am(px.u):""}"></div>`}</div>
+    <p class="hint" id="nfLive"></p>
+    <div class="slip-b"><button class="ghost" data-nfclear="${h(x.key)}">Clear</button><button class="go2" data-nfsave="${h(x.key)}">Save price</button></div></div>`;el.classList.add("on");sheetPreview();setTimeout(()=>{const i=document.getElementById("nfO");i&&i.focus()},50)}
 const parseAm=v=>{const n=parseFloat(String(v||"").replace(/[^\d.+-]/g,""));if(isNaN(n))return null;if(Math.abs(n)<100&&n>1&&n<30)return Math.round(n>=2?(n-1)*100:-100/(n-1));return Math.abs(n)>=100?n:null};
 
 /* ---------- views ---------- */
@@ -204,7 +218,7 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
     <div class="cv-t"><div class="cv-r cv-hd"><span>Backtest by stat (out of sample, ${N.model?N.model.lines:0} lines)</span><span>Right side</span></div>${N.model?Object.entries(N.model.byStat).sort((a,b)=>(b[1].hit||0)-(a[1].hit||0)).map(([k,b])=>`<div class="cv-r"><span>${h(LBL[k]||k)} ${trusted(k)?"<b class='pos'>trusted</b>":""}</span><span>${b.hit!=null?pc1(b.hit)+" of "+b.picks:"no edge"}</span></div>`).join(""):""}</div>
     <p class="hint">At standard −110 a side has to win 52.4% to break even. Only stats that beat 54% on 100+ out-of-sample picks can reach the Top List. Opponent and game-script adjustments are included; in the backtest they made no measurable difference overall.</p></details>`;
   const card=(x,i,w)=>`<div class="nf-pick ${w?"watch":""}" data-nfrow="${h(x.key)}"><div class="nf-rk">${i+1}</div>${jersey(x.id)}<div class="nf-pm"><div class="nf-pn"><span class="nf-name" data-nfprof="${x.id}">${h(x.name)}</span> <small>${h(x.posL)} · ${h(T(x.tid)[0])} ${x.c.side==="home"?"vs":"@"} ${h(T(x.c.opp)[0])}</small>${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
-      <div class="nf-pl"><b class="pick ${x.side}">${x.yn?(x.st==="td2"?"2+ TDs":"Anytime TD"):`${x.side==="o"?"Over":"Under"} ${x.l}`}</b> ${h(x.yn?"":LBL[x.st])}</div>
+      <div class="nf-pl"><b class="pick ${x.side}">${x.yn?(x.st==="td2"?"2+ TDs":"Anytime TD"):`${x.side==="o"?"Over":"Under"} ${x.l}`}</b> ${h(x.yn?"":LBL[x.st])}${x.alt?` <span class="nf-alt">your line · DraftKings ${x.dkL}${x.far?" · far from DraftKings, rough":""}</span>`:""}</div>
       <div class="nf-nums"><span><i>Sharpline</i><b>${pc(x.p)}</b></span><span><i>Proj</i><b>${x.yn?"–":r1(x.P.m)}</b></span><span><i>Fair</i><b>${am(x.fair)}</b></span>${x.price!=null?`<span><i>${h(x.bk||"Your price")}</i><b>${am(x.price)}</b></span><span><i>Implied</i><b>${pc(RK.imp(x.price))}</b></span><span><i>EV</i><b class="${evc(x.ev)}">${evs(x.ev)}</b></span>`:`<span><i>Price</i><b class="ev-na">needs one</b></span>`}</div>
       <div class="nf-sub">${h(btNote(x.st))} · DraftKings line ${fresh(Date.parse(x.upd))}</div></div>
       <div class="nf-act"><button class="addbtn" data-nfpx="${h(x.key)}">${x.price!=null?"Edit price":"Enter price"}</button>${x.price!=null?`<button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn" data-nfparlay="${h(x.key)}">+ Parlay</button>`:""}</div></div>`;
@@ -218,7 +232,7 @@ function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g)
   const stats=STAT_ORDER.filter(s=>L.some(x=>x.st===s)),games=N.events;
   const ld=N.events.filter(e=>e.state==="pre"&&!N.props[e.id]).length;
   const row=x=>{const isY=x.yn;return`<div class="nf-tr" data-nfrow="${h(x.key)}"><div class="c-pl">${jersey(x.id,"sm")}<div><span class="nf-name" data-nfprof="${x.id}">${h(x.name)}</span>${x.inj?` <span class="inj inj-${x.inj.lv==="out"?"out":x.inj.lv==="doubt"?"doubt":"quest"}">${h(x.inj.st)}</span>`:""}<small>${h(x.posL)} · ${h(T(x.tid)[0])}${x.c?` ${x.c.side==="home"?"vs":"@"} ${h(T(x.c.opp)[0])}`:""}</small></div></div>
-    <div class="c-st">${h(SHORT[x.st]||x.st)}</div><div class="c-ln"><b>${isY?"Yes":x.l}</b>${x.lo!=null&&x.lo!==x.l?`<small>opened ${x.lo}</small>`:""}</div>
+    <div class="c-st">${h(SHORT[x.st]||x.st)}</div><div class="c-ln"><b>${isY?"Yes":x.l}</b>${x.alt?`<small class="nf-alt">yours · DK ${x.dkL}</small>`:x.lo!=null&&x.lo!==x.l?`<small>opened ${x.lo}</small>`:""}</div>
     <div class="c-pj">${x.P&&x.P.m!=null&&!isY?`<b>${r1(x.P.m)}</b>${bar(x)}`:x.why==="noHist"?"<small>under 2 games</small>":x.why?"<small>not modeled</small>":"–"}</div>
     <div class="c-ch">${x.nolean?`<b class="ev-na">No lean</b><small>backtest found no edge</small>`:x.p!=null?`<b class="pick ${x.side}">${isY?"Yes":x.side==="o"?"Over":"Under"} ${pc(x.p)}</b><small>fair ${am(x.fair)}</small>`:"–"}</div>
     <div class="c-ev">${x.price!=null?`<b class="${evc(x.ev)}">${evs(x.ev)}</b><small>${am(x.price)} ${h(x.bk||"")}</small>`:x.p!=null?`<button class="lnk" data-nfpx="${h(x.key)}">Enter price</button>`:""}</div>
@@ -281,8 +295,7 @@ function ocrCtx(){const names=[],seen=new Set();N.events.forEach(e=>{const P=N.p
 function applyScan(rows){const C=ocrCtx();let n=0;const miss=[];
   rows.forEach(r=>{if(r.k==="P"){const nm=C.names.find(x=>x.p===r.player)||C.names.find(x=>x.p.toLowerCase()===String(r.player||"").toLowerCase());if(!nm){miss.push(`${r.player}: not on this week's NFL board`);return}
       const P=N.props[nm.eid],L=P&&P.lines[nm.id+"|"+r.stat];if(!L){miss.push(`${r.player} ${SHORT[r.stat]||r.stat}: DraftKings has no line for this`);return}
-      if(L.l!==r.line){miss.push(`${r.player} ${SHORT[r.stat]} ${r.line}: DraftKings' line is ${L.l}, so it can't be priced against the model at a different number`);return}
-      N.px[pxKey(nm.eid,nm.id,r.stat,r.line)]={o:r.over,u:r.under,bk:r.book||"Scanned",ts:Date.now()};n++}
+      N.px[pxKey(nm.eid,nm.id,r.stat,L.l)]={o:r.over,u:r.under,L:r.line!==L.l?r.line:undefined,bk:r.book||"Scanned",ts:Date.now()};n++;if(r.line!==L.l)miss.push(`${r.player} ${SHORT[r.stat]}: your book ${r.line}, DraftKings ${L.l}. Priced at your ${r.line}.`)}
     else{const e=N.events.find(x=>x.home.ab===r.ab||x.away.ab===r.ab);if(!e||r.odds==null){miss.push(`${r.ab} ${r.mk}: no game this week to compare with`);return}
       const m=gameMarkets(e).find(z=>z.k===(r.mk==="moneyline"?"ml":r.mk==="spread"?"sp":"tot"));if(!m){miss.push(`${r.ab} ${r.mk}: DraftKings has no line`);return}
       const S=r.mk==="total"?(r.side==="under"?m.b:m.a):(e.home.ab===r.ab?m.b:m.a);
@@ -311,8 +324,9 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-nfwk],[dat
   if(d.nfclose){document.getElementById("nfOdds").classList.remove("on");return}
   if(d.nfclear){delete N.px[d.nfclear];savePx();document.getElementById("nfOdds").classList.remove("on");paint();toast("Price cleared");return}
   if(d.nfsave){const o=parseAm((document.getElementById("nfO")||{}).value),u=parseAm((document.getElementById("nfU")||{}).value);if(o==null&&u==null){toast("Enter at least one price, like -115");return}
-    N.px[d.nfsave]={o,u,bk:((typeof BOOK!=='undefined'&&BOOK)||"Your book"),ts:Date.now()};savePx();document.getElementById("nfOdds").classList.remove("on");paint();const x=findRow(d.nfsave);toast(x&&x.ev!=null?`EV ${evs(x.ev)} at ${am(x.price)}`:"Price saved");return}},true);
-document.addEventListener("input",e=>{if(e.target.id==="nfq"){N.f.q=e.target.value;saveF();clearTimeout(paintT);paintT=setTimeout(paint,180)}});
+    const Lraw=parseFloat(((document.getElementById("nfL")||{}).value||"").replace(",","."));const x0=findRow(d.nfsave);const dk=x0?(x0.dkL??x0.l):null;
+    N.px[d.nfsave]={o,u,L:!isNaN(Lraw)&&dk!=null&&Lraw!==dk?Lraw:undefined,bk:((typeof BOOK!=='undefined'&&BOOK)||"Your book"),ts:Date.now()};savePx();document.getElementById("nfOdds").classList.remove("on");paint();const x=findRow(d.nfsave);toast(x&&x.ev!=null?`EV ${evs(x.ev)} at ${am(x.price)}`:"Price saved");return}},true);
+document.addEventListener("input",e=>{if(["nfL","nfO","nfU"].includes(e.target.id)){sheetPreview();return}if(e.target.id==="nfq"){N.f.q=e.target.value;saveF();clearTimeout(paintT);paintT=setTimeout(paint,180)}});
 document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.value;saveF();paint()}if(e.target.id==="nfsort"){N.f.sort=e.target.value;saveF();paint()}});
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);

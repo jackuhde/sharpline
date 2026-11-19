@@ -14,6 +14,8 @@ t("k shrinks toward 50%",Math.abs(M.project(I,"10","recYds",{line:50.5,k:.3}).p-
 t("one game is not enough",M.project(I,"10","recYds",{line:50.5,before:"2026-10-02T00:00Z"}).p==null);
 t("only earlier games used",M.project(I,"10","recYds",{line:50.5,before:"2026-10-04T00:00Z",k:1}).n===3);
 const r=M.project(I,"10","rec",{line:4.5,k:1});t("poisson over 4.5 with mean ~5 is near 56%",r.pOver>.45&&r.pOver<.7);
+{const d=M.project(I,"10","recYds",{line:60.5,k:1}),y=M.project(I,"10","recYds",{line:60.5,evalLine:70.5,k:1}),z=M.project(I,"10","recYds",{line:60.5,evalLine:50.5,k:1});
+  t("your higher line: lower over chance",y.pOver<d.pOver);t("your lower line: higher over chance",z.pOver>d.pOver);t("same projection at any line",Math.abs(y.m-d.m)<1e-9);t("hits counted at your line",y.hits<=d.hits);}
 t("live: already over is certain",M.liveChance(a,60,50.5,"o",.5,"recYds")===1);
 t("live: no time left, under line loses over",M.liveChance(a,40,50.5,"o",0,"recYds")===0);
 t("live: more time, more chance",M.liveChance(a,30,50.5,"o",.5,"recYds")>M.liveChance(a,30,50.5,"o",.1,"recYds"));

@@ -80,13 +80,14 @@ function project(I,id,st,ctx,DEF){const M=STATS[st];if(!M)return null;const pos=
   let pOver=null;
   /* touchdowns: no posted line to anchor to, so the rate is shrunk toward a typical rate for the position
      (about 4 games' weight) and the chance is capped; anytime-TD chances are not backtested */
+  const L0=L;const Le=ctx.evalLine!=null?ctx.evalLine:L;
   if(M.yn){const prior={RB:.38,WR:.3,TE:.2,QB:.1}[pos]||.15;const lam=(Math.min(used.length,10)*m+4*prior*fo*fg)/(Math.min(used.length,10)+4);m=lam;pOver=Math.min(.65,1-Math.exp(-Math.max(.01,lam)));parts.push(`touchdown rate shrunk toward a typical ${pos} (${prior}/game)`)}
-  else if(L!=null){if(M.d==="pois")pOver=1-poisCdf(Math.floor(L),Math.max(.05,m));
-    else if(M.d==="logn"){if(m<=0)pOver=0;else{const s2=Math.log(1+cv*cv),mu=Math.log(m)-s2/2;pOver=L<=0?1:1-Phi((Math.log(L)-mu)/Math.sqrt(s2))}}
-    else pOver=1-Phi((L-m)/Math.max(.5,cv*m))}
-  const hits=L!=null&&!M.yn?vals.filter(v=>v>L).length:null;
+  else if(Le!=null){if(M.d==="pois")pOver=1-poisCdf(Math.floor(Le),Math.max(.05,m));
+    else if(M.d==="logn"){if(m<=0)pOver=0;else{const s2=Math.log(1+cv*cv),mu=Math.log(m)-s2/2;pOver=Le<=0?1:1-Phi((Math.log(Le)-mu)/Math.sqrt(s2))}}
+    else pOver=1-Phi((Le-m)/Math.max(.5,cv*m))}
+  const hits=Le!=null&&!M.yn?vals.filter(v=>v>Le).length:null;
   const k=ctx.k!=null?ctx.k:.4,pAdj=pOver==null?null:M.yn?pOver:.5+k*(pOver-.5);
-  return{n:used.length,m,m0,cv,pOver,p:pAdj,k,parts,hits,last:vals.slice(-5),fo,fg}}
+  return{n:used.length,m,m0,cv,pOver,p:pAdj,k,parts,hits,last:vals.slice(-5),fo,fg,L:Le,L0}}
 const r1=v=>Math.round(v*10)/10;
 /* live: chance the bet still wins given what he has so far and the share of the game left */
 function liveChance(proj,cur,line,side,fracLeft,st){if(!proj||proj.m==null)return null;const M=STATS[st];const need=line-cur;
