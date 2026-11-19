@@ -274,7 +274,10 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .top .face{display:flex;align-items:center;gap:10px}
 .top .face svg,.top .face .logo{width:40px;height:40px;flex:none}
 .top .pick{white-space:normal;line-height:1.3}
-.stats.s2{margin-top:8px}.tscan{margin:0 4px 12px;font-size:12px}
+.stats.s2{margin-top:8px}
+.evl{font:800 11.5px Archivo;white-space:nowrap}.ev-pos{color:var(--over)}.ev-mid{color:var(--gold)}.ev-neg{color:var(--under)}.ev-na{color:var(--dim);font-weight:700}
+.seg.sm{display:inline-flex;gap:4px;margin-left:8px;flex-wrap:wrap}.seg.sm button{font:800 11.5px Archivo;padding:6px 10px;border-radius:9px;background:var(--s2);border:1px solid var(--line2);color:var(--mute)}.seg.sm button.on{background:var(--ink);color:#111;border-color:var(--ink)}
+.cmp{display:grid;gap:6px;margin:8px 0}.cmp>div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}.cmp>div.mine{border-color:rgba(232,184,75,.4)}.cmp span{font:800 12.5px Archivo}.cmp b{font:900 14px Archivo}.cmp small{grid-column:1/-1;color:var(--mute);font:600 11.5px/1.45 Archivo}.tscan{margin:0 4px 12px;font-size:12px}
 .cov{margin:0 0 14px;padding:12px 14px}.cov summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:4px}.cov summary::-webkit-details-marker{display:none}.cov summary b{font:800 13px Archivo}
 .funnel{margin-top:12px;display:grid;gap:4px}.fn{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:6px 0;border-bottom:1px solid var(--line)}.fn span{font:700 13px Archivo;color:var(--mute)}.fn b{font:900 15px Archivo;text-align:right}.fn small{grid-column:1/-1;color:var(--dim);font:600 11.5px/1.4 Archivo}
 .cv-h{font:800 10px Archivo;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute);margin:16px 0 6px}.cv-why div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font:700 12.5px Archivo}.cv-why b{font-weight:900}
@@ -1590,6 +1593,8 @@ function saveSettings(){const v=id=>document.getElementById(id).value;
 
 /* ---------- top list ---------- */
 function needAm(p,e){let a=toAm(p/(1+Math.max(e,.005)));a=Math.ceil(a);if(a>-100&&a<100)a=a<0?100:-100;for(let i=0;i<40&&evOf(p,a)<e;i++){a=a<0?(a+1>-100?100:a+1):a+1}return a}
+/* one color rule everywhere: green = positive EV past your minimum, amber = small or zero, red = negative */
+const evCls=v=>v==null?"ev-na":v>=SET.minEdge?"ev-pos":v>-.01?"ev-mid":"ev-neg";
 function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!=="l",sgn=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
   const tm=x.tm?team(x.tm)[0]:"",op=x.opp?team(x.opp)[0]:"",home=G&&x.tm&&nick(x.tm)===nick(G.home);
   const sub=isProp&&tm?`${tm} ${home?"vs":"@"} ${op} · ${STAT_LBL[x.st]||x.st} · ${tipT(G)}`:`${G?mu(G)+" · "+tipT(G):""}`;
@@ -1672,10 +1677,12 @@ const STAT_LBL={"Points":"Points","Rebounds":"Rebounds","Assists":"Assists","3-P
 const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}"><span class="pfa" ${pfKeyAttr(key)}>${avatar(x.p,x.tm,"av")}</span>
-    <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
-    <div class="r"><span class="pick ${sideCls(g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${g.s==="o"?"▲ Over":"▼ Under"} ${g.l}`}</span>
-      <span class="est"><b>${pct(g.p)}</b> est ${gradeTag(gradeNow(key))}</span></div>
-    ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div><div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
+    <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} ${SNAP[x.g]&&nick(x.tm)===nick(SNAP[x.g].home)?"vs":"@"} ${SNAP[x.g]?team(nick(x.tm)===nick(SNAP[x.g].home)?SNAP[x.g].away:SNAP[x.g].home)[0]:""} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
+    ${(v=>`<div class="r"><span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>
+      <span class="est"><b>${pct(v.p!=null?v.p:g.p)}</b> ${gradeTag(gradeNow(key))}</span>
+      ${v.price!=null?`<span class="evl ${evCls(v.ev)}">${v.mine?BOOK:"DK"} ${fmtAm(v.price)} · ${v.ev>=0?"+":""}${(v.ev*100).toFixed(1)}% EV</span>`:`<span class="evl ev-na">no two-sided price</span>`}</div>`)(rowVals(key))}
+    ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div>${(v=>{if(g.bp==null||YN[x.st])return"";const dkEv=evOf(g.p,g.bp),im=imp(g.bp);const b=v.mine?recBest[key]:null;
+        return`<div class="cmp"><div><span>DraftKings ${g.s==="o"?"Over":"Under"} ${g.l}</span><b>${fmtAm(g.bp)}</b><small>implies ${pct1(im)} · Sharpline ${pct1(g.p)} · edge ${((g.p-im)*100>=0?"+":"")+((g.p-im)*100).toFixed(1)} pts · EV ${(dkEv>=0?"+":"")+(dkEv*100).toFixed(1)}%</small></div>${b?`<div class="mine"><span>${BOOK} ${b.lbl} (your odds)</span><b>${fmtAm(b.o)}</b><small>implies ${pct1(imp(b.o))} · Sharpline ${pct1(b.p)} · EV ${(b.ev>=0?"+":"")+(b.ev*100).toFixed(1)}%${b.L!==g.l?` · <b style="color:var(--gold)">different line from DraftKings (${g.l})</b>`:""} · ${b.ev>dkEv?"better than DraftKings by "+((b.ev-dkEv)*100).toFixed(1)+" pts of EV":"worse than DraftKings by "+((dkEv-b.ev)*100).toFixed(1)+" pts of EV"}</small></div>`:""}</div>`})(rowVals(key))}<div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
       ${x.q.map(q=>`<div class="qrow"><span><b>${YN[x.st]?"Yes":q.l}</b> · ${[q.o!=null?(YN[x.st]?"":"Over ")+fmtAm(q.o):"",q.u!=null?"Under "+fmtAm(q.u):"",q.note||"",q.oc!=null?"Over "+q.oc+"¢":"",q.uc!=null?"Under "+q.uc+"¢":""].filter(Boolean).join(" / ")||"line only"}</span><a href="${q.url}" target="_blank" rel="noopener">${q.src}</a></div>`).join("")}
       <div class="need"><span>Bet ${YN[x.st]?(g.s==="o"?"Yes ":"No "):""}only at <b>${fmtAm(toAm(g.p))}</b> or better on ${BOOK}</span>${addBtn(key)}</div></div></div>`}
 function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=pr?pr.pO:devig(C.o,C.u)[0],so=pO>=.5,pp=so?pO:1-pO;
@@ -1691,15 +1698,23 @@ function custRowHTML(C){const key="c"+C.id,pr=C.fo?projP(C.p,C.st,C.l):null,pO=p
         <button class="go" data-rset="${C.id}" style="margin-top:8px;width:100%;padding:10px;border-radius:10px;background:var(--acc);color:#14120c;font:900 13px Archivo">Compare ${BOOK} to this line</button></div>`:`<div class="why">Fair line from ${C.bk}: Over ${fmtAm(C.o)} / Under ${fmtAm(C.u)} at ${C.l}. With the vig removed that's Over ${pct(pO)}. Enter ${poss(BOOK)} number above to look for a gap.</div>`}
       <div class="need"><span>Fair: Over <b>${fmtAm(toAm(pO))}</b> / Under <b>${fmtAm(toAm(1-pO))}</b></span><span style="display:flex;gap:8px">${addBtn(key)}<button class="addbtn" data-cdel="${C.id}">Remove</button></span></div></div></div>`}
 /* "Most books posting" is a stand-in for popularity: no free source publishes real betting volume */
-let PSORT=LS0("sl_psort2","proj"),GCOL=LS0("sl_gcol",[]);
+let PSORT=LS0("sl_psort3","ev"),PSIDE=LS0("sl_pside","all"),GCOL=LS0("sl_gcol",[]);
 /* projected stat for tonight: Sharpline's projection when there are averages, otherwise the book line */
 const projVal=it=>{if(it.key&&it.key[0]==="p"){const g=SUG[+it.key.slice(1)];return g.proj!=null?g.proj:it.line}const pr=projP(it.name,it.st,it.line);return pr?pr.m:it.line};
+/* the numbers each prop row is ranked on: the model's side at the best price (your entered odds when you have them) */
+function rowVals(key){const k=key[0],i=+key.slice(1);if(k==="p"){const g=SUG[i],x=PROPS[i];
+    if(hasMine(key)){recHTML(key);const b=recBest[key];if(b&&!b.assumed)return{ev:b.ev,p:b.p,price:b.o,side:/^Over/.test(b.lbl)?"o":"u",mine:1,priced:1}}
+    if(g&&g.bp!=null&&!YN[x.st])return{ev:evOf(g.p,g.bp),p:g.p,price:g.bp,side:g.s,priced:!!g.model}
+    return{ev:null,p:g?g.p:null,price:null,side:g?g.s:null,priced:0}}
+  const b=recBest[key];return b&&!b.assumed?{ev:b.ev,p:b.p,price:b.o,side:/^Over/.test(b.lbl)?"o":"u",mine:1,priced:1}:{ev:null,p:null,price:null,side:null,priced:0}}
 const edgeOf=key=>{const b=recBest[key];if(b&&!b.assumed)return b.ev;if(key[0]==="p"){const g=SUG[+key.slice(1)];return g.bp!=null?evOf(g.p,g.bp):-1}return-1};
-const propSorter=(a,b)=>PSORT==="proj"?(projVal(b)-projVal(a)||a.name.localeCompare(b.name)):PSORT==="books"?(b.books-a.books||b.line-a.line):PSORT==="edge"?(edgeOf(b.key)-edgeOf(a.key)):PSORT==="name"?a.name.localeCompare(b.name):(b.line-a.line||a.name.localeCompare(b.name));
+const nz=(v,d)=>v==null||isNaN(v)?d:v;
+const propSorter=(a,b)=>PSORT==="ev"?(nz(b.v.ev,-9)-nz(a.v.ev,-9)||a.name.localeCompare(b.name)):PSORT==="prob"?(nz(b.v.p,-9)-nz(a.v.p,-9)):PSORT==="price"?(nz(b.v.price&&dec(b.v.price),-9)-nz(a.v.price&&dec(a.v.price),-9)):PSORT==="proj"?(projVal(b)-projVal(a)||a.name.localeCompare(b.name)):PSORT==="books"?(b.books-a.books||b.line-a.line):PSORT==="edge"?(edgeOf(b.key)-edgeOf(a.key)):PSORT==="name"?a.name.localeCompare(b.name):(b.line-a.line||a.name.localeCompare(b.name));
 function allPropItems(){
   const L=PROPS.map((x,i)=>({key:"p"+i,g:x.g,st:x.st,tm:x.tm,name:x.p,line:SUG[i].l,books:new Set(x.q.map(q=>q.src)).size,html:()=>propRowHTML(i)}));
   CUST.forEach(C=>L.push({key:"c"+C.id,g:C.g,st:C.st,tm:C.tm,name:C.p,line:C.l,books:C.fo?0:1,html:()=>custRowHTML(C)}));
-  return L}
+  L.forEach(it=>it.v=rowVals(it.key));
+  return PSIDE==="all"?L:PSIDE==="mine"?L.filter(it=>it.v.mine):L.filter(it=>it.v.side===PSIDE&&!YN[it.st])}
 function renderProps(){
   {const fs=document.getElementById("slFollow");if(fs&&window.SLF)try{fs.innerHTML=SLF.strip()}catch(e){console.error(e);fs.innerHTML=""}}
   const af=document.getElementById("addForm");if(af&&!af.dataset.init){af.innerHTML=addFormHTML();af.dataset.init=1}
@@ -1710,9 +1725,13 @@ function renderProps(){
   document.getElementById("propChips").innerHTML=
     `<div class="chiprow"><button class="chip ${propGame==="all"?"on":""}" data-pg="all">All games <span class="ct">${cnt("all")}</span></button>`+SNAP.map((g,i)=>movedOff(i)?"":`<button class="chip ${propGame==i?"on":""}" data-pg="${i}">${mu(g)} · ${(st=>st.k==="pre"?tipT(g):st.t)(gameStatus(i))} <span class="ct">${cnt(i)}</span></button>`).join("")+`</div>`+
     `<div class="chiprow stat"><button class="chip s ${propStat==="all"?"on":""}" data-ps="all">All stats</button>`+stats.map(st=>`<button class="chip s ${propStat===st?"on":""}" data-ps="${st}">${STAT_LBL[st]||st} <span class="ct">${inGame.filter(x=>x.st===st).length}</span></button>`).join("")+`</div>`+
-    `<div class="sortrow"><label for="psort">Sort</label><select id="psort">${[["proj","Projected, high to low"],["line","Line, high to low"],["books","Most books posting"],["edge","Best edge"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${PSORT===v?"selected":""}>${l}</option>`).join("")}</select></div>`;
+    `<div class="sortrow"><label for="psort">Sort</label><select id="psort">${[["ev","Highest expected value"],["prob","Highest chance to win"],["price","Best odds (biggest payout)"],["proj","Projected stat, high to low"],["line","Line, high to low"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${PSORT===v?"selected":""}>${l}</option>`).join("")}</select>
+    <span class="seg sm">${[["all","Both sides"],["o","Overs"],["u","Unders"],["mine",poss(BOOK)+" odds"]].map(([v,l])=>`<button class="${PSIDE===v?"on":""}" data-pside="${v}">${l}</button>`).join("")}</span></div>
+    <div class="hint" style="margin:6px 2px 0">${PSORT==="proj"||PSORT==="line"?"Sorted by stat size, not value. A big projection is not a good bet by itself; sort by expected value to rank bets.":"Ranked across all games by the model's side at the best price posted. Book: DraftKings (the only one in the free feed), or your entered odds."}</div>`;
   let html="",arch="",nArch=0;
-  SNAP.forEach((G,gi)=>{const s0=html.length;propGroup(G,gi);if(movedOff(gi)&&html.length>s0){arch+=html.slice(s0);html=html.slice(0,s0);nArch++}});
+  const flat=propGame==="all"&&["ev","prob","price"].includes(PSORT);
+  if(flat){const act=items.filter(x=>!movedOff(x.g)&&(propStat==="all"||x.st===propStat)).sort(propSorter);if(act.length)html+=`<div class="list">${act.map(r=>r.html()).join("")}</div>`}
+  SNAP.forEach((G,gi)=>{if(flat&&!movedOff(gi))return;const s0=html.length;propGroup(G,gi);if(movedOff(gi)&&html.length>s0){arch+=html.slice(s0);html=html.slice(0,s0);nArch++}});
   function propGroup(G,gi){if(propGame!=="all"&&propGame!=gi)return;
     const gItems=items.filter(x=>x.g===gi&&(propStat==="all"||x.st===propStat));if(!gItems.length)return;
     const col=GCOL.includes(gi);
@@ -1770,6 +1789,7 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
   if(e.target.closest("[data-oddsclose]")&&!e.target.closest("#oddsBody")){closeOdds();return}
   if(e.target.closest("[data-oddsclear]")){if(ODDS_KEY){const k=ODDS_KEY;["L","a","b"].forEach(f=>{if(EDV[k])delete EDV[k][f]});LS.set("sl_edv",EDV);openOdds(k);syncFind(k);renderTop();toast("Cleared. Back to DraftKings' price")}return}
   {const mo=e.target.closest("[data-myodds]");if(mo){openOdds(mo.dataset.myodds);return}}
+  {const ps=e.target.closest("[data-pside]");if(ps){PSIDE=ps.dataset.pside;LS.set("sl_pside",PSIDE);renderProps();return}}
   if(e.target.closest("[data-setclose]")){document.getElementById("setSheet").classList.remove("on");return}
   if(e.target.closest("[data-scanclose]")&&!e.target.closest("button")){document.getElementById("scanSheet").classList.remove("on");return}
   const dt=e.target.closest(".dt[data-v]");if(dt){go(dt.dataset.v);return}
@@ -1808,7 +1828,7 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
 });
 document.addEventListener("change",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf){const R=reviewRows[+rv.dataset.rv];if(e.target.type==="checkbox"){R.on=e.target.checked;rv.classList.toggle("off",!R.on);const g=document.querySelector("[data-grade]");const n=reviewRows.filter(r=>r.on).length;if(g)g.textContent=`Grade ${n} line${n===1?"":"s"}`}else R[e.target.dataset.rvf]=e.target.value;return}if(e.target.id==="cg"){const af=document.getElementById("addForm");const keep={cp:document.getElementById("cp").value};af.innerHTML=addFormHTML();document.getElementById("cp").value=keep.cp;return}const d=e.target.dataset;if(d.todds){const b=BETS.find(x=>x.id==d.todds),v=Math.abs(+e.target.value);if(b){if(v>=100){const neg=b.odds!=null?b.odds<0:b._s==="-";b.odds=neg?-v:v;b.ev=b.p!=null?evPush(b.p,b.push||0,b.odds):null}else b.odds=null;saveBets();renderTrack()}}
   if(d.tstake){const b=BETS.find(x=>x.id==d.tstake),v=+e.target.value;if(b&&v>0){b.stake=v;saveBets();renderTrack()}}
-  if(e.target.id==="psort"){PSORT=e.target.value;LS.set("sl_psort2",PSORT);renderProps();return}
+  if(e.target.id==="psort"){PSORT=e.target.value;LS.set("sl_psort3",PSORT);renderProps();return}
   if(d.unit){const v=+e.target.value;if(v>0){UNIT=v;LS.set("sl_unit",UNIT);toast("Default stake $"+v)}}});
 document.addEventListener("input",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf&&e.target.type!=="checkbox"){reviewRows[+rv.dataset.rv][e.target.dataset.rvf]=e.target.value;return}const d=e.target.dataset;if(d.ed){(EDV[d.ed]=EDV[d.ed]||{})[d.f]=e.target.value;LS.set("sl_edv",EDV);updRec(d.ed);syncLater(d.ed)}});
 document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanFiles=[...e.target.files].slice(0,8);
