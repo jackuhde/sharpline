@@ -24,4 +24,7 @@ const did=(done||pe)?.id;if(did){const sum=await j(`${S}/summary?event=${did}`);
 const inj=await j(S+"/injuries");out.injuries={teams:(inj.injuries||[]).length,sample:(inj.injuries||[])[0]?.injuries?.slice(0,2)};
 const tm=await j(S+"/teams/12/roster");out.roster={groups:(tm.athletes||[]).map(g=>g.position+":"+(g.items||[]).length),sample:tm.athletes?.[0]?.items?.[0]&&{n:tm.athletes[0].items[0].displayName,pos:tm.athletes[0].items[0].position?.abbreviation,head:tm.athletes[0].items[0].headshot?.href,jersey:tm.athletes[0].items[0].jersey}};
 const dc=await j(`${C}/seasons/${sb.season?.year||2026}/teams/12/depthcharts`);out.depthchart=dc._err?dc._err:{count:dc.count};
-save("summary",out);console.log(JSON.stringify(out,null,1).slice(0,6000));
+save("summary",out);const{games,week,...rest}=out;console.log("GAMES",games.length,"BYE",(week?.teamsOnBye||[]).map(t=>t.abbreviation).join(","));console.log(JSON.stringify(rest));
+const pb=JSON.parse(fs.readFileSync("probe-out/propbets-100-p1.json","utf8"));console.log("PBSAMPLE",JSON.stringify((pb.items||[]).slice(0,4)));
+const g=JSON.parse(fs.readFileSync("probe-out/gamelog.json","utf8"));console.log("GL",JSON.stringify({labels:g.labels,names:g.names,cats:(g.categories||[]).map(c=>c.name),st:(g.seasonTypes||[]).map(s=>({n:s.displayName,cats:(s.categories||[]).map(c=>({t:c.type,n:(c.events||[]).length,first:c.events&&c.events[0]}))}))}).slice(0,3000));
+const ol=JSON.parse(fs.readFileSync("probe-out/odds-list.json","utf8"));console.log("ODDS0",JSON.stringify(ol.items&&ol.items[0]).slice(0,2500));
