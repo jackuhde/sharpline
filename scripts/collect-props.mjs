@@ -16,13 +16,15 @@ for(const d of cal){if(d>=today)continue;
   const raw=await retry(async()=>{const r=await fetch(`${BASE}/scoreboard?dates=${d.replace(/-/g,"")}`);if(!r.ok)throw new Error(r.status);return r.json()});await sleep(250);
   const evs=L.parseScoreboard(raw),types=Object.fromEntries((raw.events||[]).map(e=>[e.id,(e.season||{}).type]));
   for(const e of evs){if(types[e.id]!==2||!e.completed)continue;
+    /* DraftKings' closing game total and spread (for pace and blowout tests); the scoreboard drops odds once a game is final */
+    if(db.games[e.id]&&db.games[e.id].tot==null&&!db.games[e.id].goTried){db.games[e.id].goTried=1;try{const o=await retry(()=>L.preOdds(e.id));await sleep(200);if(o){db.games[e.id].tot=o.total.line;db.games[e.id].sp=o.spread.home}}catch(err){}}
     if(db.games[e.id]&&!alts.games[e.id]){try{const pr=await retry(()=>L.fetchProps(e.id,100,8));await sleep(250);alts.games[e.id]=(pr.alts||[]).map(a=>[a.ath,a.st,a.l,a.o]);added++}catch(err){console.log("skip alts",e.id,String(err))}continue}
     if(db.games[e.id])continue;
-    let bx,props;
+    let bx,props,go=null;try{go=await retry(()=>L.preOdds(e.id))}catch(err){}
     try{bx=await retry(()=>L.box(e.id));await sleep(250);props=await retry(()=>L.fetchProps(e.id,100,8));await sleep(250)}catch(err){console.log("skip",e.id,String(err));continue}
     if(!props.length)noProps++;
     db.games[e.id]={d,h:e.home,a:e.away,hid:e.homeId,aid:e.awayId,hs:e.homeScore,as:e.awayScore,
-      sp:e.odds&&e.odds.spread.home,tot:e.odds&&e.odds.total.line,
+      sp:go?go.spread.home:e.odds&&e.odds.spread.home,tot:go?go.total.line:e.odds&&e.odds.total.line,
       pl:Object.values(bx.players).map(p=>[p.id,p.name,p.teamId,p.dnp?0:1,p.starter?1:0,p.min,p.pts,p.reb,p.ast,p.tpm,p.stl,p.blk,p.to]),
       pr:props.filter(p=>!p.yn).map(p=>[p.ath,p.st,p.l,p.o,p.u,p.lOpen,p.oOpen,p.uOpen])};
     alts.games[e.id]=(props.alts||[]).map(a=>[a.ath,a.st,a.l,a.o]);
