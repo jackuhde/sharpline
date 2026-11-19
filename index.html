@@ -1073,7 +1073,7 @@ function topItems(){
     const it={src:"live",key:k,base:k,ev,p:g.p,price:g.bp,conf,head:`${x.p} ${YN[x.st]?(g.s==="o"?"Yes":"No")+" "+STAT_LBL[x.st].toLowerCase():propPick(i)}`,cond:`DraftKings ${fmtAm(g.bp)} now · fair ${fmtAm(toAm(g.p))}`,why:g.why};
     const n=normN(x.p);if(!bestBy[n]||bestBy[n].ev<ev)bestBy[n]=it});
   Object.values(bestBy).forEach(it=>items.push(it));
-  Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,conf:S.conf,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl,cond:`Your price: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
+  Object.values(SAVED).forEach(S=>{if(S.key[0]==="c"&&!custOf(+S.key.slice(1)))return;const N=nameOf(S.key);items.push({src:"saved",key:"f"+S.key,base:S.key,ev:S.ev,p:S.p,price:S.o,gap:S.gap,conf:S.conf,head:(S.key[0]!=="l"?N.name+" ":"")+S.lbl+(S.key[0]!=="l"?" "+(STAT[N.stat]||N.stat):""),cond:`Your price: ${S.lbl} at ${fmtAm(S.o)}`,why:S.why||""})});
   topItems.verify=[];items.forEach(x=>{x.fresh=freshOf(x.base)});
   items.forEach(x=>{if(x.ev>0&&!x.assumed&&(x.fresh.lv==="stale"||(x.base[0]==="p"&&PROPS[+x.base.slice(1)].live&&PROPS[+x.base.slice(1)].live.lv==="out")))topItems.verify.push(x)});
   const ok=items.filter(x=>x.ev>0&&!x.assumed&&x.fresh.lv!=="stale"&&x.fresh.lv!=="started"&&!topItems.verify.includes(x));topItems.hidden=ok.filter(x=>!(x.ev>=SET.minEdge&&passConf(x.conf))).length;
