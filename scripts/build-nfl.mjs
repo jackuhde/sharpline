@@ -47,6 +47,9 @@ await pool(todo,3,async({e,t,w})=>{const c=e.competitions[0],H=c.competitors.fin
   const sum=await j(`${S}/summary?event=${e.id}`);if(!sum)return;const box=parseBox(sum);
   games[e.id]={id:e.id,t,w,d:e.date,h:[H.team.id,+H.score],a:[A.team.id,+A.score],p:Object.fromEntries(Object.entries(box).filter(([,r])=>r.v.some(x=>x)).map(([id,r])=>{if(!ath[id])ath[id]=[r.n,"",r.t,"","",""];return[id,[r.t,...r.v]]}))};
   if(!lines.games[e.id]){const L=await propLines(e.id);if(Object.keys(L).length)lines.games[e.id]={w,t,final:1,l:L}}});
+/* closing spread (home team, negative = home favored) and total, from the scoreboard's DraftKings line */
+evs.forEach(({e})=>{const g=games[e.id];if(!g)return;const c=e.competitions[0],o=(c.odds||[])[0];if(!o)return;const H=c.competitors.find(x=>x.homeAway==="home");
+  const m=String(o.details||"").match(/^([A-Z]{2,4})\s+([+-]?\d+(\.\d)?)$/);if(m){const v=+m[2];g.sp=m[1]===H.team.abbreviation?v:-v}else if(/^EVEN|PK/i.test(o.details||""))g.sp=0;if(o.overUnder!=null)g.tot=+o.overUnder});
 /* upcoming and in-progress games: save lines while still pregame, keep the last pregame snapshot after kickoff */
 const open=evs.filter(({e})=>e.competitions[0].status.type.state==="pre");
 await pool(open,3,async({e,t,w})=>{const L=await propLines(e.id);if(Object.keys(L).length)lines.games[e.id]={w,t,at:new Date().toISOString(),l:L}});
