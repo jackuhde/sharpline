@@ -307,6 +307,69 @@ function applyScan(rows){const C=ocrCtx();let n=0;const miss=[];
       if(r.mk!=="moneyline"&&r.line!==S.line){miss.push(`${r.ab} ${r.mk} ${r.line}: DraftKings is at ${S.line}, so the no-vig chance doesn't apply to this number`);return}
       miss.push(`${r.ab} ${r.mk}${r.line!=null?" "+r.line:""} at ${am(r.odds)}: DraftKings no-vig chance ${pc1(S.fair)}, EV ${evs(RK.ev(S.fair,r.odds))} (${RK.ev(S.fair,r.odds)>0?"better than the market's fair price":"no edge"})`)}});savePx();paint();return{n,miss}}
 
+
+/* ---------- universal scanner: verify one selection and price it at the SUBMITTED line and odds ----------
+   Nothing here saves a price. DraftKings' current line is reported next to the submitted one, never in its place. */
+const SKILL=/^(QB|RB|WR|TE|FB|K|PK)$/;
+function scanNames(){if(!N.stats)return[];return Object.entries(N.stats.ath).filter(([,a])=>SKILL.test(a[1])).map(([id,a])=>({p:a[0],ab:T(a[2])[0],sport:"nfl",id,pos:a[1]}))}
+function scanTeams(){if(!N.stats)return[];return Object.entries(N.stats.teams).map(([id,t])=>({full:t[1],ab:t[0],nick:String(t[4]||"").toLowerCase().replace(/[^a-z]/g,"")||t[0].toLowerCase(),sport:"nfl",id}))}
+function invPhi(p){let lo=-8,hi=8;for(let i=0;i<60;i++){const m=(lo+hi)/2;M.Phi(m)<p?lo=m:hi=m}return(lo+hi)/2}
+const gameState=e=>e.state==="pre"?{ok:true,t:`Scheduled ${new Date(e.date).toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`}:e.state==="in"?{ok:null,t:`Underway: ${e.detail||"in progress"}. Pregame numbers no longer apply`}:{ok:false,t:`Final${e.detail?": "+e.detail:""}. This bet is already decided`};
+function eventOfTeam(tid){return N.events.find(x=>x.home.id===tid||x.away.id===tid)||null}
+function scanProp(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};const SBp=window.SharpBets;
+  let id=leg.athId;if(!id){const m=SBp.matchName(leg.player||"",scanNames());if(!m||!m.x){A.cands=m?m.cands:[];A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NFL players match "${leg.player||leg.ambName}". Pick one`:`No NFL player called "${leg.player}" on ESPN's rosters`});return A}id=m.x.id}
+  const a=ath(id);if(!a){A.checks.push({ok:false,t:"Player not found"});return A}
+  A.athId=id;A.player=a[0];A.pos=a[1];A.tid=a[2];A.checks.push({ok:true,t:`${a[0]} · ${a[1]} · ${T(a[2])[1]}`});
+  if(leg.team&&leg.team.ab&&leg.team.ab!==T(a[2])[0])A.checks.push({ok:false,t:`Submitted with ${leg.team.ab}, but ESPN has him on ${T(a[2])[0]}`});
+  const e=eventOfTeam(a[2]);if(!e){A.checks.push({ok:false,t:`${T(a[2])[0]} has no game in week ${N.week} (bye week)`});return A}
+  A.e=e;A.eid=e.id;A.game=`${e.away.ab} @ ${e.home.ab}`;A.checks.push(gameState(e));
+  const inj=N.inj[id];if(inj)A.checks.push({ok:inj.lv==="out"?false:null,t:`Injury report: ${inj.st}${inj.txt?" · "+inj.txt:""}`});
+  const st=leg.stat;if(!st){A.checks.push({ok:false,t:"Market not read"});return A}
+  const yn=st==="td"||st==="td2"||st==="td1";const PL=N.props[e.id];const L=PL&&!yn?PL.lines[id+"|"+st]:null;const hasYN=yn&&PL&&PL.yn[st]&&PL.yn[st].has(id);
+  if(L){A.checks.push({ok:true,t:`DraftKings has this market: ${LBL[st]||st} ${L.l}`});A.market={rows:[{book:"DraftKings",line:L.l,over:null,under:null,note:"price not in ESPN's free feed"}],open:L.lo,upd:L.upd,dkL:L.l}}
+  else if(hasYN){A.checks.push({ok:true,t:`DraftKings has ${LBL[st]||st} for him`});A.market={rows:[{book:"DraftKings",line:null,note:"price not in ESPN's free feed"}]}}
+  else A.checks.push({ok:null,t:PL?`DraftKings has no ${LBL[st]||st} line for him this week`:"DraftKings props for this game haven't loaded"});
+  if(st==="td1"||!M.STATS[st]&&!yn){A.an={none:`${LBL[st]||st} isn't something Sharpline models, so there's no probability for it`};return A}
+  const c=ctxFor(e,id);if(!c){A.an={none:"Couldn't place him in this game"};return A}
+  const base={use:N.model&&N.model.use,opp:c.opp,spread:c.spread,total:c.total,wx:N.stats.next&&N.stats.next[e.id]&&N.stats.next[e.id].wx};
+  if(yn){const P=M.project(N.I,id,"td",base,N.DEF);if(!P||P.n<2){A.an={none:"Fewer than 2 games of history"};return A}let p=P.pOver;if(st==="td2"){const l=-Math.log(1-p);p=1-Math.exp(-l)*(1+l)}
+    A.an={p:leg.side==="no"?1-p:p,proj:null,n:P.n,trusted:trusted("td"),bt:btNote("td"),parts:P.parts||[],last:P.last,anchored:false,model:"touchdown rate"};return A}
+  if(leg.line==null){A.an={none:"No line to price"};return A}
+  const anchor=L?L.l:leg.line;const P=M.project(N.I,id,st,{...base,line:anchor,evalLine:leg.line,k:kOf(st)},N.DEF);
+  if(!P||P.p==null){A.an={none:"Not enough games this season to model him"};return A}
+  const pOver=P.p,side=leg.side;const sd=Math.max(.5,(P.cv||.4)*P.m);const far=L&&Math.abs(leg.line-L.l)>(M.STATS[st].d==="pois"?1:.6*sd);
+  let pDK=null;if(L&&L.l!==leg.line){const Q=M.project(N.I,id,st,{...base,line:L.l,k:kOf(st)},N.DEF);if(Q&&Q.p!=null)pDK=side==="under"?1-Q.p:Q.p}
+  A.an={pOver,p:side==="under"?1-pOver:side==="over"?pOver:null,proj:P.m,n:P.n,hits:P.hits,last:P.last,parts:P.parts||[],trusted:trusted(st),bt:btNote(st),far,anchored:!!L,dkL:L&&L.l,pDK,model:"projection"};
+  return A}
+function scanGame(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};const ab=(leg.team||leg.teams[0]||{}).ab;
+  const tms=scanTeams();const tm=tms.find(x=>x.ab===ab)||tms.find(x=>(leg.teams[0]||{}).full&&x.full===leg.teams[0].full);
+  if(!tm){A.checks.push({ok:false,t:"Team not recognized"});return A}const e=eventOfTeam(tm.id);
+  if(!e){A.checks.push({ok:false,t:`${tm.ab} has no game in week ${N.week}`});return A}A.e=e;A.eid=e.id;A.game=`${e.away.ab} @ ${e.home.ab}`;
+  if(leg.teams.length>1){const o=tms.find(x=>x.ab===leg.teams[1].ab);if(o&&e.home.id!==o.id&&e.away.id!==o.id)A.checks.push({ok:false,t:`${tm.ab} plays ${e.home.id===tm.id?e.away.ab:e.home.ab} this week, not ${o.ab}`})}
+  A.checks.push({ok:true,t:A.game});A.checks.push(gameState(e));
+  if(leg.mk==="teamTotal"){A.checks.push({ok:null,t:"Team totals aren't in ESPN's free feed"});A.an={none:"No team-total data, so no probability"};return A}
+  const mk={spread:"sp",ml:"ml",total:"tot"}[leg.mk],m=gameMarkets(e).find(z=>z.k===mk);if(!m){A.checks.push({ok:null,t:"DraftKings has no line for this market"});A.an={none:"No market line to price against"};return A}
+  const S=mk==="tot"?(leg.side==="under"?m.b:m.a):(e.home.id===tm.id?m.b:m.a);
+  A.market={rows:[{book:"DraftKings",line:S.line,price:S.price,fair:S.fair}],open:S.open,dkL:S.line};A.checks.push({ok:true,t:`DraftKings: ${m.lbl}${S.line!=null?" "+(mk==="sp"&&S.line>0?"+":"")+S.line:""} ${am(S.price)}`});
+  if(S.fair==null){A.an={none:"DraftKings' price for both sides is needed to remove the vig"};return A}
+  let p=S.fair,rough=null;const L=leg.line;
+  if(mk!=="ml"&&L!=null&&L!==S.line){const sd=mk==="sp"?13.5:10,d=Math.abs(L-S.line);if(d>3.5){A.an={none:`Your line is ${d} points from DraftKings' ${S.line}, too far to move the market's chance reliably`};return A}
+    if(mk==="sp"){const mu=-S.line-sd*invPhi(1-S.fair);p=1-M.Phi((-L-mu)/sd)}else{const mu=S.line+sd*invPhi(leg.side==="under"?S.fair:1-S.fair);const po=1-M.Phi((L-mu)/sd);p=leg.side==="under"?1-po:po}
+    rough=`moved from DraftKings' ${S.line} to your ${L} on a bell curve (ignores key numbers like 3 and 7)`}
+  A.an={p,proj:null,model:"DraftKings no-vig",rough,anchored:true,trusted:true};return A}
+function scanQuote(leg){if(!N.stats)return{sport:"nfl",checks:[{ok:false,t:"NFL data hasn't loaded"}],market:{rows:[]},an:null};return leg.mk==="prop"?scanProp(leg):scanGame(leg)}
+function scanBet(leg,A,odds,stake,book){/* tracker record that keeps the submitted line, odds, book and time */
+  const e=A.e;if(!e)return null;const base={id:Date.now()+Math.floor(Math.random()*1000),type:"straight",sport:"nfl",date:localDate(e.date),game:`${e.away.ab} @ ${e.home.ab}`,tip:e.date,book:book||"Scanned",stake:stake||((typeof UNIT!=='undefined'&&UNIT)||10),res:null,
+    odds,p:A.an&&A.an.p,push:0,ev:A.an&&A.an.p!=null&&odds!=null?RK.ev(A.an.p,odds):null,grade:null,conf:null,src:"scanner",home:e.home.name,away:e.away.name,evid:e.id,scanTs:Date.now()};
+  if(leg.mk==="prop"){const yn=leg.stat==="td"||leg.stat==="td2";const pick=yn?(leg.stat==="td2"?"2+ touchdowns":"Anytime TD"):`${leg.side==="under"?"Under":"Over"} ${leg.line} ${SHORT[leg.stat]||leg.stat}`;
+    return{...base,key:"n:scan:"+e.id+"|"+A.athId+"|"+leg.stat+"|"+leg.line,name:A.player,mkt:SHORT[leg.stat]||leg.stat,pick,tm:A.tid,ath:A.athId,
+      spec:{sport:"nfl",kind:"prop",ev:e.id,ath:A.athId,stat:yn?"td":leg.stat,line:yn?(leg.stat==="td2"?1.5:.5):leg.line,side:yn?"o":leg.side==="under"?"u":"o",player:A.player,pos:A.pos}}}
+  const tms=scanTeams(),tm=tms.find(x=>x.ab===(leg.team||leg.teams[0]||{}).ab);const mk={spread:"sp",ml:"ml",total:"tot"}[leg.mk];if(!mk)return null;
+  const team=tm?(e.home.id===tm.id?e.home:e.away):null;const pick=mk==="ml"?`${team.short||team.ab} ML`:mk==="sp"?`${team.short||team.ab} ${leg.line>0?"+":""}${leg.line}`:`${leg.side==="under"?"Under":"Over"} ${leg.line}`;
+  return{...base,key:`nl:scan:${e.id}|${mk}|${Date.now()}`,name:`${e.away.ab} @ ${e.home.ab}`,mkt:{ml:"Moneyline",sp:"Spread",tot:"Total"}[mk],pick,
+    spec:{sport:"nfl",kind:mk,ev:e.id,team:mk==="tot"?null:team.id,teamName:mk==="tot"?null:team.name,line:mk==="ml"?null:leg.line,side:mk==="tot"?(leg.side==="under"?"u":"o"):null}}}
+function setPx(eid,id,st,dkL,side,odds,L,bk){const k=pxKey(eid,id,st,dkL);const cur=N.px[k]||{};N.px[k]={...cur,[side==='under'?'u':'o']:odds,L:L!=null&&L!==dkL?L:undefined,bk:bk||'Scanned',ts:Date.now()};savePx();paint();return k}
+function openMarket(name){N.f.q=name||"";N.f.g="all";saveF();if(typeof setSport==="function"&&typeof SPORT!=="undefined"&&SPORT!=="nfl")setSport("nfl");N.view="props";if(typeof go==="function")go("props");paint()}
 /* ---------- render + events ---------- */
 async function ensure(){if(!N.stats)await loadStatic();if(!N.stats)return;if(N.week==null)N.week=N.stats.week;await loadWeek();loadInj().then(()=>paint());
   const pre=N.events.filter(e=>e.state==="pre"&&!N.props[e.id]);if(pre.length&&!N.allBusy){N.allBusy=1;loadAllProps().then(()=>{N.allBusy=0;paint()})}}
@@ -336,5 +399,5 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
+window.NFL={N,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
 })();

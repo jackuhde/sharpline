@@ -811,6 +811,53 @@ html,body{overscroll-behavior-y:none}
   .sheet-in{border-radius:18px 18px 0 0}
 }
 </style>
+<style id="scan-css">
+.sc-sheet{max-width:760px}
+.sc-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 16px;border:2px dashed var(--line2);border-radius:18px;background:var(--bg);cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
+.sc-drop:hover,.sc-drop:focus-visible,.sc-drop.over{border-color:var(--acc);background:rgba(212,175,55,.06);outline:none}
+.sc-drop svg{width:30px;height:30px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round;margin-bottom:4px}
+.sc-drop b{font:900 15px Archivo}.sc-drop>span{font:700 12px Archivo;color:var(--mute)}.sc-desk{display:none}
+@media (hover:hover) and (pointer:fine){.sc-desk{display:inline}.sc-touch{display:none}}
+#thumbs div{position:relative}#thumbs .sc-x{position:absolute;top:3px;right:3px}
+.sc-text{width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line2);color:var(--ink);font:600 14px/1.45 Archivo;resize:vertical;min-height:70px}
+.sc-text:focus{outline:none;border-color:var(--acc)}
+.sc-go{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:end}.sc-go .go2{margin-top:12px}.sc-go .ghost{margin-top:12px;padding:13px 14px;border-radius:13px;border:1px solid var(--line2);font:800 13px Archivo;color:var(--ink);background:var(--s2)}
+.sc-fine{margin:14px 2px 0;font:600 11.5px/1.45 Archivo;color:var(--dim)}
+.sc-h2{margin:16px 2px 10px}.sc-h2 b{display:block;font:900 16px Archivo}.sc-h2 span{font:600 12.5px Archivo;color:var(--mute)}
+.sc-card{border:1px solid var(--line2);border-radius:16px;padding:12px;margin-bottom:12px;background:var(--s1,rgba(255,255,255,.02))}.sc-card.off{opacity:.45}
+.sc-ch{display:flex;align-items:center;gap:10px;margin-bottom:8px}.sc-ch b{font:900 13.5px Archivo;flex:1;white-space:nowrap}.sc-card .sc-book{flex:0 1 170px;width:170px}
+.sc-leg{border-top:1px solid var(--line);padding:9px 0 4px}
+.sc-row{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.sc-row>*{flex:1 1 90px;min-width:0}
+.sc-card input,.sc-card select{padding:9px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line2);color:var(--ink);font:700 13px Archivo;width:100%}
+.sc-card input:focus,.sc-card select:focus{outline:none;border-color:var(--acc)}
+.sc-money label{display:flex;flex-direction:column;gap:4px;font:800 10.5px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.sc-x{flex:0 0 auto!important;width:28px;height:28px;border-radius:8px;background:var(--s3);color:var(--mute);font:900 15px Archivo;line-height:1}
+.sc-miss{font:700 12px Archivo;color:var(--gold);margin-top:4px}.sc-m{font:700 12px Archivo;color:var(--acc2);margin-top:4px}.sc-raw{font:600 11.5px Archivo;color:var(--dim);margin-top:3px;overflow-wrap:anywhere}
+.sc-sum{border:1px solid var(--line2);border-radius:16px;padding:14px;margin:14px 0;background:var(--s2)}.sc-sum>div:first-child{font:800 14px Archivo}.sc-sum p{margin:6px 0 0;font:600 12.5px/1.45 Archivo}
+.sc-sum .fav{color:var(--over)}.sc-sum .unfav{color:var(--under)}.sc-sum .neu{color:var(--gold)}.dim{color:var(--mute)!important}.bad{color:var(--under)!important}
+.sc-sumb{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.sc-sumb .ghost{padding:8px 12px;border-radius:10px;border:1px solid var(--line2);font:800 12px Archivo;color:var(--ink);background:none}
+.sc-res{border:1px solid var(--line2);border-left:4px solid var(--line2);border-radius:16px;padding:14px;margin-bottom:14px;background:var(--bg);animation:scIn .35s ease both}
+.sc-res.v-fav{border-left-color:var(--over)}.sc-res.v-unfav{border-left-color:var(--under)}.sc-res.v-neu{border-left-color:var(--gold)}
+@keyframes scIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){.sc-res{animation:none}}
+.sc-res header{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.sc-res header b{display:block;font:900 16px/1.25 Archivo}.sc-res header span{font:700 12px Archivo;color:var(--mute)}
+.sc-v{flex:none;font:900 11px Archivo;font-style:normal;text-transform:uppercase;letter-spacing:.06em;padding:5px 9px;border-radius:999px;background:var(--s3);color:var(--mute)}
+.sc-v.fav{background:rgba(52,199,89,.14);color:var(--over)}.sc-v.unfav{background:rgba(255,69,58,.12);color:var(--under)}.sc-v.neu{background:rgba(212,175,55,.14);color:var(--gold)}
+.sc-res section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.sc-res h4{margin:0 0 7px;font:900 10.5px Archivo;letter-spacing:.09em;text-transform:uppercase;color:var(--acc)}
+.sc-kv,.sc-nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}.sc-kv div,.sc-nums div{padding:8px 10px;border-radius:10px;background:var(--s2)}
+.sc-kv i,.sc-nums i{display:block;font:800 10px Archivo;font-style:normal;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}.sc-kv b{font:800 13.5px Archivo;overflow-wrap:anywhere}.sc-nums b{font:900 18px Archivo}
+.sc-ck{list-style:none;margin:0;padding:0;display:grid;gap:5px}.sc-ck li{display:flex;gap:8px;font:600 13px/1.4 Archivo}.sc-ck i{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:900 10.5px Archivo;font-style:normal}
+.sc-ck .ok i{background:rgba(52,199,89,.16);color:var(--over)}.sc-ck .bad i{background:rgba(255,69,58,.14);color:var(--under)}.sc-ck .warn i{background:rgba(212,175,55,.16);color:var(--gold)}
+.sc-p{margin:7px 0 0;font:600 13px/1.5 Archivo}.sc-note{color:var(--acc2)}
+.sc-t{display:grid;gap:3px;font:700 12.5px Archivo}.sc-t>div{display:grid;grid-template-columns:1.4fr .8fr .8fr .8fr;gap:6px;padding:7px 9px;border-radius:9px;background:var(--s2);align-items:center}
+.sc-t .th{background:none;font:800 10px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;padding:2px 9px}.sc-t small{display:block;font:600 10.5px Archivo;color:var(--mute)}
+.sc-t .best{box-shadow:inset 0 0 0 1px rgba(52,199,89,.5)}.sc-t .worst{box-shadow:inset 0 0 0 1px rgba(255,69,58,.45)}
+.sc-legs>div{grid-template-columns:2.4fr .7fr .7fr .7fr .7fr 1fr}.sc-legs .sc-v{font-size:9.5px;padding:4px 6px;text-align:center}.sc-legs em.bad{font-style:normal}
+.sc-dropt>div{grid-template-columns:2fr .6fr .7fr .7fr}
+@media (max-width:560px){.sc-legs>div{grid-template-columns:1fr auto auto auto}.sc-legs>div>span:nth-child(4),.sc-legs>div>span:nth-child(6){display:none}}
+.sc-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.sc-acts .addbtn[disabled]{opacity:.45}
+.sc-saved{margin-top:14px;border:1px solid var(--line2);border-radius:14px;padding:10px 12px}.sc-saved summary{font:800 13px Archivo;cursor:pointer}
+.sc-saved>div{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.sc-saved>div>span{flex:1}.sc-saved b{display:block;font:800 13px Archivo}.sc-saved small{font:600 11.5px Archivo;color:var(--mute)}
+</style>
 </head>
 <body>
 <div id="ptr"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/></svg></div>
@@ -865,16 +912,20 @@ html,body{overscroll-behavior-y:none}
 
 <div class="prof" id="prof" role="dialog" aria-label="Player profile"></div>
 <div class="prof" id="lg" role="dialog" aria-label="Live game"></div>
-<div class="sheet" id="scanSheet"><div class="sheet-bg" data-scanclose="1"></div><div class="sheet-in">
-  <div class="sheet-h"><div><div class="eyebrow">Upload</div><h2>Scan any bet</h2></div><button class="x" data-scanclose="1">×</button></div>
-  <p class="sheet-p">Upload screenshots from any sportsbook, a bet slip, or a tip someone posted (X, Instagram, Discord, group chats). Sharpline reads them on your phone, so nothing is uploaded. Then it shows every line it found so you can fix misreads before grading. It grades the exact line and odds in the screenshot and shows what the board has now.</p>
-  <label class="drop" id="drop"><input type="file" id="scanFiles" accept="image/png,image/jpeg,image/webp,image/*" multiple hidden>
-    <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-    <b>Tap to choose screenshots</b><span>Up to 8 at a time · PNG, JPG or WebP</span></label>
-  <div class="thumbs" id="thumbs"></div>
-  <button class="go2" id="scanGo" data-scango="1" disabled>Read screenshots</button>
+<div class="sheet" id="scanSheet"><div class="sheet-bg" data-scanclose="1"></div><div class="sheet-in sc-sheet">
+  <div class="sheet-h"><div><div class="eyebrow">Bet scanner</div><h2>Scan any bet</h2></div><button class="x" data-scanclose="1">×</button></div>
+  <div id="scIn">
+    <p class="sheet-p">A bet slip, a parlay, a props page, a post from X, Instagram, Discord or Reddit, a group chat. Sharpline reads it, lets you check what it read, verifies each pick against real games and markets, then grades the exact line and odds you submitted.</p>
+    <div class="sc-drop" id="scDrop" role="button" tabindex="0" aria-label="Add screenshots"><input type="file" id="scanFiles" accept="image/png,image/jpeg,image/webp,image/*" multiple hidden>
+      <svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M12 8v8M8 12h8"/></svg>
+      <b><span class="sc-touch">Tap to add screenshots</span><span class="sc-desk">Drop screenshots here, paste with Ctrl+V, or click</span></b><span>Up to 8 · read on your device, nothing is uploaded</span></div>
+    <div class="thumbs" id="thumbs"></div>
+    <textarea id="scText" class="sc-text" rows="3" placeholder="Or paste text: “Mahomes o275.5 pass yds -115”, “Chiefs -3.5 / Ravens ML”, a whole group chat or slip"></textarea>
+    <div class="sc-go"><button class="ghost" data-scmanual="1">Enter a bet by hand</button><button class="go2" id="scanGo" data-scango="1" disabled>Read</button></div>
+  </div>
   <div id="scanSteps" class="steps" style="display:none"></div><div class="scanstat" id="scanStat"></div>
-  <div id="scanRes"></div>
+  <div id="scanRes"></div><div id="scSaved"></div>
+  <p class="sc-fine">Screenshot reading is free text recognition: it reads words and numbers, not logos or colors, and can misread small or stylized text. That's why you review everything before it's graded.</p>
 </div></div>
 <div class="sheet" id="oddsSheet"><div class="sheet-bg" data-oddsclose="1"></div><div class="sheet-in">
   <div class="sheet-h"><div><div class="eyebrow">Your book's price</div><h2 id="oddsTitle">Enter odds</h2></div><button class="x" data-oddsclose="1">×</button></div>
@@ -904,7 +955,9 @@ html,body{overscroll-behavior-y:none}
 <script src="tracker2.js?v=1795900001"></script>
 <script src="recs.js?v=1795800001"></script>
 <script src="livegame.js?v=1795900001"></script>
-<script src="nfl.js?v=1795900007"></script>
+<script src="nfl.js?v=1795900008"></script>
+<script src="betparse.js?v=1795900001"></script>
+<script src="scanner.js?v=1795900001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1905,9 +1958,9 @@ document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.clos
   const dt=e.target.closest(".dt[data-v]");if(dt){go(dt.dataset.v);return}
   const t=e.target.closest("button,[data-row],a");if(!t||t.tagName==="A")return;const d=t.dataset;
   if(d.v){go(d.v);return}
-  if(d.scan){document.getElementById("scanSheet").classList.add("on");return}
+  if(d.scan){if(window.Scanner)Scanner.open();else document.getElementById("scanSheet").classList.add("on");return}
   if(d.scanclose){document.getElementById("scanSheet").classList.remove("on");return}
-  if(d.scango){runScan();return}
+  if(d.scango){if(window.Scanner)Scanner.read();else runScan();return}
   if(d.grade){gradeReview();return}
   if(d.save){saveFind(d.save);return}
   if(d.cadd){addCustom();return}
@@ -1941,10 +1994,7 @@ document.addEventListener("change",e=>{const rv=e.target.closest("[data-rv]");if
   if(e.target.id==="psort"){PSORT=e.target.value;LS.set("sl_psort3",PSORT);renderProps();return}
   if(d.unit){const v=+e.target.value;if(v>0){UNIT=v;LS.set("sl_unit",UNIT);toast("Default stake $"+v)}}});
 document.addEventListener("input",e=>{const rv=e.target.closest("[data-rv]");if(rv&&e.target.dataset.rvf&&e.target.type!=="checkbox"){reviewRows[+rv.dataset.rv][e.target.dataset.rvf]=e.target.value;return}const d=e.target.dataset;if(d.ed){(EDV[d.ed]=EDV[d.ed]||{})[d.f]=e.target.value;LS.set("sl_edv",EDV);updRec(d.ed);syncLater(d.ed)}});
-document.addEventListener("change",e=>{if(e.target.id!=="scanFiles")return;scanFiles=[...e.target.files].slice(0,8);
-  document.getElementById("thumbs").innerHTML=scanFiles.map(f=>`<div><img src="${URL.createObjectURL(f)}" alt=""></div>`).join("");
-  document.getElementById("scanGo").disabled=!scanFiles.length;document.getElementById("scanGo").textContent=scanFiles.length?`Read ${scanFiles.length} screenshot${scanFiles.length>1?"s":""}`:"Read lines";
-  document.getElementById("scanStat").textContent="";document.getElementById("scanRes").innerHTML=""});
+/* screenshot picking, paste and drag-and-drop are handled in scanner.js */
 function toast(m,kind){const t=document.getElementById("toast");t.textContent=m;t.className="on"+(kind?" "+kind:"");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),kind?2600:1600)}
 function renderAll(){if(window.PF&&PF.open)setTimeout(()=>renderProfile(true),0);const open=[...document.querySelectorAll(".row.open")].map(r=>r.dataset.row);
   renderTop();renderProps();renderLines();renderTrack();document.querySelectorAll("[data-edbox]").forEach(b=>updRec(b.dataset.edbox));open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")})}
