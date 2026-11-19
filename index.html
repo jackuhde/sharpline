@@ -192,6 +192,21 @@ body.pf-lock{overflow:hidden}
 .acct-note{font-size:12px;color:var(--dim);margin:0}.acct-msg{font-size:12.5px;margin:0;color:var(--tx)}
 .acct-link{justify-self:start;border:0;background:none;color:var(--dim);font:600 12px Archivo;text-decoration:underline;cursor:pointer;padding:0}
 .top.lean{opacity:.96}.lean-tag{font:800 10px Archivo;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+/* live value */
+.lv-val-p{margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.02)}
+.lv-val-p.pos{border-color:color-mix(in srgb,var(--over) 55%,transparent);background:color-mix(in srgb,var(--over) 7%,transparent)}
+.lv-val-p.neg{opacity:.85}.lv-val-p .vt{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap}
+.lv-val-p .vg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}.lv-val-p .vg small{display:block;font:700 9.5px Archivo;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.lv-val-p .vg b{font:800 14px "JetBrains Mono",monospace}
+.vb{display:inline-block;font:800 10px Archivo;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 7px;white-space:nowrap}
+.vb.pos{background:var(--over);color:#07170e}.vb.mid{background:color-mix(in srgb,var(--gold) 25%,transparent);color:var(--gold)}.vb.neg{background:color-mix(in srgb,var(--under) 18%,transparent);color:var(--under)}.vb.na{background:rgba(255,255,255,.07);color:var(--mute)}
+.lv-gv tr.best td{background:color-mix(in srgb,var(--over) 8%,transparent)}.lv-note{font-size:12px;color:var(--mute);margin:8px 2px 0}
+.lv-upd.warn{color:var(--gold)}
+body.lv-busy .lv-feed .dot{animation:lvpulse .8s ease-in-out infinite}@keyframes lvpulse{50%{opacity:.25;transform:scale(.7)}}
+@media(max-width:520px){.lv-val-p .vg{grid-template-columns:repeat(3,1fr)}}
+.arch{margin:18px 0 6px;border:1px solid var(--line);border-radius:14px;padding:4px 12px}.arch summary{cursor:pointer;font:700 13px Archivo;color:var(--mute);padding:10px 0;list-style:none}.arch summary::before{content:"▸ ";}.arch[open] summary::before{content:"▾ "}.arch-in{padding-bottom:8px}
+.gh-st{font-style:normal;color:var(--mute);font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.mkt-t{margin-top:10px}.mkt-r{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;align-items:center}.mkt-r i{font-style:normal;font-family:"JetBrains Mono",monospace;font-weight:800}.mkt-r small{color:var(--mute);margin-left:4px}
 </style>
 <style>
 :root{
@@ -744,7 +759,7 @@ html,body{overscroll-behavior-y:none}
 <script src="profile.js?v=1795200001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795300003"></script>
-<script src="livegame.js?v=1795200001"></script>
+<script src="livegame.js?v=1795400001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -759,6 +774,7 @@ const toAm=p=>{p=Math.min(Math.max(p,.001),.999);return p>=.5?-Math.round(100*p/
 const decToAm=d=>d>=2?Math.round((d-1)*100):-Math.round(100/(d-1));
 const fmtAm=a=>a==null||isNaN(a)?"–":(a>0?"+":"")+a;
 const pct=x=>(x*100).toFixed(0)+"%";
+const esc2=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pct1=x=>(x*100).toFixed(1)+"%";
 const evOf=(p,am)=>p*dec(am)-1;
 /* EV per $1 with a push chance: win pays dec-1, push returns stake, loss costs 1 */
@@ -1489,39 +1505,45 @@ function renderProps(){
   const items=allPropItems(),inGame=items.filter(x=>propGame==="all"||x.g==propGame);
   const stats=STAT_ORDER.filter(st=>inGame.some(x=>x.st===st)).concat([...new Set(inGame.map(x=>x.st))].filter(st=>!STAT_ORDER.includes(st)));
   if(propStat!=="all"&&!stats.includes(propStat))propStat="all";
-  const cnt=g=>items.filter(x=>g==="all"||x.g==g).length;
+  const cnt=g=>items.filter(x=>(g==="all"?!movedOff(x.g):x.g==g)).length;
   document.getElementById("propChips").innerHTML=
-    `<div class="chiprow"><button class="chip ${propGame==="all"?"on":""}" data-pg="all">All games <span class="ct">${cnt("all")}</span></button>`+SNAP.map((g,i)=>`<button class="chip ${propGame==i?"on":""}" data-pg="${i}">${mu(g)} · ${tipT(g)} <span class="ct">${cnt(i)}</span></button>`).join("")+`</div>`+
+    `<div class="chiprow"><button class="chip ${propGame==="all"?"on":""}" data-pg="all">All games <span class="ct">${cnt("all")}</span></button>`+SNAP.map((g,i)=>movedOff(i)?"":`<button class="chip ${propGame==i?"on":""}" data-pg="${i}">${mu(g)} · ${(st=>st.k==="pre"?tipT(g):st.t)(gameStatus(i))} <span class="ct">${cnt(i)}</span></button>`).join("")+`</div>`+
     `<div class="chiprow stat"><button class="chip s ${propStat==="all"?"on":""}" data-ps="all">All stats</button>`+stats.map(st=>`<button class="chip s ${propStat===st?"on":""}" data-ps="${st}">${STAT_LBL[st]||st} <span class="ct">${inGame.filter(x=>x.st===st).length}</span></button>`).join("")+`</div>`+
     `<div class="sortrow"><label for="psort">Sort</label><select id="psort">${[["proj","Projected, high to low"],["line","Line, high to low"],["books","Most books posting"],["edge","Best edge"],["name","Player name"]].map(([v,l])=>`<option value="${v}" ${PSORT===v?"selected":""}>${l}</option>`).join("")}</select></div>`;
-  let html="";
-  SNAP.forEach((G,gi)=>{if(propGame!=="all"&&propGame!=gi)return;
+  let html="",arch="",nArch=0;
+  SNAP.forEach((G,gi)=>{const s0=html.length;propGroup(G,gi);if(movedOff(gi)&&html.length>s0){arch+=html.slice(s0);html=html.slice(0,s0);nArch++}});
+  function propGroup(G,gi){if(propGame!=="all"&&propGame!=gi)return;
     const gItems=items.filter(x=>x.g===gi&&(propStat==="all"||x.st===propStat));if(!gItems.length)return;
     const col=GCOL.includes(gi);
-    html+=`<button class="gh gtog ${col?"col":""}" data-gtog="${gi}" aria-expanded="${!col}">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${LIVE.ev[gi]&&LIVE.ev[gi].state==="in"?`<em class="gh-live">Live now</em>`:LIVE.ev[gi]&&LIVE.ev[gi].state==="post"?"Final":tipT(G)}</span><span class="gcount">${gItems.length}</span><i class="chev"></i></button><div class="gbody ${col?"col":""}">${LIVE.ev[gi]&&LIVE.ev[gi].state==="in"?`<div class="gh-note">This game has started. These are the pregame lines and grades, kept for comparison. Current in-game prices are in <button class="lnk" data-golive="1">Live</button>.</div>`:""}`;
+    html+=`<button class="gh gtog ${col?"col":""}" data-gtog="${gi}" aria-expanded="${!col}">${logo(G.away)}<b>${mu(G)}</b>${logo(G.home)}<span class="t">${(st=>st.k==="pre"?tipT(G):st.k==="live"||st.k==="half"?`<em class="gh-live">${esc2(st.t)}</em>`:`<em class="gh-st">${esc2(st.t)}</em>`)(gameStatus(gi))}</span><span class="gcount">${gItems.length}</span><i class="chev"></i></button><div class="gbody ${col?"col":""}">${movedOff(gi)?`<div class="gh-note">Pregame lines and grades, kept for comparison. ${gameStatus(gi).k==="final"?"This game is over.":`Current in-game prices are in <button class="lnk" data-golive="1">Live</button>.`}</div>`:""}`;
     if(propStat==="all"){const rows=gItems.slice().sort(propSorter);html+=`<div class="list">${rows.map(r=>r.html()).join("")}</div></div>`;return}
     const sts=[...new Set(gItems.map(x=>x.st))].sort((a,b)=>statRank(a)-statRank(b));
     sts.forEach(st=>{const rows=gItems.filter(x=>x.st===st).sort(propSorter);
       html+=`<div class="sh"><span>${STAT_LBL[st]||st}</span><i></i><em>${rows.length}</em></div><div class="list">${rows.map(r=>r.html()).join("")}</div>`});
     html+=`</div>`;
-  });
+  }
+  if(arch)html+=`<details class="arch"><summary>${nArch} game${nArch===1?"":"s"} started or finished · pregame lines kept for comparison</summary><div class="arch-in">${arch}</div></details>`;
   document.getElementById("propList").innerHTML=html||`<div class="empty"><b>Nothing here</b>No ${propStat==="all"?"":(STAT_LBL[propStat]||propStat).toLowerCase()+" "}lines found for this game yet. Scan a screenshot to grade a line that isn't listed.</div>`;
   document.querySelectorAll("#propList [data-edbox]").forEach(b=>updRec(b.dataset.edbox));
 }
 
 /* ---------- lines ---------- */
 function renderLines(){
-  document.getElementById("lineList").innerHTML=SNAP.map((G,gi)=>{
+  const cards=SNAP.map((G,gi)=>{
     const ms=LINES.map((L,i)=>({L,i})).filter(o=>o.L.g===gi);
     const E=evFor(gi),st=started(gi);
     return`<div class="gcard ${st?"is-started":""}"><div class="top2">${logo(G.away)}<span class="vs">${team(G.away)[0]} <span style="color:var(--dim)">@</span> ${team(G.home)[0]}</span>${logo(G.home)}<span class="t">${E&&E.state!=="pre"?`<b class="${E.state==="in"?"livenow":""}">${E.state==="in"?`${E.awayScore}-${E.homeScore} · `:E.completed?`Final ${E.awayScore}-${E.homeScore} · `:""}${E.detail}</b>`:tipT(G)}</span></div>
       ${E&&E.odds&&!st?`<div class="liveodds"><span class="fr fr-live">${E.odds.book} live · ${ago(LIVE.oddsTs)}</span>${G.liveMove?`<span class="mv">${G.liveMove.replace(/^\S+ since open: /,"Since open: ")}</span>`:""}</div>`:!st?`<div class="liveodds"><span class="fr fr-${(Date.now()-boardTs())/6e4>90?"aging":"recent"}">From research at ${clock(boardTs())}</span></div>`:""}
+      ${movedOff(gi)?`<div class="gh-note">Pregame lines, kept for comparison. ${gameStatus(gi).k==="final"?"This game is over.":`Current in-game prices are in <button class="lnk" data-golive="1">Live</button>.`}</div>`:""}
       <div class="notes">${G.notes.map(n=>`<span class="note">${n}</span>`).join("")}</div>
+      ${!ms.length&&G.mk.length?`<div class="mkt-t">${G.mk.map(m=>{const q=m.q[0]||{},fp=m.fair&&m.fair.p;return`<div class="mkt-r"><b>${esc2(m.k)}</b><span>${esc2(m.a)} <i>${fmtAm(q.a)}</i>${fp?` <small>fair ${pct(fp[0])}</small>`:""}</span><span>${esc2(m.b)} <i>${fmtAm(q.b)}</i>${fp?` <small>fair ${pct(fp[1])}</small>`:""}</span></div>`}).join("")}<div class="sm" style="margin-top:6px">DraftKings prices. Fair is DraftKings' own price with the vig removed, so neither side is an edge at DraftKings; compare it with ${poss(BOOK)} price.</div></div>`:""}
       ${ms.map(({L,i})=>{const ev=L.bp!=null?evOf(L.p,L.bp):null;
         return`<div class="mrow" data-lrow="${i}"><div><div class="mk">${L.m} ${gradeTag(gradeNow("l"+i))}${L.p0!=null&&Math.abs(L.p-L.p0)>=.01?` <span class="moved ${L.p>L.p0?"up":"dn"}">${L.p>L.p0?"▲":"▼"} ${(Math.abs(L.p-L.p0)*100).toFixed(0)} pts since research</span>`:""}</div><div class="line2"><span class="pick ${sideCls(L.s)} ${L.t==="pass"?"pass":""}">${L.pick}</span><span class="est"><b>${pct(L.p)}</b> est</span></div></div>
           <div class="r"><div class="big">${fmtAm(toAm(L.p))}</div><div class="sm">fair · need this or better</div>${L.bp!=null?`<div class="sm">best seen ${fmtAm(L.bp)} (${L.bk}) <span style="color:${ev>0.005?"var(--over)":ev<-0.005?"var(--under)":"var(--mute)"}">${ev>=0?"+":""}${(ev*100).toFixed(1)}%</span></div>`:""}</div>
           <div class="why">${L.why}</div>${edHTML("l"+i)}<div>${addBtn("l"+i)}</div></div>`}).join("")}
-      <div class="src" style="margin-top:10px;line-height:1.7">Sources: ${G.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(" · ")}</div></div>`}).join("");
+      <div class="src" style="margin-top:10px;line-height:1.7">Sources: ${G.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(" · ")}</div></div>`});
+  const act=cards.filter((c,gi)=>!movedOff(gi)),old=cards.filter((c,gi)=>movedOff(gi));
+  document.getElementById("lineList").innerHTML=(act.join("")||`<div class="empty"><b>No games left to start today</b>Games in progress are in Live.</div>`)+(old.length?`<details class="arch"><summary>${old.length} game${old.length===1?"":"s"} started or finished · pregame lines kept for comparison</summary><div class="arch-in">${old.join("")}</div></details>`:"");
   document.querySelectorAll("#lineList [data-edbox]").forEach(b=>updRec(b.dataset.edbox));
 }
 
@@ -1642,7 +1664,14 @@ const ago=ts=>{if(!ts)return"never";const m=Math.round((Date.now()-ts)/60000);re
 const clock=ts=>new Date(ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
 const boardTs=()=>DATA_VERSION?new Date(DATA_VERSION).getTime():0;
 function evFor(gi){const G=SNAP[gi];return G&&LIVE.ev[gi]}
-const started=gi=>{const e=evFor(gi);if(e)return e.state!=="pre";const G=SNAP[gi];return G?Date.now()>new Date(G.tip).getTime()+5*60000:false};
+/* Game status comes from ESPN's status, never from the scheduled tip time alone. */
+const GSTAT={STATUS_SCHEDULED:["pre","Upcoming"],STATUS_DELAYED:["delayed","Delayed"],STATUS_RAIN_DELAY:["delayed","Delayed"],STATUS_POSTPONED:["postponed","Postponed"],STATUS_CANCELED:["postponed","Canceled"],
+  STATUS_IN_PROGRESS:["live","Live"],STATUS_END_PERIOD:["live","Live"],STATUS_HALFTIME:["half","Halftime"],STATUS_SUSPENDED:["susp","Suspended"],STATUS_FINAL:["final","Final"],STATUS_FINAL_OT:["final","Final"]};
+function gameStatus(gi){const e=evFor(gi);if(!e)return{k:"pre",t:"Upcoming",known:false};const m=GSTAT[e.statusName];
+  if(m)return{k:m[0],t:m[0]==="live"&&e.detail?e.detail:m[1],known:true};return e.state==="post"?{k:"final",t:"Final",known:true}:e.state==="in"?{k:"live",t:e.detail||"Live",known:true}:{k:"pre",t:"Upcoming",known:true}}
+/* in play or finished: these leave the pregame screens and live in the Live tab */
+const movedOff=gi=>["live","half","susp","final"].includes(gameStatus(gi).k);
+const started=gi=>movedOff(gi);
 /* match ESPN events to tonight's board by team nickname (ESPN says "LA Clippers", the board says "Los Angeles Clippers") */
 function mapEvents(list){const out={};SNAP.forEach((G,gi)=>{const e=list.find(x=>nick(x.home)===nick(G.home)&&nick(x.away)===nick(G.away));if(e)out[gi]=e});return out}
 /* overlay live DraftKings numbers onto the board's game lines and recompute the estimates from them */

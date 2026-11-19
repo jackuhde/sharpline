@@ -17,7 +17,7 @@ const gameOf=id=>LV.g[id]||(LV.g[id]={odds:null,oddsTs:0,props:{},propsTs:0,prop
 
 /* ---------- polling ---------- */
 function wanted(){return document.getElementById("v-live")?.classList.contains("on")||!!LV.open}
-async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted())return;LV.busy=true;
+async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted())return;LV.busy=true;document.body.classList.add("lv-busy");
   try{try{LV.sb=await SharpLive.scoreboard(DATA_DATE);LV.sbTs=Date.now();LV.sbOk=true}catch(e){LV.sbOk=false}
     const live=LV.sb.filter(e=>e.state==="in"),now=Date.now();
     await Promise.all(live.map(async e=>{const G=gameOf(e.id),isOpen=LV.open===e.id;
@@ -29,7 +29,7 @@ async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted
     /* season stats for anyone with a live market but no averages yet (bench players without pregame props) */
     const need=[];live.forEach(e=>Object.values(gameOf(e.id).props).forEach(m=>{if(LIVE.ids[m.ath]&&!(m.ath in LIVE.logs)&&!need.includes(m.ath))need.push(m.ath)}));
     if(need.length){await Promise.all(need.slice(0,6).map(a=>SharpLive.gamelog(a).then(v=>{LIVE.logs[a]=v||0}).catch(()=>{LIVE.logs[a]=0})));buildProj()}
-    saveHist()}finally{LV.busy=false}
+    saveHist()}finally{LV.busy=false;document.body.classList.remove("lv-busy")}
   render()}
 function start(){if(LV.timer)return;LV.timer=setInterval(()=>poll(false),POLL);poll(true)}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&wanted())poll(true)});
@@ -66,8 +66,17 @@ function model(id,mk){const e=LV.sb.find(x=>x.id===id),G=gameOf(id);if(!e||mk.yn
   const pm=mk.o!=null&&mk.u!=null?devig(mk.o,mk.u)[0]:mk.o!=null?Math.max(.01,imp(mk.o)-.025):null;
   /* live markets react to things this model can't see (rotations, matchups, pace in real time), so lean on them:
      35% model, 65% DraftKings' no-vig chance, and never more than 4 points from the market */
-  const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw,side=cur+mean>=mk.l?"o":"u",p=side==="o"?pO:1-pO,price=side==="o"?mk.o:mk.u;
-  return{name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,side,p,price,oneSide:mk.o==null||mk.u==null,ev:price!=null&&mk.o!=null&&mk.u!=null?evOf(p,price):null,capped:pm!=null}}
+  const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw;
+  return withSides({name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,thin:!!(P.gp!=null&&P.gp<5),capped:pm!=null},mk.o,mk.u,cur+mean>=mk.l?"o":"u")}
+/* Both sides judged at their own posted prices. A bet is only "good value" when Sharpline's chance beats the price,
+   never just because the projection is past the line. */
+function withSides(m,o,u,lean){const sd=(p,price)=>price==null?null:{p,price,imp:imp(price),ev:evOf(p,price),gap:p-imp(price)};
+  m.sides={o:sd(m.pO,o),u:sd(1-m.pO,u)};m.oneSide=o==null||u==null;
+  const best=!m.oneSide?(m.sides.o.ev>=m.sides.u.ev?"o":"u"):lean;m.side=best;const S=m.sides[best];
+  m.p=best==="o"?m.pO:1-m.pO;m.price=S?S.price:null;m.imp=S?S.imp:null;m.ev=S&&!m.oneSide?S.ev:null;return m}
+/* value verdict used everywhere in Live: positive, marginal, negative, or not enough to say */
+function verdict(m,isFresh){if(!m)return{k:"na",t:"No estimate"};if(!isFresh)return{k:"na",t:"Price not current"};if(m.oneSide||m.ev==null)return{k:"na",t:"Only one side posted"};
+  if(m.thin)return{k:"na",t:"Too few games to rate"};if(m.ev>=.03)return{k:"pos",t:"Good value"};if(m.ev>=0)return{k:"mid",t:"Marginal"};return{k:"neg",t:"Poor price"}}
 function fresh(id,mk){const G=gameOf(id);return!mk.gone&&G.propsOk!==false&&Date.now()-G.propsTs<FRESH&&!(mk.lag>LAG_MAX)}
 
 /* ---------- views ---------- */
@@ -76,7 +85,13 @@ const statusTxt=e=>e.state==="in"?(/^0(\.0)?$|^0:00$/.test(e.clock||"")||!e.cloc
 const tipLocal=e=>new Date(e.date).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
 const upd=ts=>ts?ago(ts):"never";
 function feedBar(){const age=LV.sbTs?Date.now()-LV.sbTs:null,old=age==null||age>FRESH;
-  return`<div class="lv-feed ${old?"old":""}"><span class="dot"></span>${LV.sbOk===false?"Can't reach ESPN right now. Showing the last update.":`Scores ${upd(LV.sbTs)} · refreshes every ${POLL/1000}s while this screen is open`}</div>`}
+  /* quiet by default: a time stamp, a spinner only while fetching, and a warning only when data is stale or failed */
+  if(LV.sbOk===false)return`<div class="lv-feed old"><span class="dot"></span>Can't reach ESPN right now. Showing the update from ${hm(LV.sbTs)}.</div>`;
+  if(old&&LV.sbTs)return`<div class="lv-feed old"><span class="dot"></span>Scores may be out of date. Last update ${hm(LV.sbTs)}.</div>`;
+  return`<div class="lv-feed"><span class="dot"></span>${LV.sbTs?"Updated "+hm(LV.sbTs):"Updating…"}</div>`}
+const hm=ts=>ts?new Date(ts).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):"–";
+function staleNote(G){const s=[],old=ts=>ts&&Date.now()-ts>FRESH*2;if(G.oddsOk===false||old(G.oddsTs))s.push("game lines "+hm(G.oddsTs));if(G.propsOk===false||old(G.propsTs))s.push("props "+hm(G.propsTs));
+  return s.length?`<div class="lv-upd warn">Last good update: ${s.join(", ")}. Prices may have moved.</div>`:""}
 function valueCount(id){const G=gameOf(id);let n=0;Object.values(G.props).forEach(mk=>{if(!fresh(id,mk))return;const m=model(id,mk);if(m&&m.ev!=null&&m.ev>=.03)n++});return n}
 function topPerf(id){const G=gameOf(id);if(!G.box)return"";const ps=Object.values(G.box.players).filter(p=>!p.dnp).sort((a,b)=>(b.pts||0)-(a.pts||0)).slice(0,3);
   return ps.map(p=>`<span>${esc(p.name.split(" ").slice(-1)[0])} <b>${p.pts}</b>p ${p.reb}r ${p.ast}a</span>`).join("")}
@@ -88,7 +103,7 @@ function gameCard(e){const G=gameOf(e.id),o=G.odds,n=Object.values(G.props).filt
     <div class="lv-mk">${o?`<span>Live total <b>${o.total.line??"–"}</b></span><span>Spread <b>${ab2(e.homeAb)} ${o.spread.home>0?"+":""}${o.spread.home??"–"}</b></span>`:`<span>No live game line right now</span>`}
       <span>${n?`<b>${n}</b> live player markets`:G.propsFetched?"No live player markets":"Loading markets"}</span>${v?`<span class="lv-val">${v} with potential value</span>`:""}</div>
     ${G.box?`<div class="lv-perf">${topPerf(e.id)}</div>`:""}
-    <div class="lv-upd">Odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)}</div>`}
+    ${staleNote(G)}`}
 const SC={};
 function syncCards(box,live){const have=new Map([...box.querySelectorAll("[data-lvg]")].map(b=>[b.dataset.lvg,b]));
   live.forEach((e,i)=>{let b=have.get(e.id);if(!b){b=document.createElement("button");b.className="lv-card";b.dataset.lvg=e.id}have.delete(e.id);
@@ -102,7 +117,7 @@ function renderList(){const el=document.getElementById("liveBody");if(!el)return
   const html=feedBar()+(!LV.sbTs?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Checking for games in progress…</span></div>`:
     (live.length?`<div class="lv-h">In progress <em>${live.length}</em></div><div id="lvCards"></div>`
       :`<div class="pf-empty"><b style="color:var(--ink)">No games in progress right now.</b> Live scores, live lines and live player props appear here once a game tips off. ${pre.length?`Next tip: ${esc(ab2(pre[0].awayAb))} @ ${esc(ab2(pre[0].homeAb))} at ${tipLocal(pre[0])}.`:""}</div>`)+
-    (pre.length?`<div class="lv-h">Up next</div><div class="lv-mini">${pre.map(e=>`<div><span>${esc(ab2(e.awayAb))} @ ${esc(ab2(e.homeAb))}</span><b>${tipLocal(e)}</b></div>`).join("")}</div>`:"")+
+    (pre.length?`<div class="lv-h">Up next</div><div class="lv-mini">${pre.map(e=>`<div><span>${esc(ab2(e.awayAb))} @ ${esc(ab2(e.homeAb))}</span><b>${/DELAYED/.test(e.statusName)?"Delayed":/POSTPONED|CANCELED/.test(e.statusName)?"Postponed":tipLocal(e)}</b></div>`).join("")}</div>`:"")+
     (post.length?`<div class="lv-h">Final</div><div class="lv-mini">${post.map(e=>`<div><span>${esc(ab2(e.awayAb))} ${e.awayScore} @ ${esc(ab2(e.homeAb))} ${e.homeScore}</span><b>Final</b></div>`).join("")}</div>`:""))+
     `<p class="pf-foot">Live lines and live player props are DraftKings' in-game markets as published through ESPN. Projections are Sharpline's model. Bet only after confirming the price at your book; live prices change in seconds.</p>`;
   const cards=document.getElementById("lvCards"),keep=cards&&cards.parentNode===el?cards:null;
@@ -123,18 +138,45 @@ function lean(pre,mk){const base=mk.lOpen??(pre&&pre.l);if(base==null)return"";i
   if(mk.oOpen!=null&&mk.o!=null&&mk.o!==mk.oOpen)return`<span class="lv-dir ${dec(mk.o)<dec(mk.oOpen)?"o":"u"}">Same line, ${dec(mk.o)<dec(mk.oOpen)?"Over":"Under"} price shortened</span>`;return""}
 function propRow(id,k,mk,pre){const m=model(id,mk),f=fresh(id,mk),st=mk.gone?"susp":f?"live":"old",open=LV.exp[k];
   const chip=st==="susp"?`<span class="lv-st susp">Suspended or pulled ${mk.goneTs?ago(mk.goneTs):""}</span>`:st==="old"?`<span class="lv-st old">${mk.lag>LAG_MAX?`Not updated for ${Math.round(mk.lag/60000)} min`:"Outdated"}</span>`:`<span class="lv-st live">Live</span>`;
-  const val=f&&m&&m.ev!=null&&m.ev>=.03;
+  const V=verdict(m,f),val=V.k==="pos";
   return`<div class="lv-pr ${st} ${val?"val":""} ${open?"open":""}" data-lvx="${esc(k)}"><div class="lv-pr-top">
       <div class="lv-pr-l"><b>${STAT_LBL[mk.st]||mk.st}</b> ${chip}<div class="s">${m?`Now <b>${r1(m.cur)}</b> · needs ${m.need<0?"none, already over":r1(m.need)+" more"}`:""}${pre&&pre.l!=null?` · pregame ${pre.l}`:""}</div></div>
       <div class="lv-pr-r"><div class="ln">${mk.yn?"Yes":mk.l}</div><div class="px">O ${fmtAm(mk.o)}${mk.yn?"":` · U ${fmtAm(mk.u)}`}</div></div></div>
-    ${m?`<div class="lv-pr-m"><span>Projected final <b>${r1(m.final)}</b> <em>model</em></span><span>${m.side==="o"?"Over":"Under"} <b>${pct(m.p)}</b></span>${f&&m.ev!=null?`<span class="${m.ev>=0?"pos":"neg"}">${m.ev>=0?"+":""}${(m.ev*100).toFixed(1)}% EV</span>`:`<span class="muted">No EV: ${m.oneSide?"only one side posted":"price not current"}</span>`}${val?`<span class="lv-val">Potential edge</span>`:""}</div>`
+    ${m?valuePanel(m,V,mk.l,mk.st)
       :`<div class="lv-pr-m"><span class="muted">${mk.yn?"Yes/No markets aren't modeled live.":"No season data for a live projection; showing the market only."}</span></div>`}
-    ${open?`<div class="lv-pr-x">${m?`<p>${esc(m.name)} has ${r1(m.cur)} in ${Math.round((m.pl&&m.pl.min)||0)} minutes${m.pl&&m.pl.pf!=null?` with ${m.pl.pf} fouls`:""}. About ${r1(m.gameLeft)} game minutes are left; Sharpline expects him to play about ${r1(m.minLeft)} of them${m.mwhy.length?` (${esc(m.mwhy.join(", "))})`:""}, adding about ${r1(m.remMean)} for a projected ${r1(m.final)}. Chance of Over ${mk.l}: ${pct(m.pO)}${m.pm!=null?` (Sharpline's in-game model alone says ${pct(m.pOverRaw)}; blended with DraftKings' no-vig ${pct(m.pm)}, which sees rotations and matchups this model can't)`:""}.</p>`:""}
+    ${open?`<div class="lv-pr-x">${m?`<p>${esc(m.name)} has ${r1(m.cur)} in ${Math.round((m.pl&&m.pl.min)||0)} minutes${m.pl&&m.pl.pf!=null?` with ${m.pl.pf} fouls`:""}. About ${r1(m.gameLeft)} game minutes are left; Sharpline expects him to play about ${r1(m.minLeft)} of them${m.mwhy.length?` (${esc(m.mwhy.join(", "))})`:""}, adding about ${r1(m.remMean)} for a projected ${r1(m.final)}. Chance he reaches ${Math.floor(mk.l)+1}+: ${pct(m.pO)}, so Over ${mk.l} wins ${pct(m.pO)} of the time and Under ${mk.l} ${pct(1-m.pO)}${m.pm!=null?` (Sharpline's in-game model alone says ${pct(m.pOverRaw)}; blended with DraftKings' no-vig ${pct(m.pm)}, which sees rotations and matchups this model can't)`:""}.</p>`:""}
       ${lean(pre,mk)}${moveChart(id+"|"+k,pre,mk)}
       ${m&&f&&m.price!=null?`<button class="lv-track" data-lvtrack="${esc(id+"|"+k)}">+ Track ${m.side==="o"?"Over":"Under"} ${mk.l} at ${fmtAm(m.price)}</button>`:""}</div>`:""}</div>`}
+function valuePanel(m,V,line,st){const sgn=x=>(x>=0?"+":"")+(x*100).toFixed(1),S=m.sides[m.side],lbl=(m.side==="o"?"Over ":"Under ")+line;
+  return`<div class="lv-val-p ${V.k}"><div class="vt"><span class="vb ${V.k}">${V.t}</span><b>${lbl}</b>${S?` at ${fmtAm(S.price)}`:""}</div>
+    <div class="vg"><div><small>Sharpline</small><b>${pct(m.p)}</b></div><div><small>Price needs</small><b>${S?pct1(S.imp):"–"}</b></div>
+      <div><small>Edge</small><b class="${S&&S.gap>=0?"pos":"neg"}">${S?sgn(S.gap)+" pts":"–"}</b></div><div><small>EV</small><b class="${m.ev!=null&&m.ev>=0?"pos":"neg"}">${m.ev!=null?sgn(m.ev)+"%":"–"}</b></div>
+      <div><small>Proj. final</small><b>${r1(m.final)}</b></div></div></div>`}
 function boxTable(G,teamId){const ps=Object.values(G.box.players).filter(p=>p.teamId===teamId).sort((a,b)=>(b.starter-a.starter)||(b.min-a.min));
   return`<div class="pf-tw"><table class="pf-log lv-box"><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th></tr></thead><tbody>
   ${ps.map(p=>`<tr class="${p.dnp?"dnp":""}"><td><span class="pfn" ${pfAttr({n:p.name})}>${esc(p.name)}</span></td><td>${p.dnp?"DNP":Math.round(p.min)}</td><td>${p.pts??"–"}</td><td>${p.reb??"–"}</td><td>${p.ast??"–"}</td><td>${p.tpm??"–"}</td><td>${p.stl??"–"}</td><td>${p.blk??"–"}</td><td>${p.to??"–"}</td><td class="${(p.pf||0)>=5?"neg":""}">${p.pf??"–"}</td></tr>`).join("")}</tbody></table></div>`}
+/* Live game-line model. Start from the pregame closing total and spread (DraftKings), then update with the score,
+   tonight's scoring pace and the minutes left. Remaining points and margin are treated as normal:
+   full-game spread about 12 points for margin and 19 for total, shrinking with the square root of time left.
+   Like props, the result is blended 35/65 with DraftKings' no-vig price and kept within 4 points of it. */
+function gameModel(e,G){const o=G.odds,pre=G.preOdds;if(!o||!pre||pre.total.line==null||pre.spread.home==null)return null;
+  const L=SharpLive.gameMinLeft(e.period,e.clockSec),played=Math.max(0,(e.period<=4?Math.min(e.period,4)*12:48+(e.period-4)*5)-L);if(L<=0)return null;
+  const cur=e.homeScore+e.awayScore,margin=e.homeScore-e.awayScore,w=played/(played+24),rate=(1-w)*pre.total.line/48+w*(played?cur/played:pre.total.line/48);
+  const f=Math.sqrt(L/48),sdT=Math.max(19*f,2.5),sdM=Math.max(12*f,2),totMean=cur+rate*L,marMean=margin+(-pre.spread.home)*(L/48);
+  const blend=(raw,a,b)=>{if(a==null||b==null)return{p:raw,raw,pm:null};const pm=devig(a,b)[0];return{p:Math.min(pm+.04,Math.max(pm-.04,pm+.35*(raw-pm))),raw,pm}};
+  const out={totMean,marMean,L,rate,mk:[]},add=(key,lbl,line,a,b,rawA,la,lb)=>{if(a==null&&b==null)return;const B=blend(rawA,a,b);
+    out.mk.push({key,lbl,line,raw:B.raw,pm:B.pm,...withSides({pO:B.p},a,b,rawA>=.5?"o":"u"),la,lb})};
+  if(o.total.line!=null)add("total","Total",o.total.line,o.total.over,o.total.under,1-Phi((o.total.line-totMean)/sdT),"Over "+o.total.line,"Under "+o.total.line);
+  if(o.spread.home!=null){const h=o.spread.home,sg=v=>(v>0?"+":"")+v;add("spread","Spread",h,o.spread.homeOdds,o.spread.awayOdds,Phi((marMean+h)/sdM),ab2(e.homeAb)+" "+sg(h),ab2(e.awayAb)+" "+sg(-h))}
+  if(o.ml.home!=null||o.ml.away!=null)add("ml","Moneyline",null,o.ml.home,o.ml.away,Phi(marMean/sdM),ab2(e.homeAb)+" ML",ab2(e.awayAb)+" ML");
+  return out}
+function gameValueHTML(e,G){const M=gameModel(e,G),fr=G.odds&&Date.now()-G.oddsTs<FRESH;
+  if(!M)return`<div class="lv-nomove">${!G.preOdds?"Waiting for DraftKings' pregame line, which the live game-line model starts from.":"Game lines aren't posted right now."}</div>`;
+  const sgn=x=>(x>=0?"+":"")+(x*100).toFixed(1);
+  return`<div class="pf-tw"><table class="pf-log lv-gv"><thead><tr><th>Bet</th><th>Price</th><th>Sharpline</th><th>Price needs</th><th>Edge</th><th>EV</th><th></th></tr></thead><tbody>
+    ${M.mk.map(m=>["o","u"].map(s=>{const S=m.sides[s];if(!S)return"";const V=verdict({...m,ev:m.oneSide?null:S.ev},fr);
+      return`<tr class="${s===m.side&&V.k==="pos"?"best":""}"><td>${esc(s==="o"?m.la:m.lb)}</td><td>${fmtAm(S.price)}</td><td><b>${pct(S.p)}</b></td><td>${pct1(S.imp)}</td><td class="${S.gap>=0?"pos":"neg"}">${sgn(S.gap)}</td><td class="${S.ev>=0?"pos":"neg"}">${m.oneSide?"–":sgn(S.ev)+"%"}</td><td><span class="vb ${V.k}">${V.t}</span></td></tr>`}).join("")).join("")}</tbody></table></div>
+    <p class="lv-note">Projected final: ${esc(ab2(e.homeAb))} by ${r1(M.marMean)} (${r1(M.totMean)} total points), from the pregame line, tonight's pace (${r1(M.rate*48)} per 48 minutes) and ${r1(M.L)} minutes left.${G.box&&G.box.winProb!=null?` ESPN's own win model: ${esc(ab2(e.homeAb))} ${Math.round(G.box.winProb*100)}%.`:""} Only DraftKings' live prices are available free, so there is no best-price comparison across books.</p>`}
 function linesTable(e,G){const o=G.odds,gi=SNAP.findIndex(S=>nick(S.home)===nick(e.home)),pre=G.preOdds||null;
   const row=(lbl,p,op,cur,extra)=>`<tr><td>${lbl}</td><td>${p??"–"}</td><td>${op??"–"}</td><td><b>${cur??"–"}</b>${extra?`<small>${extra}</small>`:""}</td></tr>`;
   const sg=v=>v==null?null:(v>0?"+":"")+v,oc=(a,b)=>b==null?null:a!=null&&a!==b?`${a} → ${b}`:b;
@@ -159,14 +201,14 @@ function renderGame(keep){const el=document.getElementById("lg");if(!el||!LV.ope
         ${byP[P.a].sort((x,y)=>statRank(x[1].st)-statRank(y[1].st)).map(([k,mk])=>propRow(e.id,k,mk,G.pre&&G.pre[k])).join("")}</div>`).join(""):`<div class="pf-empty">Nothing matches this filter right now.</div>`}`}
   else if(LV.tab==="box")body=!G.box?`<div class="pf-card pf-load"><i></i><i></i><i></i><span>Loading box score…</span></div>`:`<div class="lv-h">${esc(e.away)}</div>${boxTable(G,e.awayId)}<div class="lv-h">${esc(e.home)}</div>${boxTable(G,e.homeId)}`;
   else{const T=G.box&&G.box.teams||[],tA=T.find(t=>t.id===e.awayId),tH=T.find(t=>t.id===e.homeId),ks=["FG","Field Goal %","3PT","Three Point %","Rebounds","Assists","Turnovers","Fast Break Points","Points in Paint","Largest Lead"];
-    body=`<div class="lv-h">Game lines</div>${linesTable(e,G)}
+    body=`<div class="lv-h">Live value</div>${gameValueHTML(e,G)}<div class="lv-h">Line history</div>${linesTable(e,G)}
       ${tA&&tH?`<div class="lv-h">Team stats</div><div class="pf-tw"><table class="pf-log lv-ts"><thead><tr><th>${esc(ab2(e.awayAb))}</th><th></th><th>${esc(ab2(e.homeAb))}</th></tr></thead><tbody>${ks.filter(k=>tA.stats[k]!=null).map(k=>`<tr><td>${esc(tA.stats[k])}</td><td>${esc(k)}</td><td>${esc(tH.stats[k])}</td></tr>`).join("")}</tbody></table></div>`:""}
       ${G.box&&G.box.plays.length?`<div class="lv-h">Recent plays</div><ul class="lv-plays">${G.box.plays.slice(0,15).map(p=>`<li class="${p.score?"sc":""}"><span>Q${p.period} ${esc(p.clock)}</span>${esc(p.text)}<b>${p.away}-${p.home}</b></li>`).join("")}</ul>`:""}`}
   const parts={bar:`<div class="pf-bar"><button class="pf-back" data-lvclose="1"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Live</button><span class="pf-tt">${e.state==="in"?`<span class="lv-live">Live</span>`:esc(statusTxt(e))}</span></div>`,
     sb:`<header class="lv-sb" style="--ca:${ca};--ch:${ch}"><div class="lv-sbt">${teamTag(e.awayAb,e.away)}<b class="sc">${e.awayScore}</b><span>${esc(e.away)}</span></div>
       <div class="lv-sbc"><b>${esc(statusTxt(e))}</b>${wp!=null?`<div class="lv-wp" title="ESPN win probability"><i style="width:${Math.round((1-wp)*100)}%"></i></div><small>${esc(ab2(e.awayAb))} ${Math.round((1-wp)*100)}% · ${esc(ab2(e.homeAb))} ${Math.round(wp*100)}% (ESPN)</small>`:""}</div>
       <div class="lv-sbt r">${teamTag(e.homeAb,e.home)}<b class="sc">${e.homeScore}</b><span>${esc(e.home)}</span></div></header>`,
-    feed:`${feedBar()}<div class="lv-upd c">Live odds ${upd(G.oddsTs)} · props ${upd(G.propsTs)} · box ${upd(G.boxTs)}</div>`,
+    feed:`${feedBar()}${staleNote(G)}`,
     tabs:`<div class="seg wide lv-tabs">${tabs.map(([v,l])=>`<button class="${LV.tab===v?"on":""}" data-lvt="${v}">${l}</button>`).join("")}</div>`,
     body,
     foot:`<p class="pf-foot">Live markets are DraftKings in-game lines via ESPN. "Projected final" is Sharpline's model: current stats plus his usual per-minute production over the minutes he's expected to play from here. Movement is only what this phone recorded while open.</p>`};
