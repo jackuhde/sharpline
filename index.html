@@ -485,6 +485,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .scanbtn svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
 .when{font-size:10px!important}
 .sheet{position:fixed;inset:0;z-index:60;display:none}
+.addbtn.mine-btn{border-color:rgba(232,184,75,.45);color:var(--acc2)}
 .sheet.on{display:block}
 .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 .sheet-in{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(620px,100%);max-height:92vh;overflow:auto;background:var(--s1);border:1px solid var(--line2);border-bottom:0;border-radius:24px 24px 0 0;padding:18px 16px 30px;animation:up .3s cubic-bezier(.2,.9,.3,1)}
@@ -781,6 +782,11 @@ html,body{overscroll-behavior-y:none}
   <div id="scanSteps" class="steps" style="display:none"></div><div class="scanstat" id="scanStat"></div>
   <div id="scanRes"></div>
 </div></div>
+<div class="sheet" id="oddsSheet"><div class="sheet-bg" data-oddsclose="1"></div><div class="sheet-in">
+  <div class="sheet-h"><div><div class="eyebrow">Your book's price</div><h2 id="oddsTitle">Enter odds</h2></div><button class="x" data-oddsclose="1">×</button></div>
+  <p class="sheet-p" id="oddsNote"></p><div id="oddsBody"></div>
+  <div class="addall" style="justify-content:flex-end;margin-top:12px"><button class="addbtn" data-oddsclear="1">Clear my odds</button><button class="addbtn in" data-oddsclose="1">Done</button></div>
+</div></div>
 <div class="sheet" id="setSheet"><div class="sheet-bg" data-setclose="1"></div><div class="sheet-in">
   <div class="sheet-h"><div><div class="eyebrow">Sharpline</div><h2>Settings</h2></div><button class="x" data-setclose="1">×</button></div>
   <div id="acctBox"></div>
@@ -1006,7 +1012,7 @@ function explain(key,best,gap,real){const k=key[0],i=+key.slice(1),bits=[];
   if(ctx&&!/^Line only/.test(ctx))bits.push(ctx);
   return bits.join(" ")||"Enter the line and odds to see the difference."}
 const recCls={},recBest={};
-function updRec(key){const el=document.getElementById("rec-"+key);if(!el)return;el.innerHTML=recHTML(key);el.className="rec t-"+(recCls[key]||"na");
+function updRec(key){{const sr=document.getElementById("srec-"+key);if(sr){sr.innerHTML=recHTML(key);sr.className="rec t-"+(recCls[key]||"na")}}const el=document.getElementById("rec-"+key);if(!el)return;el.innerHTML=recHTML(key);el.className="rec t-"+(recCls[key]||"na");
   const row=el.closest(".row,.mrow");if(row){const gt=row.querySelector(".est .grade,.mk .grade");const g=(recBest[key]&&recBest[key].grade)||baseGrade(key);if(gt){gt.className="grade g-"+g;gt.textContent=g}}
   const b=recBest[key],box=document.querySelector(`[data-edbox="${key}"]`),sv=document.getElementById("sv-"+key);
   const real=b&&!b.assumed;box.classList.toggle("hit",!!(real&&b.ev>=.02));box.classList.toggle("thin",!!(real&&b.ev>=-.01&&b.ev<.02));box.classList.toggle("bad",!!(real&&b.ev<-.01));
@@ -1062,7 +1068,7 @@ function topItems(){
     const cond=!lv&&/^only if/i.test(x.cond||"");const price=bp==null?-110:bp;items.push({src:"built",n,key:"t"+n,base,ev:evOf(topP(x),price),p:topP(x),price,conf:builtConf(x,price),assumed:bp==null||cond,head:x.head,cond:lv?`DraftKings ${fmtAm(bp)} now · fair ${fmtAm(toAm(topP(x)))}`:x.cond,why:x.why})});
   /* the strongest live-priced props (A or S at DraftKings' current price: 4%+ EV and High confidence), best one per player */
   const have=new Set(items.map(x=>x.base)),bestBy={};
-  PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||have.has(k)||SAVED[k]||OUT.has(normN(x.p)))return;const ev=evOf(g.p,g.bp);if(ev<.04)return;
+  PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||have.has(k)||SAVED[k]||hasMine(k)||OUT.has(normN(x.p)))return;const ev=evOf(g.p,g.bp);if(ev<.04)return;
     const lbl=YN[x.st]?(g.s==="o"?"Over 0.5":"Under 0.5"):(g.s==="o"?"Over ":"Under ")+g.l,conf=baseConf(k,lbl,g.p,g.bp,g.l);if(!conf||conf.lv!=="High")return;
     const it={src:"live",key:k,base:k,ev,p:g.p,price:g.bp,conf,head:`${x.p} ${YN[x.st]?(g.s==="o"?"Yes":"No")+" "+STAT_LBL[x.st].toLowerCase():propPick(i)}`,cond:`DraftKings ${fmtAm(g.bp)} now · fair ${fmtAm(toAm(g.p))}`,why:g.why};
     const n=normN(x.p);if(!bestBy[n]||bestBy[n].ev<ev)bestBy[n]=it});
@@ -1079,6 +1085,8 @@ function leanItems(skip,n){const by={};
   PROPS.forEach((x,i)=>{const g=SUG[i],k="p"+i;if(!x.lp||g.bp==null||skip.has(k)||SAVED[k]||OUT.has(normN(x.p))||YN[x.st])return;
     const f=freshOf(k);if(f.lv==="started"||f.lv==="stale")return;if(x.live&&x.live.lv==="out")return;
     if(!g.model)return; /* only the backtested model ranks here */
+    if(hasMine(k)){recHTML(k);const b=recBest[k];if(!b||b.assumed)return;const nm=normN(x.p);
+      if(!by[nm]||by[nm].ev<b.ev)by[nm]={key:k,base:k,ev:b.ev,p:b.p,price:b.o,mine:1,lbl:b.lbl,fresh:f,head:`${x.p} ${b.lbl} ${STAT[x.st]||x.st}`,need:toAm(b.p/1.02),why:g.why};return}
     const ev=evOf(g.p,g.bp),nm=normN(x.p);if(g.p<.5)return;
     if(!by[nm]||by[nm].ev<ev)by[nm]={key:k,base:k,ev,p:g.p,price:g.bp,fresh:f,head:`${x.p} ${propPick(i)}`,need:toAm(g.p/1.02),why:g.why}});
   return Object.values(by).sort((a,b)=>b.ev-a.ev||b.p-a.p).slice(0,n)}
@@ -1408,6 +1416,8 @@ let BETS=LS.get("sl_bets",[]),UNIT=LS.get("sl_unit",10);const SCANNED=new Set(),
 const saveBets=()=>LS.set("sl_bets",BETS);
 const baseOf=key=>key[0]==="t"?(TOP[+key.slice(1)].k+TOP[+key.slice(1)].i):key[0]==="f"?key.slice(1):key;
 const tracked=key=>{const b=baseOf(key);return BETS.some(x=>x.key===b&&x.date===DATA_DATE)};
+const hasMine=k=>{const E=EDV[k];return!!(E&&E.a&&E.b)};
+function oddsBtn(base){return`<button class="addbtn mine-btn${hasMine(base)?" in":""}" data-myodds="${base}">${hasMine(base)?"✎ Edit "+poss(BOOK)+" odds":"✎ Enter "+poss(BOOK)+" odds"}</button>`}
 function addBtn(key){const on=tracked(key),pl=window.TR2&&TR2.inSlip(key);return`<button class="addbtn ${on?"in":""}" data-track="${key}">${on?"✓ Tracked":"+ Track"}</button><button class="addbtn leg ${pl?"in":""}" data-pleg="${key}">${pl?"✓ In parlay":"+ Parlay"}</button>`}
 function trackBet(key){const base=baseOf(key);if(tracked(key)){go("track");return}
   const R=betRec(key);if(!R)return;BETS.unshift(R);saveBets();renderAll();toast(R.odds==null?"Tracked. Add the odds you got in the Tracker":"Tracked")}
@@ -1520,7 +1530,7 @@ function renderTop(){
         <div class="st"><div class="k">Line gap</div><div class="v">${x.gap&&x.gap.d>0?"+"+x.gap.d+" pt":"–"}</div></div>
         <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
       <div class="why"><b style="color:var(--ink)">Why take it:</b> ${x.why}${x.assumed?" Difference shown assumes -110.":""}</div>
-      <div class="act">${addBtn(x.key)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("");
+      <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}).join("");
   {const L=items.length<5?leanItems(new Set(items.map(x=>x.base)),8-items.length):[];
    if(!items.length&&!L.length)document.getElementById("topList").innerHTML=`<div class="empty"><b>No priced edges right now</b>Scan screenshots or enter a book's line and odds. Anything that grades green lands here automatically.</div>`;
    if(L.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:${items.length?22:4}px 4px 8px">${items.length?"More to consider":"Best available tonight"}</div>
@@ -1528,12 +1538,12 @@ function renderTop(){
     ${L.map((x,n)=>{const N=nameOf(x.base),G=SNAP[N.g];return`<div class="top lean" data-key="${x.key}"><div class="rank">${items.length+n+1}</div>${freshTag(x.fresh)}
       <div class="kind">${gradeTag(gradeNow(x.base),"md")} <span class="lean-tag">${x.ev>=.02?"Lower confidence":"Lean"}</span> Prop · ${N.stat}</div>
       <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${x.head}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${mu(G)} · ${tipT(G)}</div></div></div>
-      <div style="margin-top:10px"><span class="pick n">${x.ev>=.02?`DraftKings ${fmtAm(x.price)} now · fair ${fmtAm(toAm(x.p))}`:`DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better`}</span></div>
+      <div style="margin-top:10px"><span class="pick n">${x.mine?`${poss(BOOK)} ${x.lbl} at ${fmtAm(x.price)} (your odds) · fair ${fmtAm(toAm(x.p))}`:x.ev>=.02?`DraftKings ${fmtAm(x.price)} now · fair ${fmtAm(toAm(x.p))}`:`DraftKings ${fmtAm(x.price)} now · worth it at ${fmtAm(x.need)} or better`}</span></div>
       <div class="stats"><div class="st"><div class="k">Model chance</div><div class="v">${Math.round(x.p*100)}%</div></div>
-        <div class="st"><div class="k">At DraftKings</div><div class="v" style="color:${x.ev>=0?"var(--over)":"var(--under)"}">${x.ev>=0?"+":""}${(x.ev*100).toFixed(1)}%</div></div>
+        <div class="st"><div class="k">${x.mine?"At "+BOOK:"At DraftKings"}</div><div class="v" style="color:${x.ev>=0?"var(--over)":"var(--under)"}">${x.ev>=0?"+":""}${(x.ev*100).toFixed(1)}%</div></div>
         <div class="st"><div class="k">Fair price</div><div class="v">${fmtAm(toAm(x.p))}</div></div></div>
       <div class="why"><b style="color:var(--ink)">Why:</b> ${x.why}</div>
-      <div class="act">${addBtn(x.key)}</div></div>`}).join("")}`)}
+      <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}</div></div>`}).join("")}`)}
   if(topItems.verify&&topItems.verify.length)document.getElementById("topList").insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>{const N=nameOf(x.base);
     return`<div class="vrow"><div><b>${x.head}</b><div class="sub">${x.base[0]==="p"&&PROPS[+x.base.slice(1)].live?PROPS[+x.base.slice(1)].live.txt:`Showed ${(x.ev*100).toFixed(1)}% when lines were checked at ${clock(boardTs())}. Prices may have moved since.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`}).join("")}</div>`);
   if(topItems.hidden)document.getElementById("topList").insertAdjacentHTML("afterbegin",`<div class="hint" style="margin:0 4px 12px">${topItems.hidden} positive-edge bet${topItems.hidden===1?" is":"s are"} hidden by your settings (edge ${(SET.minEdge*100).toFixed(0)}%+${SET.minConf!=="Any"?", "+SET.minConf+" confidence+":""}). Their grades don't change. <button class="lnk" data-settings="1">Settings</button></div>`);
@@ -1633,6 +1643,15 @@ function renderLines(){
 
 
 
+/* ---------- your book's odds from any Top List card ----------
+   Same editor as the Props tab. Your line and odds replace DraftKings' price for that bet: the grade, the edge and its
+   place on the Top List follow your number, so a worse price at your book drops it and a better one can raise it. */
+let ODDS_KEY=null;
+function openOdds(key){ODDS_KEY=key;const N=nameOf(key);document.getElementById("oddsTitle").textContent=N.name+(key[0]==="l"?"":" · "+(STAT_LBL[N.stat]||N.stat));
+  document.getElementById("oddsNote").textContent=`Type ${poss(BOOK)} line and both prices. The grade and the Top List update as you type; if ${BOOK}'s price isn't worth it, the bet drops off the main list.`;
+  document.getElementById("oddsBody").innerHTML=edHTML(key).replace(`id="rec-${key}"`,`id="srec-${key}"`).replace(`data-edbox="${key}"`,`data-sedbox="${key}"`);
+  document.getElementById("oddsSheet").classList.add("on")}
+function closeOdds(){document.getElementById("oddsSheet").classList.remove("on");if(ODDS_KEY){syncFind(ODDS_KEY);ODDS_KEY=null}renderAll()}
 /* ---------- events ---------- */
 
 function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
@@ -1640,6 +1659,9 @@ function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.t
   if(v==="live"&&window.LiveUI){LiveUI.start();LiveUI.render();LiveUI.poll(true)}}
 document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.closest("[data-grade]"))return;if(e.target.closest(".ed input")||e.target.closest(".addp input,.addp select")||e.target.closest(".det input"))return;
   const sb=e.target.closest("[data-sgn]");if(sb){const[k,f]=sb.dataset.sgn.split("|"),cur=sgnOf(k,f),nx=cur==="-"?"+":"-";(EDV[k]=EDV[k]||{})["s"+f]=nx;LS.set("sl_edv",EDV);sb.textContent=nx==="-"?"−":"+";sb.className="sgn "+(nx==="-"?"m":"p");updRec(k);syncLater(k);return}const jp=e.target.closest("[data-jump]");if(jp){jumpTo(jp.dataset.jump);return}
+  if(e.target.closest("[data-oddsclose]")&&!e.target.closest("#oddsBody")){closeOdds();return}
+  if(e.target.closest("[data-oddsclear]")){if(ODDS_KEY){const k=ODDS_KEY;["L","a","b"].forEach(f=>{if(EDV[k])delete EDV[k][f]});LS.set("sl_edv",EDV);openOdds(k);syncFind(k);renderTop();toast("Cleared. Back to DraftKings' price")}return}
+  {const mo=e.target.closest("[data-myodds]");if(mo){openOdds(mo.dataset.myodds);return}}
   if(e.target.closest("[data-setclose]")){document.getElementById("setSheet").classList.remove("on");return}
   if(e.target.closest("[data-scanclose]")&&!e.target.closest("button")){document.getElementById("scanSheet").classList.remove("on");return}
   const dt=e.target.closest(".dt[data-v]");if(dt){go(dt.dataset.v);return}
