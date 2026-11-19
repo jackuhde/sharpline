@@ -275,6 +275,10 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .top .face svg,.top .face .logo{width:40px;height:40px;flex:none}
 .top .pick{white-space:normal;line-height:1.3}
 .stats.s2{margin-top:8px}.tscan{margin:0 4px 12px;font-size:12px}
+.cov{margin:0 0 14px;padding:12px 14px}.cov summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:4px}.cov summary::-webkit-details-marker{display:none}.cov summary b{font:800 13px Archivo}
+.funnel{margin-top:12px;display:grid;gap:4px}.fn{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:6px 0;border-bottom:1px solid var(--line)}.fn span{font:700 13px Archivo;color:var(--mute)}.fn b{font:900 15px Archivo;text-align:right}.fn small{grid-column:1/-1;color:var(--dim);font:600 11.5px/1.4 Archivo}
+.cv-h{font:800 10px Archivo;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute);margin:16px 0 6px}.cv-why div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font:700 12.5px Archivo}.cv-why b{font-weight:900}
+.cv-r{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(5,minmax(0,1fr));gap:6px;padding:5px 0;border-bottom:1px solid var(--line);font:700 12.5px Archivo;text-align:right}.cv-r span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cv-hd{color:var(--dim);font-size:10px;letter-spacing:.8px;text-transform:uppercase}
 .tdet{grid-column:2;margin-top:10px;font:600 13px/1.5 Archivo;color:var(--mute)}.tdet summary{cursor:pointer;color:var(--acc2);font-weight:800}.tdet p{margin:8px 0}.tdet ul{margin:0;padding-left:18px}.tdet li{margin:4px 0}.tdet b{color:var(--ink)}
 .stats{grid-column:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .st{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
@@ -1091,6 +1095,40 @@ function propCand(i){const x=PROPS[i],g=SUG[i],k="p"+i;if(!x||!g||!g.model||YN[x
     ev:evOf(pA,price),evRaw:line===g.l?evOf(pRawS,price):null,p:pA,pRaw:pRawS,pm:pmS,imp:imp(price),kk,proj:g.proj,conf,fresh,parts:MD.parts,hits:MD.hits,n10:MD.n,
     inj:x.live&&x.live.lv!=="out"?x.live.txt:null,mates:x.mates,lOpen:q.lOpen??null,oOpen:q.oOpen??null,uOpen:q.uOpen??null,
     head:`${x.p} ${lbl} ${STAT[x.st]||x.st}`,why:g.why}}
+/* ================= slate coverage report =================
+   Counts every DraftKings player-prop market ESPN returned, then follows each one through the pipeline and records the
+   first reason it stopped. Nothing is dropped silently: every market ends in exactly one bucket. Read by the
+   "How tonight's slate was evaluated" panel on the Top List and by tests. */
+const REASONS={unmatched:"Player not matched to a roster",started:"Game started or final",yesno:"Yes/No market (not modeled pregame)",unsupported:"Stat not modeled",
+  oneSided:"Only one side priced",noLog:"Fewer than 3 games or game log not loaded",out:"Player ruled out",inj:"Injury question (questionable or doubtful)",
+  stale:"Price out of date",neg:"No edge at the posted price",thin:"Edge below your minimum after the accuracy adjustment",conf:"Hidden by your confidence filter",
+  dup:"Duplicate of a market already counted",line2:"Second line posted for the same player and stat (only the main line is priced)",capP:"Qualified, held back: one per player",capG:"Qualified, held back: per-game limit",capN:"Qualified, beyond the top 10",shown:"On the Top List"};
+function slateReport(shown){const R={games:[],raw:0,alts:0,markets:[],byReason:{},by:{game:{},stat:{},side:{},book:{}},ev:{raw0:0,adj0:0,adj2:0,adj4:0}};
+  const shownSet=new Set((shown||[]).map(c=>c.base)),qual=new Set((topItems.qual||[]).map(c=>c.base));
+  SNAP.forEach((G,gi)=>{const e=LIVE.ev[gi],rows=LIVE.props[gi];R.games.push({gi,label:mu(G),state:e?e.state:"?",loaded:!!rows,markets:rows?rows.length:0,alts:rows&&rows.alts?rows.alts.length:0,total:rows&&rows.count||0});
+    if(rows){R.raw+=rows.length;R.alts+=rows.alts?rows.alts.length:0}});
+  const seen=new Set();
+  SNAP.forEach((G,gi)=>{(LIVE.props[gi]||[]).forEach(r=>{const who=LIVE.ids[r.ath],st=r.st,m={gi,st,line:r.l,ath:r.ath,name:who?who.name:"id "+r.ath,side:null,ev:null};
+    const key=gi+"|"+r.ath+"|"+st+"|"+r.l;let why=null;
+    if(seen.has(key))why="dup";seen.add(key);
+    const i=!why&&who?PROPS.findIndex(x=>x.g===gi&&x.st===st&&normN(x.p)===normN(who.name)):-1,x=PROPS[i],g=SUG[i];
+    if(!why&&!who)why="unmatched";
+    if(!why&&started(gi))why="started";
+    if(!why&&r.yn)why="yesno";
+    if(!why&&!STAT_COMP[st])why="unsupported";
+    if(!why&&(r.o==null||r.u==null))why="oneSided";
+    if(!why&&(i<0||!g||!g.model||g.l!==r.l)){const P=projOf(m.name);why=!P||!P.g10||P.g10.length<3||!P.min?"noLog":g&&g.l!==r.l?"line2":"noLog"}
+    if(!why&&OUT.has(normN(m.name)))why="out";
+    const c=!why?propCand(i):null;
+    if(!why&&!c)why="noLog";
+    if(c){m.side=c.side;m.ev=c.ev;m.evRaw=c.evRaw;m.p=c.p;m.price=c.price;m.base=c.base;m.conf=c.conf&&c.conf.lv;
+      if(c.evRaw!=null&&c.evRaw>0)R.ev.raw0++;if(c.ev>0)R.ev.adj0++;if(c.ev>=.02)R.ev.adj2++;if(c.ev>=.04)R.ev.adj4++;
+      if(c.inj)why="inj";else if(c.fresh.lv==="stale")why="stale";else if(c.ev<=0)why="neg";else if(c.ev<SET.minEdge)why="thin";else if(!passConf(c.conf))why="conf";
+      else if(shownSet.has(c.base))why="shown";else{const why2=(topItems.held||{})[c.base];why=why2||"capN"}}
+    m.why=why;R.markets.push(m);R.byReason[why]=(R.byReason[why]||0)+1;
+    const bump=(k,v)=>{const b=R.by[k][v]=R.by[k][v]||{total:0,priced:0,pos:0,qual:0,shown:0};b.total++;if(c)b.priced++;if(c&&c.ev>0)b.pos++;if(c&&["shown","capP","capG","capN"].includes(why))b.qual++;if(why==="shown")b.shown++};
+    bump("game",mu(G));bump("stat",st);if(m.side)bump("side",m.side==="o"?"Over":"Under");bump("book","DraftKings")})});
+  return R}
 function topItems(){
   const pool=[];PROPS.forEach((x,i)=>{const c=propCand(i);if(c)pool.push(c)});
   const have=new Set(pool.map(c=>c.base));
@@ -1109,8 +1147,9 @@ function topItems(){
   topItems.hidden=ok.filter(c=>c.ev>=SET.minEdge&&!passConf(c.conf)).length;
   const MAX=10,cap=SET.perPlayer==="1x"?1:+SET.perPlayer||1,gcap=+SET.perGame||99,out=[],nP={},nG={},taken=new Set();
   const add=c=>{out.push(c);taken.add(c.base);nP[c.ath]=(nP[c.ath]||0)+1;nG[c.gi]=(nG[c.gi]||0)+1};
-  for(const c of Q){if(out.length>=MAX)break;if((nP[c.ath]||0)>=cap||(nG[c.gi]||0)>=gcap)continue;add(c)}
-  for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap)continue;add(c)}
+  topItems.qual=Q;topItems.held={};
+  for(const c of Q){if(out.length>=MAX)break;if((nP[c.ath]||0)>=cap){topItems.held[c.base]="capP";continue}if((nG[c.gi]||0)>=gcap){topItems.held[c.base]="capG";continue}add(c)}
+  for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap)continue;delete topItems.held[c.base];add(c)}
   if(SET.perPlayer==="1")for(const c of Q){if(out.length>=MAX)break;if(taken.has(c.base))continue;
     if(c.ev>=Math.max(.05,2*SET.minEdge)&&c.conf&&c.conf.lv==="High"){const first=out.find(o=>o.ath===c.ath);c.corr=first?first.head:null;add(c)}}
   /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
@@ -1574,12 +1613,40 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
     <div class="stats s2">${cell("Projection",x.proj!=null?x.proj:"–")}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
     ${det}
     <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"&&SAVED[x.base]?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}
+function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]||0,M=R.markets.length;
+  const matched=M-n("unmatched")-n("dup"),pre=matched-n("started"),modelable=pre-n("yesno")-n("unsupported")-n("oneSided")-n("line2"),priced=modelable-n("noLog"),
+    avail=priced-n("out")-n("inj")-n("stale"),qual=n("shown")+n("capP")+n("capG")+n("capN");
+  const loaded=R.games.filter(g=>g.loaded).length,step=(lbl,v,note)=>`<div class="fn"><span>${lbl}</span><b>${v}</b>${note?`<small>${note}</small>`:""}</div>`;
+  const tbl=(title,obj)=>`<div class="cv-t"><div class="cv-h">${title}</div><div class="cv-r cv-hd"><span></span><span>Markets</span><span>Priced</span><span>+EV</span><span>Qualified</span><span>Shown</span></div>${Object.entries(obj).sort((a,b)=>b[1].total-a[1].total).map(([k,b])=>`<div class="cv-r"><span>${esc2(STAT_LBL[k]||k)}</span><span>${b.total}</span><span>${b.priced}</span><span>${b.pos}</span><span>${b.qual}</span><span>${b.shown}</span></div>`).join("")}</div>`;
+  const order=["shown","capP","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
+  return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b></summary>
+    <div class="funnel">
+      ${step("Games on the slate",SNAP.length,`${loaded} with DraftKings props loaded`)}
+      ${step("DraftKings player-prop markets",M,`one per player, stat and line, both sides counted once. Plus ${R.alts} one-sided milestone lines (like 25+ points), which are shown in profiles but can't be priced without the other side`)}
+      ${step("Matched to a roster player",matched)}
+      ${step("Game not started",pre)}
+      ${step("Two-sided over/under in a modeled stat",modelable)}
+      ${step("Priced by the model",priced,"needs 3+ games in the player's ESPN game log")}
+      ${step("Current price, no injury question",avail)}
+      ${step("Positive EV before the accuracy adjustment",R.ev.raw0)}
+      ${step("Positive EV after it",R.ev.adj0)}
+      ${step(`At least ${(SET.minEdge*100).toFixed(0)}% EV (your minimum)`,R.ev.adj2>=0?n("shown")+n("capP")+n("capG")+n("capN")+n("conf"):"–")}
+      ${step("Qualified",qual)}
+      ${step("Shown",shownN,n("capP")?`${n("capP")} more qualified from players already listed`:"")}
+    </div>
+    <div class="cv-h">Where each market stopped</div>
+    <div class="cv-why">${order.filter(k=>n(k)).map(k=>`<div><span>${REASONS[k]}</span><b>${n(k)}</b></div>`).join("")}</div>
+    ${tbl("By game",R.by.game)}${tbl("By stat",R.by.stat)}${tbl("By side (the side the model prefers)",R.by.side)}${tbl("By sportsbook",R.by.book)}
+    <p class="hint" style="margin-top:10px">Only DraftKings' prices are in ESPN's free feed, so there's no cross-book comparison here. Enter or scan ${poss(BOOK)} odds and that price is used for the bet instead.</p>
+    ${R.games.some(g=>g.loaded&&g.markets===0)||loaded<R.games.filter(g=>g.state==="pre").length?`<p class="warn">Some games have no DraftKings props loaded yet, so this slate is incomplete. That's a data gap, not a lack of value.</p>`:""}
+  </details>`}
 function renderTop(){
   const prevPos={};document.querySelectorAll("#topList .top[data-key]").forEach(el=>prevPos[el.dataset.key]=el.getBoundingClientRect().top);
   const items=topItems(),WL=topItems.watch||[],S=topItems.scan||{},box=document.getElementById("topList");
   const scanTxt=S.props?`Scanned ${S.props} DraftKings props from ${S.players} players in ${S.games} game${S.games===1?"":"s"}. ${S.priced} priced by the model${S.noLog?`; ${S.noLog} not, because the player has fewer than 3 games or his game log hasn't loaded yet`:""}${S.started?`; ${S.started} in games that have started`:""}.`:"";
   const head=`<div class="hint tscan">${scanTxt} ${items.length?`${topItems.qualified} bet${topItems.qualified===1?"":"s"} cleared ${(SET.minEdge*100).toFixed(0)}% expected value after the accuracy adjustment; showing the best ${items.length}, ${SET.perPlayer==="1x"?"one per player":SET.perPlayer==="1"?"one per player unless a second is exceptional":"up to "+SET.perPlayer+" per player"}.`:""}</div>`;
-  box.innerHTML=head+items.map((x,n)=>topCard(x,n+1,false)).join("");
+  let REP=null;try{REP=slateReport(items);topItems.report=REP}catch(e){console.warn("report",e)}
+  box.innerHTML=head+coverageHTML(REP,items.length)+items.map((x,n)=>topCard(x,n+1,false)).join("");
   if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets.${WL.length?" Closest to qualifying, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
   if(!items.length&&!WL.length&&!S.props)box.innerHTML=`<div class="empty"><b>No priced props yet</b>DraftKings posts player props through the day. Scan screenshots or enter a book's odds meanwhile.</div>`;
   if(topItems.verify&&topItems.verify.length)box.insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>
