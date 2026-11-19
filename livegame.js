@@ -257,7 +257,7 @@ window.liveForPlayer=function(name){const n=SharpLive.norm(name);const id=Object
    within 4 points). At any other line there is no matching price, so it is the model alone and is labeled that way.
    These live chances are not yet graded for calibration. */
 function evOfBet(home,away){return LV.sb.find(e=>nick(e.home)===nick(home)&&nick(e.away)===nick(away))||null}
-function betChance(spec,home,away){if(!spec||!home)return null;const e=evOfBet(home,away);if(!e)return null;
+function betChance(spec,home,away){if(spec&&spec.sport==="nfl")return window.NFL?NFL.betChance(spec):null;if(!spec||!home)return null;const e=evOfBet(home,away);if(!e)return null;
   if(e.state==="pre")return{st:"pre"};if(e.state!=="in")return{st:"post"};const G=gameOf(e.id),fr=G.odds&&Date.now()-G.oddsTs<FRESH;
   const clock=statusTxt(e),score=`${ab2(e.awayAb)} ${e.awayScore}, ${ab2(e.homeAb)} ${e.homeScore}`;
   if(spec.kind==="prop"){const n=SharpLive.norm(spec.player||""),ath=Object.keys(LIVE.ids).find(k=>SharpLive.norm(LIVE.ids[k].name)===n);

@@ -47,7 +47,7 @@ document.addEventListener("change",e=>{if(e.target.closest("[data-slipodds]"))sl
 
 /* ---------- parlay grading: each leg graded like a straight bet, then combined ---------- */
 async function gradeParlays(){const P=BETS.filter(b=>b.type==="parlay"&&!b.res&&!b.noAuto);if(!P.length)return 0;let n=0;
-  for(const b of P){for(const l of b.legs.filter(x=>!x.res&&x.spec)){let list;try{list=await sbFor(l.date)}catch(e){continue}
+  for(const b of P){for(const l of b.legs.filter(x=>!x.res&&x.spec&&x.spec.sport!=="nfl")){let list;try{list=await sbFor(l.date)}catch(e){continue}
       const ev=list.find(e=>(l.ev&&e.id===l.ev)||(nick(e.home)===nick(l.home)&&nick(e.away)===nick(l.away)));if(!ev)continue;
       let bx=null;if(l.spec.kind==="prop"&&ev.completed){try{bx=BOX_CACHE[ev.id]||(BOX_CACHE[ev.id]=await SharpLive.box(ev.id))}catch(e){continue}}
       const r=SharpLive.grade(l.spec,{...ev,home:l.home,away:l.away},bx);if(r){l.res=r.res;l.gnote=r.detail}}
@@ -63,14 +63,16 @@ function settleParlay(b){const L=b.legs;if(L.some(l=>l.res==="L"))return{res:"L"
   return{res:"W",odds,gnote:`${L.length-live.length} leg${L.length-live.length===1?"":"s"} pushed or void; paid as a ${live.length}-leg parlay${ok?" at "+sgnAm(odds):""}${b.sgp?" (your book may reprice a same-game parlay differently)":""}`}}
 
 /* ---------- tracker filters ---------- */
-const F=Object.assign({type:"all",res:"all",when:"all"},LSg("sl_tfilt",{}));
-function filter(list){const now=Date.now(),days={d7:7,d30:30}[F.when];return list.filter(b=>{const isP=b.type==="parlay",isLine=!isP&&b.key&&b.key[0]==="l";
+const F=Object.assign({type:"all",res:"all",when:"all",sport:"all"},LSg("sl_tfilt",{}));
+const sportOf=b=>b.type==="parlay"?([...new Set((b.legs||[]).map(l=>l.spec&&l.spec.sport==="nfl"?"nfl":"nba"))].length>1?"mixed":(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl")?"nfl":"nba"):(b.sport||"nba");
+const isLineBet=b=>b.type!=="parlay"&&((b.key&&b.key[0]==="l")||(b.spec&&["ml","sp","tot"].includes(b.spec.kind)));
+function filter(list){const now=Date.now(),days={d7:7,d30:30}[F.when];return list.filter(b=>{const isP=b.type==="parlay",isLine=isLineBet(b);if(F.sport!=="all"&&sportOf(b)!==F.sport)return false;
   if(F.type==="straight"&&isP)return false;if(F.type==="parlay"&&!isP)return false;if(F.type==="props"&&(isP||isLine))return false;if(F.type==="lines"&&!isLine)return false;
   if(F.res==="W"&&b.res!=="W")return false;if(F.res==="L"&&b.res!=="L")return false;if(F.res==="open"&&b.res)return false;
   if(days&&now-new Date(b.date+"T12:00:00").getTime()>days*864e5)return false;return true})}
 function filterBar(){const c=(k,v,l)=>`<button class="chip ${F[k]===v?"on":""}" data-tf="${k}|${v}">${l}</button>`;
   return`<div class="tfilt"><div class="chiprow">${c("type","all","All bets")}${c("type","straight","Straight")}${c("type","parlay","Parlays")}${c("type","props","Player props")}${c("type","lines","Game lines")}</div>
-    <div class="chiprow">${c("res","all","Any result")}${c("res","open","Pending")}${c("res","W","Won")}${c("res","L","Lost")}<span class="tf-sp"></span>${c("when","d7","7 days")}${c("when","d30","30 days")}${c("when","all","All time")}<span class="tf-sport">NBA</span></div></div>`}
+    <div class="chiprow">${c("res","all","Any result")}${c("res","open","Pending")}${c("res","W","Won")}${c("res","L","Lost")}<span class="tf-sp"></span>${c("when","d7","7 days")}${c("when","d30","30 days")}${c("when","all","All time")}</div><div class="chiprow">${c("sport","all","All sports (overall)")}${c("sport","nba","NBA")}${c("sport","nfl","NFL")}</div></div>`}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-tf]");if(!t)return;const[k,v]=t.dataset.tf.split("|");F[k]=v;LSs("sl_tfilt",F);renderTrack()});
 
 function legsHTML(b){if(b.type!=="parlay")return"";const icon=r=>r==="W"?'<i class="lg w">✓</i>':r==="L"?'<i class="lg l">✕</i>':r==="P"||r==="V"?'<i class="lg p">–</i>':'<i class="lg o">•</i>';
@@ -86,7 +88,9 @@ function perfHTML(list){const all=perf(list),st=perf(list.filter(b=>b.type!=="pa
   const legs=pa.flatMap(b=>b.legs).filter(l=>l.res==="W"||l.res==="L"),lw=legs.filter(l=>l.res==="W").length;
   return`<div class="eyebrow tk-h">Your bets</div><div class="tsum"><div class="hint" style="margin:0 0 8px">Settled at the odds you got. Pushes and voids are not wins or losses. Units use your default stake of ${money(UNIT)}.</div>
     <div class="stats"><div class="st"><div class="k">Profit</div><div class="v" style="color:${all.net>0?"var(--over)":all.net<0?"var(--under)":""}">${all.n?money(all.net):"–"}</div></div><div class="st"><div class="k">Units</div><div class="v">${all.n?(all.net/UNIT>=0?"+":"")+(all.net/UNIT).toFixed(2):"–"}</div></div><div class="st"><div class="k">ROI</div><div class="v">${all.roi==null?"–":(all.roi>=0?"+":"")+(all.roi*100).toFixed(1)+"%"}</div></div></div>
-    <div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span></span><span>W-L-P</span><span>Win %</span><span>Profit</span><span>ROI</span></div>${row("All bets",all)}${row("Straight",st)}${row("Parlays",pp)}</div>
+    <div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span></span><span>W-L-P</span><span>Win %</span><span>Profit</span><span>ROI</span></div>${row(F.sport==="all"?"All bets (overall, every sport)":"All "+F.sport.toUpperCase()+" bets",all)}${row("Straight",st)}${row("Parlays",pp)}${F.sport==="all"?["nba","nfl","mixed"].map(sp=>{const l=list.filter(b=>sportOf(b)===sp);return l.length?row(sp==="mixed"?"Parlays mixing sports":sp.toUpperCase(),perf(l)):""}).join(""):""}</div>
+    ${(()=>{const nf=list.filter(b=>b.type!=="parlay"&&b.spec&&b.spec.sport==="nfl"&&b.spec.kind==="prop");if(!nf.length)return"";const g={};nf.forEach(b=>{const k=(b.spec.pos||"?")+" · "+(b.mkt||"");(g[k]=g[k]||[]).push(b)});
+      return`<div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span>NFL props by position</span><span>W-L-P</span><span>Win %</span><span>Profit</span><span>ROI</span></div>${Object.entries(g).sort().map(([k,l])=>row(k,perf(l))).join("")}</div>`})()}
     ${pa.length?`<div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span>Parlays</span><span>Placed</span><span>Won</span><span>Void</span><span>Avg legs</span></div><div class="tr"><span>All</span><span>${pa.length}</span><span>${pa.filter(b=>b.res==="W").length}</span><span>${pa.filter(b=>b.res==="P"||b.res==="V").length}</span><span>${(pa.reduce((a,b)=>a+b.legs.length,0)/pa.length).toFixed(1)}</span></div>
       ${Object.entries(sizes).sort().map(([k,l])=>{const x=perf(l);return`<div class="tr"><span>${k} legs</span><span>${l.length}</span><span>${x.W}</span><span>${x.PV}</span><span>${money(x.net)}</span></div>`}).join("")}</div>
       <div class="hint" style="margin-top:8px">Legs inside your parlays: ${legs.length?`${lw} of ${legs.length} won (${Math.round(lw/legs.length*100)}%)`:"none settled yet"}. A parlay can lose with most legs right, so leg accuracy and parlay results are tracked separately.</div>`:""}</div>`}
@@ -131,7 +135,9 @@ function extras(box){if(!box)return;try{if(BETS.length)box.insertAdjacentHTML("b
   try{if(window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.html())}catch(e){console.warn(e)}
   try{box.insertAdjacentHTML("beforeend",accHTML())}catch(e){console.warn(e)}
   try{if(window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.backtestHTML())}catch(e){console.warn(e)}}
-window.TR2={extras,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
+function addLegObj(R){if(!R)return;if(R.odds==null){toast("Enter your book's price first");return}if(SLIP.some(l=>l.key===R.key)){toast("Already in the slip");return}
+  SLIP.push({...R,id:Date.now()+Math.random(),res:null});saveSlip();paintSlip();toast(`Added to parlay slip (${SLIP.length} leg${SLIP.length===1?"":"s"})`)}
+window.TR2={extras,addLegObj,sportOf,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
 setTimeout(()=>{paintSlip();
 },0);
 })();

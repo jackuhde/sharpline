@@ -4,7 +4,7 @@ on:
     - cron: "23 */3 * * *"   # every 3 hours: new finals, roster status, and pregame prop lines
   workflow_dispatch:
   push:
-    paths: ["scripts/build-nfl.mjs", ".github/workflows/nfl.yml"]
+    paths: ["scripts/build-nfl.mjs", "scripts/nfl-backtest.mjs", "nfl-model.js", ".github/workflows/nfl.yml"]
 permissions:
   contents: write
 concurrency: nfl
@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/build-nfl.mjs
+      - run: node scripts/nfl-backtest.mjs
       - name: Commit if changed
         run: |
           git config user.name "sharpline-bot"

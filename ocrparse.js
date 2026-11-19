@@ -30,11 +30,12 @@ function findName(t,names){const n=norm(t);if(!n||/\d/.test(t)&&!/^[^\d]*$/.test
     if(n.includes(xn)){best={x,score:3};return}
     if(toks.includes(last)&&last.length>2){const sc=toks.includes(parts[0])?2.5:(toks.some(tk=>tk[0]===parts[0][0])?1.5:1);if(!best||sc>best.score)best={x,score:sc,amb:best&&best.score===sc}}});
   if(best&&!best.amb)return best.x;return null}
-function findStat(t){for(const[re,st]of STAT_RE)if(re.test(t))return st;return null}
+let CUR_RE=null;
+function findStat(t){for(const[re,st]of(CUR_RE||STAT_RE))if(re.test(t))return st;return null}
 function findTeam(t,teams){const n=" "+norm(t)+" ",up=" "+t.toUpperCase().replace(/[^A-Z ]/g," ")+" ";
   for(const T of teams){if(n.includes(" "+norm(T.full)+" ")||n.includes(" "+T.nick+" ")||up.includes(" "+T.ab+" "))return T}return null}
 function looksLikeName(t){return/^[A-Z][A-Za-z.'’-]+(\s+[A-Z][A-Za-z.'’-]+){1,2}(\s+(Jr|Sr|II|III|IV)\.?)?$/.test(t.trim())}
-function parse(lines,ctx){const rows=[],names=ctx.names,teams=ctx.teams;let player=null,stat=null,team=null,pend=null,hint=null;
+function parse(lines,ctx){CUR_RE=ctx.statRe||null;const rows=[],names=ctx.names,teams=ctx.teams;let player=null,stat=null,team=null,pend=null,hint=null;
   const flush=()=>{if(pend&&player&&stat&&pend.line!=null&&(pend.over!=null||pend.under!=null))rows.push({k:"P",player:player.p,ab:player.ab||"?",hint,stat,line:pend.line,over:pend.over??null,under:pend.under??null,raw:pend.raw.trim(),conv:/⁽/.test(pend.raw)});pend=null};
   lines.forEach(L=>{const t=fixText(L.t).trim();if(!t)return;
     const mu=t.toUpperCase().match(/\b([A-Z]{2,3})\s*(?:@|VS\.?|AT)\s*([A-Z]{2,3})\b/);if(mu&&!/[+-]\d{3}|\d+\.5/.test(t)){hint=[mu[1],mu[2]];return}

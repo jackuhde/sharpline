@@ -15,6 +15,74 @@
 <link rel="preload" href="fonts/archivo-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/archivo-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:Archivo;font-style:normal;font-weight:500;font-display:swap;src:url(fonts/archivo-latin-500-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:600;font-display:swap;src:url(fonts/archivo-latin-600-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:700;font-display:swap;src:url(fonts/archivo-latin-700-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:800;font-display:swap;src:url(fonts/archivo-latin-800-normal.woff2) format("woff2")}@font-face{font-family:Archivo;font-style:normal;font-weight:900;font-display:swap;src:url(fonts/archivo-latin-900-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2")}
+
+/* ---------- sport switch ---------- */
+.sport{display:inline-flex;margin-left:10px;padding:3px;border-radius:11px;background:var(--s2);border:1px solid var(--line2);gap:2px}
+.sport button{font:800 12px Archivo;letter-spacing:.04em;padding:6px 12px;border-radius:8px;color:var(--mute);background:none;border:0;min-height:30px;transition:background .18s,color .18s}
+.sport button.on{background:var(--ink);color:#111}
+.nfl-pane,.nfl-t{display:none}
+body.sp-nfl .nfl-pane{display:block}body.sp-nfl .nfl-t{display:inline}body.sp-nfl .nba-t{display:none}
+body.sp-nfl #stale,body.sp-nfl #dash,body.sp-nfl #topList,body.sp-nfl #slFollow,body.sp-nfl #propChips,body.sp-nfl #propList,body.sp-nfl #v-lines>details.xp,body.sp-nfl #lineList,body.sp-nfl #liveBody{display:none!important}
+/* ---------- motion: quick, and off for reduced motion ---------- */
+.view.v-in{animation:vIn .2s ease-out}.wrap.sp-in .view.on{animation:spIn .24s ease-out}
+@keyframes vIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes spIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+.nf-tr,.nf-pick{animation:rowIn .18s ease-out both}@keyframes rowIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.view.v-in,.wrap.sp-in .view.on,.nf-tr,.nf-pick,.prof.on,.tp-bar i{animation:none!important;transition:none!important}}
+/* ---------- NFL ---------- */
+.nf-week{display:flex;align-items:center;gap:10px;margin:4px 0 12px}.nf-week>div{flex:1;min-width:0}.nf-week b{display:block;font:900 15px Archivo}.nf-week small{color:var(--mute);font:600 12px Archivo}
+.nf-week button{width:40px;height:40px;border-radius:11px;background:var(--s2);border:1px solid var(--line2);color:var(--ink);font:900 20px Archivo}.nf-week button:disabled{opacity:.3}
+.nf-av{--c1:#444;--c2:#888;flex:none;width:40px;height:40px;border-radius:10px;background:var(--c1);display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:inset 0 -3px 0 var(--c2)}
+.nf-av b{font:900 15px Archivo;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35)}.nf-av i{position:absolute;top:2px;left:0;right:0;text-align:center;font:800 7px Archivo;font-style:normal;color:rgba(255,255,255,.75);letter-spacing:.06em}
+.nf-av.sm{width:32px;height:32px;border-radius:8px}.nf-av.sm b{font-size:12.5px}.nf-av.sm i{display:none}.nf-av.lg{width:64px;height:64px;border-radius:14px}.nf-av.lg b{font-size:24px}.nf-av.lg i{font-size:9px;top:4px}
+.nf-logo{--c1:#444;--c2:#888;flex:none;width:34px;height:34px;border-radius:9px;background:var(--c1);box-shadow:inset 0 -3px 0 var(--c2);display:grid;place-items:center;font:900 11px Archivo;color:#fff}
+.nf-name{font-weight:800;cursor:pointer}.nf-name:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--acc)}
+.nf-fr{font:700 11px Archivo;color:var(--over)}.nf-fr.old{color:var(--gold)}
+.nf-lv{color:var(--under);font-style:normal;font-weight:800}
+.nf-list{display:grid;gap:8px}
+.nf-pick{display:grid;grid-template-columns:28px 40px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--s1)}
+.nf-pick.watch{background:transparent;border-style:dashed}
+.nf-rk{font:900 20px Archivo;color:var(--dim);text-align:center;padding-top:6px}
+.nf-pn{font:800 14.5px Archivo}.nf-pn small{color:var(--mute);font-weight:600;margin-left:4px}
+.nf-pl{margin-top:2px;font:600 13px Archivo;color:var(--mute)}.nf-pl b{font-size:15px}
+.pick.o,.nf-pl b.o{color:var(--over)}.pick.u,.nf-pl b.u{color:var(--under)}
+.nf-nums{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px}.nf-nums span{display:flex;flex-direction:column}.nf-nums i{font:800 9.5px Archivo;letter-spacing:.07em;text-transform:uppercase;font-style:normal;color:var(--dim)}.nf-nums b{font:900 15px Archivo;font-variant-numeric:tabular-nums}
+.nf-sub{margin-top:6px;font:600 11.5px Archivo;color:var(--mute)}
+.nf-act{display:flex;flex-direction:column;gap:6px}
+.nf-filters{display:grid;gap:8px;margin-bottom:8px}.nf-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.nf-ctl input,.nf-ctl select{min-height:38px;padding:0 10px;border-radius:10px;background:var(--s2);border:1px solid var(--line2);color:var(--ink);font:700 13px Archivo}.nf-ctl input{flex:1;min-width:160px}
+.nf-table{border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--s1)}
+.nf-tr{display:grid;grid-template-columns:minmax(170px,2.2fr) .9fr .8fr 1.3fr 1.1fr 1fr 34px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line)}
+.nf-tr:first-child{border-top:0}.nf-th{background:var(--s2);font:800 10px Archivo;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);padding-top:8px;padding-bottom:8px}
+.nf-tr .c-pl{display:flex;gap:10px;align-items:center;min-width:0}.nf-tr .c-pl>div{min-width:0}.nf-tr small{display:block;color:var(--mute);font:600 11px Archivo;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nf-tr b{font-variant-numeric:tabular-nums}.c-st{font:800 12.5px Archivo;color:var(--mute)}.c-ln b{font:900 15px Archivo}.c-bt{text-align:center}
+.nf-bar{position:relative;display:block;height:5px;margin-top:5px;border-radius:3px;background:var(--s3)}.nf-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--mute);transition:width .4s ease}.nf-bar i.o{background:var(--over)}.nf-bar i.u{background:var(--under)}
+.nf-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:1px}
+b.pos{color:var(--over)}b.neg{color:var(--under)}
+.nf-games{display:grid;gap:12px}
+.nf-game{border:1px solid var(--line2);border-radius:14px;background:var(--s1);padding:12px 14px}
+.nf-gh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.nf-gh>div{display:flex;flex-direction:column}.nf-gh b{font:900 14.5px Archivo}.nf-gh small{color:var(--mute);font:600 11.5px Archivo}.nf-gh>em{margin-left:auto;font:700 12px Archivo;color:var(--mute);font-style:normal}
+.nf-at{font:900 13px Archivo;color:var(--dim);padding:0 4px}.nf-at.big{font-size:22px;color:var(--ink)}
+.nf-mk{display:grid;gap:6px;margin-top:10px}.nf-mr{display:grid;grid-template-columns:92px 1fr 1fr;gap:8px;align-items:stretch}.nf-ml{font:800 11px Archivo;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);align-self:center}
+.nf-ms{display:grid;grid-template-columns:1fr auto;gap:0 8px;padding:7px 10px;border-radius:10px;background:var(--s2)}.nf-ms span{font:700 13px Archivo}.nf-price{font:900 15px Archivo;font-variant-numeric:tabular-nums}.nf-ms small{grid-column:1/-1;color:var(--mute);font:600 11px Archivo}
+.nf-ba{grid-column:1/-1;display:flex;gap:12px}.nf-src{margin-top:8px;font:600 11.5px/1.45 Archivo;color:var(--dim)}
+.nf-more{margin-top:8px}.nf-more summary{cursor:pointer;font:800 12px Archivo;color:var(--acc2)}.nf-tl{display:grid;gap:4px;margin-top:6px;font:600 12.5px Archivo;color:var(--mute)}.nf-tl b{color:var(--ink);margin-right:6px}.nf-tl span{margin-right:8px}
+.nf-sit{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--s2);font:700 13px Archivo}.nf-sit small{display:block;color:var(--mute);font-weight:600;margin-top:2px}
+.nf-ts{display:grid;gap:3px;margin-top:8px}.nf-ts>div{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;font:700 12.5px Archivo}.nf-ts span:last-child{text-align:right}.nf-ts i{font-style:normal;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.nf-bx{display:grid;gap:2px;margin-top:10px}.nf-bxh{font:800 10.5px Archivo;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);margin-top:6px}.nf-bxr{display:grid;grid-template-columns:minmax(0,1.3fr) 40px minmax(0,2fr);gap:8px;font:600 12.5px Archivo}
+.nf-ph{display:flex;gap:14px;align-items:flex-start;margin:6px 0 14px}.nf-ph h2{font:900 26px/1.1 Archivo;letter-spacing:-.4px}.nf-pmeta{margin-top:4px;font:700 13px Archivo;color:var(--mute)}.inj-line{margin-top:6px;font:600 12.5px/1.45 Archivo;color:var(--mute)}.inj-line small{display:block;color:var(--dim)}
+.nf-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px;margin-top:8px}.nf-stats div{padding:8px 10px;border-radius:10px;background:var(--s2)}.nf-stats b{display:block;font:900 18px Archivo}.nf-stats i{font:700 10.5px Archivo;font-style:normal;color:var(--mute)}
+.nf-pp{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}.nf-pp small{display:block;color:var(--mute);font:600 11.5px Archivo}.nf-pp>div:nth-child(2){text-align:right}
+.nf-gl{overflow-x:auto}.nf-glr{display:grid;grid-template-columns:34px 46px repeat(7,minmax(44px,1fr));gap:6px;padding:6px 0;border-top:1px solid var(--line);font:600 12.5px Archivo;font-variant-numeric:tabular-nums;min-width:420px}.nf-glr.th{border-top:0;font:800 10px Archivo;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+#nfProf .pf-in{max-width:880px}
+@media(max-width:760px){
+  .nf-th{display:none}
+  .nf-tr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pl ch" "st ev" "pj pj";gap:4px 10px;padding:10px 12px}
+  .nf-tr .c-pl{grid-area:pl}.nf-tr .c-ch{grid-area:ch;text-align:right}.nf-tr .c-ev{grid-area:ev;text-align:right}.nf-tr .c-pj{grid-area:pj}.nf-tr .c-bt{display:none}
+  .nf-tr .c-st,.nf-tr .c-ln{grid-area:st;display:inline}.nf-tr .c-ln{margin-left:64px}.nf-tr .c-ln small{display:none}
+  .nf-pick{grid-template-columns:40px minmax(0,1fr);gap:10px}.nf-rk{display:none}.nf-act{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+  .nf-mr{grid-template-columns:1fr 1fr}.nf-ml{grid-column:1/-1}
+  .sport{margin-left:auto}.sport button{padding:6px 10px}
+}
 /* ---------- player profile ---------- */
 .pfa{display:block;cursor:pointer;border-radius:12px}.pfn{cursor:pointer}.pfn:hover{text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
 .face[data-prof]{cursor:pointer}
@@ -348,7 +416,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 /* tracker */
 .bn{display:block;font:700 11px Archivo;color:var(--acc2);margin-top:3px}
 .tsum .hint{font:600 12.5px/1.5 Archivo;color:var(--mute)}
-@media (max-width:440px){.hd .when{display:none!important}.hd .scanbtn{margin-left:auto!important}}
+@media (max-width:440px){.hd .when{display:none!important}.hd .scanbtn{margin-left:auto!important}body .hd .sport+.when+.scanbtn,body .hd .sport~.scanbtn{margin-left:8px!important}}
 .gear{margin-left:6px;width:36px;height:36px;border-radius:12px;background:var(--s2);border:1px solid var(--line2);display:grid;place-items:center;flex:none}
 .gear svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .dash{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
@@ -747,38 +815,42 @@ html,body{overscroll-behavior-y:none}
   <div class="spl-word">Sharpline</div><div class="spl-tag">Beat the number</div></div>
 <header><div class="hd">
   <div class="mark2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="logo-svg"><defs><linearGradient id="bglogo-svg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262626"/><stop offset="1" stop-color="#050505"/></linearGradient><linearGradient id="svlogo-svg" x1="0" y1="140" x2="0" y2="440" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e4e4e4"/><stop offset="1" stop-color="#4a4a4a"/></linearGradient><linearGradient id="aulogo-svg" x1="0" y1="130" x2="0" y2="445" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f7d27a"/><stop offset="1" stop-color="#e3b34f"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#bglogo-svg)"/><g class="i-lines" stroke="url(#svlogo-svg)" stroke-width="11" stroke-linecap="round"><line class="g0" x1="255" y1="140" x2="94" y2="433"/><line class="g1" x1="255" y1="140" x2="171" y2="437"/><line class="g2" x1="255" y1="140" x2="339" y2="437"/><line class="g3" x1="255" y1="140" x2="420" y2="433"/></g><g class="i-arrow"><rect x="245" y="128" width="21" height="318" rx="10.5" fill="url(#aulogo-svg)"/><path d="M256 62 L218 134 H256 Z" fill="#f6cf6c"/><path d="M256 62 L294 134 H256 Z" fill="#d6a238"/></g></svg>
-</div><div class="brand">Sharpline</div>
+</div><div class="brand">Sharpline</div><div class="sport" role="tablist" aria-label="Sport"><button role="tab" data-sport="nba">NBA</button><button role="tab" data-sport="nfl">NFL</button></div>
   <div class="when" id="when"><b>Loading…</b>&nbsp;</div><button class="scanbtn" data-scan="1"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.5"/></svg>Scan</button><button class="gear" data-refresh="1" aria-label="Refresh lines"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></svg></button><button class="gear" data-settings="1" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div></header>
 
 <div class="wrap">
   <section class="view on" id="v-top">
-    <div class="ph"><div class="eyebrow">Tonight's slate</div><h1>Top List</h1>
+    <div class="ph"><div class="eyebrow"><span class="nba-t">Tonight's slate</span><span class="nfl-t">This week's NFL slate</span></div><h1>Top List</h1>
       <p>Bets with a current price and a positive expected return.</p><div id="stale"></div><div id="dash"></div></div>
     <div id="topList"></div>
+    <div class="nfl-pane" id="nflTop"></div>
   </section>
 
   <section class="view" id="v-props">
     <div class="ph"><div class="eyebrow">Player props</div><h1>Every Prop, Over or Under</h1>
-      <p>Most lines are fair. Enter your book's price on a row to check it.</p></div>
+      <p><span class="nba-t">Most lines are fair. Enter your book's price on a row to check it.</span><span class="nfl-t">Every DraftKings NFL line, with Sharpline's projection and chance. Enter or scan your book's price to see EV.</span></p></div>
     <div id="slFollow"></div>
     <div class="chips" id="propChips"></div>
     <div id="propList"></div>
+    <div class="nfl-pane" id="nflProps"></div>
   </section>
 
   <section class="view" id="v-lines">
     <div class="ph"><div class="eyebrow">Game lines</div><h1>Spreads, Totals, Moneylines</h1>
-      <p>Live DraftKings prices through ESPN, checked against prediction markets where available.</p></div>
+      <p>Live DraftKings prices through ESPN<span class="nba-t">, checked against prediction markets where available</span>.</p></div>
     <details class="gcard xp" style="padding:14px"><summary class="eyebrow">Expert check · no influence today</summary>
       <p style="color:var(--mute);font:600 12.5px/1.55 Archivo;margin-top:6px">Outside picks move Sharpline's numbers only with a record graded at the prices the expert actually posted, time-stamped before the game. The weight grows with sample size, ROI measured against its own noise, closing-line value, recency and quarter-to-quarter consistency, and is capped at 15% so the market price always leads. Win rate alone counts for nothing, because 65% on heavy favorites can still lose money. Under 200 graded picks, a losing record, or no closing-line value means zero weight.</p>
       <div class="qrow"><span><b>Published picks (SportsLine, Covers, Dimers, Action and others)</b></span><span>0%</span></div>
       <div class="hint" style="margin-top:6px">Their posted records aren't graded at the price each pick was released at, and there is no free feed that does it, so none qualifies. Every number on this page comes from DraftKings and prediction-market prices plus Sharpline's own model. Opinion is never mixed into those numbers.</div></details>
     <div id="lineList"></div>
+    <div class="nfl-pane" id="nflLines"></div>
   </section>
 
   <section class="view" id="v-live">
-    <div class="ph"><div class="eyebrow">In-game</div><h1>Live</h1><p>Scores, live DraftKings lines and live player props, with Sharpline's in-game projections.</p></div>
+    <div class="ph"><div class="eyebrow">In-game</div><h1>Live</h1><p><span class="nba-t">Scores, live DraftKings lines and live player props, with Sharpline's in-game projections.</span><span class="nfl-t">Score, quarter, clock, possession, down and distance, and box scores from ESPN's official game status.</span></p></div>
     <div id="liveBody"></div>
+    <div class="nfl-pane" id="nflLive"></div>
   </section>
   <section class="view" id="v-track">
     <div class="ph"><div class="eyebrow">Your record</div><h1>Bet Tracker</h1>
@@ -819,15 +891,17 @@ html,body{overscroll-behavior-y:none}
   <button data-v="track"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg>Tracker<span class="badge" id="badge" style="display:none">0</span></button>
 </nav>
 <div class="toast" id="toast"></div>
-<script src="ocrparse.js?v=1794947364"></script>
+<script src="ocrparse.js?v=1795900001"></script>
 <script src="rank.js?v=1795800001"></script>
+<script src="nfl-model.js?v=1795900001"></script>
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795800001"></script>
-<script src="tracker2.js?v=1795800002"></script>
+<script src="tracker2.js?v=1795900001"></script>
 <script src="recs.js?v=1795800001"></script>
-<script src="livegame.js?v=1795800001"></script>
+<script src="livegame.js?v=1795900001"></script>
+<script src="nfl.js?v=1795900001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1263,7 +1337,7 @@ function stage(n){const el=document.getElementById("scanSteps");if(!el)return;el
   el.innerHTML=["Preparing image","Reading text","Matching players, teams and odds"].map((t,i)=>`<span class="${i+1<n?"done":i+1===n?"on":""}">${t}</span>`).join("")}
 async function runScan(){const st=document.getElementById("scanStat"),go=document.getElementById("scanGo"),th=[...document.querySelectorAll("#thumbs div")];
   go.disabled=true;document.getElementById("scanRes").innerHTML="";let rows=[],fails=0;
-  try{const w=await getWorker(st);const ctx=ocrCtx();
+  try{const w=await getWorker(st);const ctx=SPORT==="nfl"&&window.NFL?NFL.ocrCtx():ocrCtx();
     for(let i=0;i<scanFiles.length;i++){st.dataset.i=`${i+1} of ${scanFiles.length}`;st.textContent=`Reading screenshot ${i+1} of ${scanFiles.length}…`;
       try{th.forEach(x=>x.classList.remove("scanning"));th[i]&&th[i].classList.add("scanning");stage(1);
         const cv=await prepImage(scanFiles[i]);stage(2);const {data}=await w.recognize(cv);stage(3);
@@ -1272,6 +1346,9 @@ async function runScan(){const st=document.getElementById("scanStat"),go=documen
     stage(0);
   }catch(e){st.innerHTML=`<span style="color:var(--under)">The reader couldn't load. Check your connection and try again.</span>`;go.disabled=false;return}
   delete st.dataset.i;
+  if(SPORT==="nfl"&&window.NFL){const R=NFL.applyScan(rows);go.disabled=false;
+    st.innerHTML=R.n?`Priced ${R.n} NFL line${R.n===1?"":"s"} from the screenshot. They now show EV on the Props tab and can reach the Top List.`:`<span style="color:var(--under)">Nothing matched this week's NFL board.</span>`;
+    document.getElementById("scanRes").innerHTML=R.miss.length?`<div class="rv">${R.miss.slice(0,20).map(m=>`<div class="rvn">${esc2(m)}</div>`).join("")}</div>`:"";return}
   const seen=new Set();reviewRows=rows.filter(r=>{const id=JSON.stringify([r.k,r.player,r.stat,r.ab,r.mk,r.line,r.over,r.under,r.odds,r.side]);if(seen.has(id))return false;seen.add(id);return true}).map(r=>({...r,on:true}));
   st.innerHTML=reviewRows.length?`Read ${reviewRows.length} line${reviewRows.length===1?"":"s"}${fails?` · ${fails} screenshot${fails>1?"s":""} had nothing readable`:""}. Check them, fix anything wrong, then grade.`:`<span style="color:var(--under)">I couldn't find any lines. Try a sharper, full-screen screenshot of the props list.</span>`;
   renderReview();go.disabled=false}
@@ -1801,9 +1878,18 @@ function openOdds(key){ODDS_KEY=key;const N=nameOf(key);document.getElementById(
 function closeOdds(){document.getElementById("oddsSheet").classList.remove("on");if(ODDS_KEY){syncFind(ODDS_KEY);ODDS_KEY=null}renderAll()}
 /* ---------- events ---------- */
 
-function go(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));window.scrollTo({top:0});
+let CURV="top";
+function go(v){CURV=v;document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  document.querySelectorAll(".view").forEach(x=>{const on=x.id==="v-"+v;if(on&&!x.classList.contains("on")){x.classList.remove("v-in");void x.offsetWidth;x.classList.add("v-in")}x.classList.toggle("on",on)});window.scrollTo({top:0});
+  if(SPORT==="nfl"){if(window.NFL)NFL.show(v);return}
   if(v==="live"&&window.LiveUI){LiveUI.start();LiveUI.render();LiveUI.poll(true)}}
+/* ---------- sport: NBA or NFL. Filters, tab and tracker are kept when switching ---------- */
+let SPORT=LS0("sl_sport","nba");
+function setSport(sp,quiet){SPORT=sp==="nfl"?"nfl":"nba";LS.set("sl_sport",SPORT);document.body.classList.toggle("sp-nfl",SPORT==="nfl");document.body.classList.toggle("sp-nba",SPORT==="nba");
+  document.querySelectorAll("[data-sport]").forEach(b=>{b.classList.toggle("on",b.dataset.sport===SPORT);b.setAttribute("aria-selected",b.dataset.sport===SPORT)});
+  document.title="Sharpline "+SPORT.toUpperCase();if(window.NFL)NFL.setOn(SPORT==="nfl");
+  const wrap=document.querySelector(".wrap");if(!quiet&&wrap){wrap.classList.remove("sp-in");void wrap.offsetWidth;wrap.classList.add("sp-in")}go(CURV)}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-sport]");if(b){setSport(b.dataset.sport)}});
 document.addEventListener("click",e=>{if(e.target.closest(".rv")&&!e.target.closest("[data-grade]"))return;if(e.target.closest(".ed input")||e.target.closest(".addp input,.addp select")||e.target.closest(".det input"))return;
   {const tc=e.target.closest("#topList .top");if(tc&&!e.target.closest("button,a,input,details,[data-prof],.face")){const d=tc.querySelector("details.tdet");if(d){d.open=!d.open;return}}}
   const sb=e.target.closest("[data-sgn]");if(sb){const[k,f]=sb.dataset.sgn.split("|"),cur=sgnOf(k,f),nx=cur==="-"?"+":"-";(EDV[k]=EDV[k]||{})["s"+f]=nx;LS.set("sl_edv",EDV);sb.textContent=nx==="-"?"−":"+";sb.className="sgn "+(nx==="-"?"m":"p");updRec(k);syncLater(k);return}const jp=e.target.closest("[data-jump]");if(jp){jumpTo(jp.dataset.jump);return}
@@ -1995,7 +2081,7 @@ function specFor(base,lbl,L){const k=base[0],i=+base.slice(1);
     const full=fullOfAbbr(w[0]);if(!full)return null;
     return Ln.m==="Moneyline"?{kind:"ml",team:full}:{kind:"sp",team:full,line:+w[1]}}
   return null}
-async function gradePending(){const pend=BETS.filter(b=>!b.res&&b.spec&&!b.noAuto&&b.type!=="parlay");if(!pend.length)return 0;let n=0;
+async function gradePending(){const pend=BETS.filter(b=>!b.res&&b.spec&&!b.noAuto&&b.type!=="parlay"&&b.spec.sport!=="nfl");if(!pend.length)return 0;let n=0;
   const dates=[...new Set(pend.map(b=>b.date))];
   for(const d of dates){let list;try{list=await sbFor(d)}catch(e){continue}
     for(const b of pend.filter(x=>x.date===d)){const ev=list.find(e=>(b.ev&&e.id===b.ev)||(nick(e.home)===nick(b.home)&&nick(e.away)===nick(b.away)));if(!ev)continue;
@@ -2113,6 +2199,7 @@ async function checkUpdate(){return refreshAll();try{const d=await fetchData();i
     const open=[...document.querySelectorAll(".row.open")].map(r=>r.dataset.row),view=(document.querySelector(".view.on")||{}).id;
     applyData(d);renderAll();open.forEach(i=>{const r=document.querySelector(`[data-row="${i}"]`);if(r)r.classList.add("open")});
     toast("Lines updated · "+SNAP_TIME.split(", ").pop())}}catch(e){}}
+setSport(SPORT,true);
 boot();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
