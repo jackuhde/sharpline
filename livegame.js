@@ -16,7 +16,10 @@ const saveHist=()=>{if(HIST_D!==DATA_DATE){if(HIST_D)HIST={};HIST_D=DATA_DATE}tr
 const gameOf=id=>LV.g[id]||(LV.g[id]={odds:null,oddsTs:0,props:{},propsTs:0,propsOk:null,propsFetched:0,noMarket:false,pre:null,box:null,boxTs:0,boxOk:null,lines:[]});
 
 /* ---------- polling ---------- */
-function wanted(){return document.getElementById("v-live")?.classList.contains("on")||!!LV.open}
+/* poll whenever the app is open and any game is in progress, on every tab, so live prices, the tracker's live chances
+   and player profiles stay current; otherwise only while the Live tab or a game is open */
+function anyLive(){return LV.sb.some(e=>e.state==="in")||Object.values((window.LIVE&&LIVE.ev)||{}).some(e=>e&&e.state==="in")}
+function wanted(){return document.getElementById("v-live")?.classList.contains("on")||!!LV.open||anyLive()}
 async function poll(force){if(LV.busy||document.hidden)return;if(!force&&!wanted())return;LV.busy=true;document.body.classList.add("lv-busy");
   try{try{LV.sb=await SharpLive.scoreboard(DATA_DATE);LV.sbTs=Date.now();LV.sbOk=true}catch(e){LV.sbOk=false}
     const live=LV.sb.filter(e=>e.state==="in"),now=Date.now();
@@ -164,7 +167,7 @@ function gameModel(e,G){const o=G.odds,pre=G.preOdds;if(!o||!pre||pre.total.line
   const cur=e.homeScore+e.awayScore,margin=e.homeScore-e.awayScore,w=played/(played+24),rate=(1-w)*pre.total.line/48+w*(played?cur/played:pre.total.line/48);
   const f=Math.sqrt(L/48),sdT=Math.max(19*f,2.5),sdM=Math.max(12*f,2),totMean=cur+rate*L,marMean=margin+(-pre.spread.home)*(L/48);
   const blend=(raw,a,b)=>{if(a==null||b==null)return{p:raw,raw,pm:null};const pm=devig(a,b)[0];return{p:Math.min(pm+.04,Math.max(pm-.04,pm+.35*(raw-pm))),raw,pm}};
-  const out={totMean,marMean,L,rate,mk:[]},add=(key,lbl,line,a,b,rawA,la,lb)=>{if(a==null&&b==null)return;const B=blend(rawA,a,b);
+  const out={totMean,marMean,L,rate,sdT,sdM,mk:[]},add=(key,lbl,line,a,b,rawA,la,lb)=>{if(a==null&&b==null)return;const B=blend(rawA,a,b);
     out.mk.push({key,lbl,line,raw:B.raw,pm:B.pm,...withSides({pO:B.p},a,b,rawA>=.5?"o":"u"),la,lb})};
   if(o.total.line!=null)add("total","Total",o.total.line,o.total.over,o.total.under,1-Phi((o.total.line-totMean)/sdT),"Over "+o.total.line,"Under "+o.total.line);
   if(o.spread.home!=null){const h=o.spread.home,sg=v=>(v>0?"+":"")+v;add("spread","Spread",h,o.spread.homeOdds,o.spread.awayOdds,Phi((marMean+h)/sdM),ab2(e.homeAb)+" "+sg(h),ab2(e.awayAb)+" "+sg(-h))}
@@ -223,7 +226,7 @@ function patchKeyed(box,html){const t=document.createElement("div");t.innerHTML=
   if(nw.length!==old.length||nw.some((n,i)=>n.className!==old[i].className||n.dataset.k!==old[i].dataset.k)){box.innerHTML=html;return}
   /* avatars carry a fresh SVG id on every render, so ignore those ids when deciding what changed */
   const sig=h=>h.replace(/\bj\d+\b/g,"j");nw.forEach((n,i)=>{if(sig(n.outerHTML)!==sig(old[i].outerHTML))old[i].replaceWith(n)})}
-function render(){renderList();if(LV.open)renderGame(true);if(window.PF&&PF.open)renderProfile(true)}
+function render(){renderList();paintTracker();if(LV.open)renderGame(true);if(window.PF&&PF.open)renderProfile(true)}
 function openGame(id){lastGame="";const g0=document.getElementById("lg");if(g0)g0._sig="";LV.open=id;LV.tab="props";const el=document.getElementById("lg");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   history.pushState({sl:"lg"},"");renderGame();poll(true)}
 function hideGame(){LV.open=null;const el=document.getElementById("lg");el.classList.add("out");if(!(window.PF&&PF.open))document.body.classList.remove("pf-lock");setTimeout(()=>{el.classList.remove("on","out");el.innerHTML=""},260)}
@@ -247,5 +250,44 @@ window.liveForPlayer=function(name){const n=SharpLive.norm(name);const id=Object
       ${ms.sort((x,y)=>statRank(x[1].st)-statRank(y[1].st)).map(([k,mk])=>propRow(e.id,k,mk,G.pre&&G.pre[k])).join("")||`<div class="pf-empty">No live player markets for him right now.</div>`}
       <p class="pf-sub2">Live lines are separate from tonight's pregame line shown below.</p></section>`}
   return null};
-window.LiveUI={start,poll,render,LV,openGame,model};
+
+/* ---------- live chance for tracked bets ----------
+   For an open bet whose game is in progress: Sharpline's current chance that it wins, from the same live models used in
+   the Live tab. When DraftKings has a live market at the bet's exact line, the chance is blended with that price (35/65,
+   within 4 points). At any other line there is no matching price, so it is the model alone and is labeled that way.
+   These live chances are not yet graded for calibration. */
+function evOfBet(home,away){return LV.sb.find(e=>nick(e.home)===nick(home)&&nick(e.away)===nick(away))||null}
+function betChance(spec,home,away){if(!spec||!home)return null;const e=evOfBet(home,away);if(!e)return null;
+  if(e.state==="pre")return{st:"pre"};if(e.state!=="in")return{st:"post"};const G=gameOf(e.id),fr=G.odds&&Date.now()-G.oddsTs<FRESH;
+  const clock=statusTxt(e),score=`${ab2(e.awayAb)} ${e.awayScore}, ${ab2(e.homeAb)} ${e.homeScore}`;
+  if(spec.kind==="prop"){const n=SharpLive.norm(spec.player||""),ath=Object.keys(LIVE.ids).find(k=>SharpLive.norm(LIVE.ids[k].name)===n);
+    const pl=G.box&&G.box.players[n],cur=pl?curOf(pl,spec.stat):null,need=spec.side==="o"?"over":"under";
+    if(!comps(spec.stat))return{st:"na",why:"No live model for this stat",clock,score};
+    if(pl&&pl.dnp)return{st:"na",why:"Hasn't played",clock,score};
+    if(cur!=null&&cur>spec.line)return{st:"done",p:spec.side==="o"?1:0,clock,score,now:`${cur} now, already ${need==="over"?"over":"past"} ${spec.line}`};
+    if(!ath)return{st:"na",why:"Player not matched to ESPN",clock,score};
+    const live=G.props[ath+"|"+spec.stat],same=live&&!live.gone&&live.l===spec.line&&fresh(e.id,live);
+    const m=model(e.id,same?live:{ath,st:spec.stat,l:spec.line,o:null,u:null});if(!m)return{st:"na",why:"Not enough data for a live estimate",clock,score};
+    const p=spec.side==="o"?m.pO:1-m.pO;
+    return{st:"live",p,src:same?"blend":"model",clock,score,now:`${cur??0} now, projected ${r1(m.final)}`,mkt:live&&!live.gone?live:null,thin:m.thin}}
+  const M=gameModel(e,G);if(!M)return{st:"na",why:!G.preOdds?"Waiting for the pregame line the live model starts from":"Game lines not posted right now",clock,score};
+  const home_=nick(spec.team||"")===nick(e.home);let p,raw,mk=M.mk.find(x=>x.key===(spec.kind==="tot"?"total":spec.kind==="sp"?"spread":"ml"));
+  if(spec.kind==="tot"){raw=1-Phi((spec.line-M.totMean)/M.sdT);if(spec.side==="u")raw=1-raw;
+    p=mk&&mk.line===spec.line&&fr?(spec.side==="o"?mk.sides.o&&mk.sides.o.p:mk.sides.u&&mk.sides.u.p):null}
+  else{const mar=home_?M.marMean:-M.marMean;raw=spec.kind==="ml"?Phi(mar/M.sdM):Phi((mar+spec.line)/M.sdM);
+    const s=home_?"o":"u";p=mk&&fr&&(spec.kind==="ml"||(home_?mk.line===spec.line:mk.line===-spec.line))?(mk.sides[s]&&mk.sides[s].p):null}
+  const proj=`projected ${ab2(e.homeAb)} ${M.marMean>=0?"by "+r1(M.marMean):"down "+r1(-M.marMean)}, ${r1(M.totMean)} total`;
+  return{st:"live",p:p??raw,src:p!=null?"blend":"model",clock,score,now:proj}}
+function chanceHTML(b){const legs=b.type==="parlay"?b.legs:null;
+  const show=c=>c.st==="done"?`<b class="${c.p?"pos":"neg"}">${c.p?"Won already":"Lost already"}</b> · ${esc(c.now)}`:c.st==="live"?`<b>${Math.round(c.p*100)}%</b> to win · ${esc(c.now)}${c.src==="model"?" · model only, no live price at this line":""}${c.thin?" · few games":""}`:c.st==="na"?esc(c.why):"";
+  if(!legs){const c=betChance(b.spec,b.home,b.away);if(!c||c.st==="pre"||c.st==="post")return"";
+    return`<span class="lv-live">Live</span> ${esc(c.score)} · ${esc(c.clock)}<br>${show(c)}`}
+  const rows=legs.map(l=>({l,c:l.res?null:betChance(l.spec,l.home,l.away)}));if(!rows.some(r=>r.c&&r.c.st!=="pre"&&r.c.st!=="post"))return"";
+  let all=1,ok=true;rows.forEach(({l,c})=>{if(l.res==="W"||l.res==="P"||l.res==="V")return;if(l.res==="L"){all=0;return}
+    if(c&&(c.st==="live"||c.st==="done"))all*=c.p;else ok=false});
+  const tot=b.sgp?`Same-game legs are correlated, so no combined chance is shown.`:ok?`<b>${Math.round(all*100)}%</b> all remaining legs win (legs treated as independent)`:`Combined chance shown once every pending leg is in progress`;
+  return`<span class="lv-live">Live</span> ${tot}<div class="tlegs">${rows.filter(r=>r.c&&r.c.st!=="pre"&&r.c.st!=="post").map(({l,c})=>`<div>${esc(l.key[0]==="l"?"":l.name.split(" ").pop()+" ")}${esc(l.pick)}: ${show(c)}</div>`).join("")}</div>`}
+function paintTracker(){document.querySelectorAll("[data-tlive]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tlive);const h=b&&!b.res?chanceHTML(b):"";
+  if(el._h!==h){el._h=h;el.innerHTML=h;el.style.display=h?"":"none"}})}
+window.LiveUI={start,poll,render,LV,openGame,model,betChance,paintTracker};
 })();

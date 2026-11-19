@@ -90,7 +90,7 @@ let DVP=null,DVPload=null;
 function loadDVP(){if(DVP||DVPload)return;DVPload=fetch("dvp.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{DVP=j||{};if(PF.open)renderProfile(true)}).catch(()=>{DVP={}})}
 function matchupHTML(){loadDVP();if(PF.gi<0)return"";const G=SNAP[PF.gi];if(!G)return"";const opp=G.home===PF.tm?G.away:G.home;
   const who=PF.id&&LIVE.ids[PF.id]||{},raw=String(who.pos||"").toUpperCase(),pos=raw==="C"?"C":/^(G|PG|SG)$/.test(raw)?"G":/^(F|SF|PF)$/.test(raw)?"F":raw.includes("C")?"C":raw.includes("G")?"G":raw.includes("F")?"F":null;
-  const posName={G:"guards",F:"forwards",C:"centers"}[pos];
+  const posName=(DVP&&DVP.starters?"starting ":"")+({G:"guards",F:"forwards",C:"centers"}[pos]||"");
   if(!DVP)return`<section class="pf-card pf-load"><i></i><i></i><i></i><span>Loading matchup data…</span></section>`;
   const T=DVP.teams&&(DVP.teams[opp]||Object.entries(DVP.teams).filter(([k])=>k.split(" ").pop()===opp.split(" ").pop()).map(([,v])=>v)[0]);
   if(!pos||!T)return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>Not available yet</h3></div></div><div class="pf-empty">${!pos?"ESPN doesn't list a position for him.":"Matchup stats haven't been built for this opponent yet."}</div></section>`;
@@ -100,7 +100,7 @@ function matchupHTML(){loadDVP();if(PF.gi<0)return"";const G=SNAP[PF.gi];if(!G)r
   return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>${esc(opp.split(" ").pop())} vs ${posName}<span class="pf-sub"> · ${T.gp} games this season</span></h3></div></div>
     <div class="pf-tw"><table class="pf-log pf-dvp"><thead><tr><th>Allowed per game</th><th>Season</th><th>Rank</th><th>Last ${T.l10gp}</th><th>Rank</th><th>League avg</th></tr></thead><tbody>
     ${rows.map(([k,l])=>`<tr class="${hot.includes(k)?"hot":""}"><td>${l}</td><td><b>${D.s[k]??"–"}</b></td><td class="${tone(D.sr[k])}">${ord(D.sr[k])}</td><td>${D.l10[k]??"–"}</td><td class="${tone(D.l10r[k])}">${ord(D.l10r[k])}</td><td>${L[k]}</td></tr>`).join("")}</tbody></table></div>
-    <div class="pf-sub2">Totals allowed to all ${posName} in a game, from ESPN box scores through ${esc(DVP.through)}. Rank 1st means the defense allows the most (friendliest matchup), 30th the least. ESPN lists positions only as guard, forward or center, so a point guard and a wing guard share a group, and minutes are not adjusted for role.${T.l10gp<10?"":" Ten games is a small sample; lean on the season column."} This is context only; it isn't added to Sharpline's projection.</div></section>`}
+    <div class="pf-sub2">${DVP.starters?`Totals allowed to the opposing ${posName} in a game (the five starters only; bench players are left out)`:`Totals allowed to all ${posName} in a game`}, from ESPN box scores through ${esc(DVP.through)}. Rank 1st means the defense allows the most (friendliest matchup), 30th the least. Starting positions use ESPN's box-score labels, which are only guard, forward or center, so a point guard and a wing guard share a group, and a team starting three guards adds three to that group. Minutes are not adjusted for role.${T.l10gp<10?"":" Ten games is a small sample; lean on the season column."} This is context only; it isn't added to Sharpline's projection.</div></section>`}
 function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
   let list=PF.range==="opp"?rows.all.filter(r=>r.opp===opp):rows.cur.slice(0,PF.range);
   list=list.filter(r=>valOf(r,st)!=null).slice(0,20).reverse();

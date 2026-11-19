@@ -364,6 +364,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .tb-in{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin-top:10px}
 .tb-in label,.tsum label{display:block;font:800 10px Archivo;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
 .tb-in input,.tsum input{width:100%;background:var(--s3);border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:9px 10px;font:800 14px Archivo}
+.tlive{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--s3);border:1px solid var(--line2);font:700 12px/1.5 Archivo;color:var(--mute)}.tlive b{color:var(--ink);font-size:13.5px}.tlive b.pos{color:var(--over)}.tlive b.neg{color:var(--under)}.tlive .tlegs{margin-top:4px}.tlive .tlegs div{padding:2px 0}
 .tb-res{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
 .tb-res button{padding:9px 0;border-radius:10px;background:var(--s3);color:var(--ink);font:800 12.5px Archivo;border:1px solid var(--line2)}
 .tb-res .w{color:var(--over);border-color:rgba(46,230,166,.35)}.tb-res .l{color:var(--under);border-color:rgba(255,90,110,.35)}
@@ -795,11 +796,11 @@ html,body{overscroll-behavior-y:none}
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1794947364"></script>
 <script src="live.js?v=1795000002"></script>
-<script src="profile.js?v=1795400004"></script>
+<script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795300003"></script>
 <script src="tracker2.js?v=1795400002"></script>
-<script src="livegame.js?v=1795400003"></script>
+<script src="livegame.js?v=1795500001"></script>
 <script>
 
 const TEAMS={"Atlanta Hawks":["ATL","#E03A3E","#C1D32F"],"Boston Celtics":["BOS","#007A33","#BA9653"],"Brooklyn Nets":["BKN","#222","#888"],"Charlotte Hornets":["CHA","#1D1160","#00788C"],"Chicago Bulls":["CHI","#CE1141","#111"],"Cleveland Cavaliers":["CLE","#860038","#FDBB30"],"Dallas Mavericks":["DAL","#00538C","#B8C4CA"],"Denver Nuggets":["DEN","#0E2240","#FEC524"],"Detroit Pistons":["DET","#C8102E","#1D42BA"],"Golden State Warriors":["GSW","#1D428A","#FFC72C"],"Houston Rockets":["HOU","#CE1141","#C4CED4"],"Indiana Pacers":["IND","#002D62","#FDBB30"],"Los Angeles Clippers":["LAC","#C8102E","#1D428A"],"Los Angeles Lakers":["LAL","#552583","#FDB927"],"Memphis Grizzlies":["MEM","#5D76A9","#12173F"],"Miami Heat":["MIA","#98002E","#F9A01B"],"Milwaukee Bucks":["MIL","#00471B","#EEE1C6"],"Minnesota Timberwolves":["MIN","#0C2340","#78BE20"],"New Orleans Pelicans":["NOP","#0C2340","#C8102E"],"New York Knicks":["NYK","#006BB6","#F58426"],"Oklahoma City Thunder":["OKC","#007AC1","#EF3B24"],"Orlando Magic":["ORL","#0077C0","#C4CED4"],"Philadelphia 76ers":["PHI","#006BB6","#ED174C"],"Phoenix Suns":["PHX","#1D1160","#E56020"],"Portland Trail Blazers":["POR","#E03A3E","#222"],"Sacramento Kings":["SAC","#5A2D81","#63727A"],"San Antonio Spurs":["SAS","#8a96a0","#111"],"Toronto Raptors":["TOR","#CE1141","#111"],"Utah Jazz":["UTA","#002B5C","#F9A01B"],"Washington Wizards":["WAS","#002B5C","#E31837"]};
@@ -1411,7 +1412,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
   </div>
   ${pend.length?`<div class="eyebrow tk-h">Open bets · ${pend.length}</div><div class="list">${pend.map(b=>`<div class="tb" data-tid="${b.id}">
      <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}</div><div class="sub">${b.game} · ${b.mkt} · ${b.src}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
-     ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="tb-in"><div><label>${b.type==="parlay"?"Parlay odds you got":"Odds you got"}</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
+     <div class="tlive" data-tlive="${b.id}" style="display:none"></div>${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="tb-in"><div><label>${b.type==="parlay"?"Parlay odds you got":"Odds you got"}</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
      ${b.spec&&!b.noAuto?`<div class="hint" style="margin-top:8px">Grades itself when the game is final.</div>`:""}<div class="tb-res"><button data-res="${b.id}|W" class="w">Won</button><button data-res="${b.id}|L" class="l">Lost</button><button data-res="${b.id}|P">Push</button><button data-res="${b.id}|V">Void</button></div></div>`).join("")}</div>`:""}
   ${Object.keys(byM).length?`<div class="eyebrow tk-h">By market</div><div class="list tk-t">${Object.entries(byM).map(([m,l])=>{const x=trackStats(l);return`<div class="tr"><span>${m}</span><span>${x.W}-${x.L}${x.P?"-"+x.P:""}</span><span style="color:${x.net>0?"var(--over)":x.net<0?"var(--under)":"var(--mute)"}">${x.n?money(x.net):"–"}</span><span>${x.roi==null?"–":(x.roi>=0?"+":"")+(x.roi*100).toFixed(0)+"%"}</span></div>`}).join("")}</div>`:""}
   ${C?`<div class="eyebrow tk-h">Is Sharpline accurate?</div><div class="tsum">
@@ -1422,7 +1423,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
   ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
      ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="sub">${b.auto?`<span class="autog">Auto-graded</span> ${b.gnote} · `:""}${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
   ${unitHTML()}
-  <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`}
+  <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`;if(window.LiveUI)LiveUI.paintTracker()}
 const unitHTML=()=>`<div class="tsum" style="margin-top:14px"><div class="f two"><div><label>Default stake for new bets ($)</label><input type="number" inputmode="decimal" data-unit="1" value="${UNIT}"></div><div class="hint" style="align-self:end">Flat stakes. Sharpline never raises your stake after a loss.</div></div></div>`;
 function exportCSV(){const cols=["date","name","game","mkt","pick","odds","book","stake","res","profit","p","ev","grade","conf","src"];
   const esc=v=>{v=v==null?"":String(v);return/[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v};
@@ -1683,7 +1684,7 @@ function buildProj(){PROJ=BOARD.proj.map(x=>({...x}));
       l10:t?{pts:t.pts,reb:t.reb,ast:t.ast,tpm:t.tpm,stl:t.stl,blk:t.blk}:null,l10min:t?t.min:null,src:`ESPN game log (${s.gp} games${t?`, last ${t.gp}`:""})`};
     const i=PROJ.findIndex(x=>normN(x.p)===normN(who.name));if(i>=0)PROJ[i]=e;else PROJ.push(e)})}
 async function loadProps(force){const gis=Object.keys(LIVE.ev).filter(gi=>{const e=LIVE.ev[gi];return e&&e.id&&(e.state||"pre")==="pre"});
-  if(!gis.length)return"none";if(!force&&Date.now()-LIVE.propsTs<8*60000)return"cached";
+  if(!gis.length)return"none";if(!force&&Date.now()-LIVE.propsTs<2*60000)return"cached";
   const r=await Promise.all(gis.map(gi=>SharpLive.propBets(LIVE.ev[gi].id).then(v=>[gi,v]).catch(()=>[gi,null])));
   let ok=0;r.forEach(([gi,v])=>{if(v){LIVE.props[gi]=v;ok++}});if(!ok)throw new Error("props");LIVE.propsTs=Date.now();return"ok"}
 async function loadRosters(){const ids=[...new Set(Object.values(LIVE.ev).flatMap(e=>[e.homeId,e.awayId]).filter(Boolean))];
@@ -1878,7 +1879,7 @@ async function boot(){
   try{const d=await todayBoard(await fetchData());applyData(d);renderAll();hideSplash()}
   catch(e){console.error(e);document.getElementById("when").innerHTML="<b>Offline</b>couldn't load lines";document.getElementById("when").title=String(e&&e.stack||e).slice(0,300);
     document.getElementById("topList").innerHTML=`<div class="empty"><b>Couldn't load tonight's lines</b>Check your connection and reopen Sharpline.</div>`;hideSplash();return}
-  refreshAll();
+  refreshAll();if(window.LiveUI)LiveUI.start();
   /* live lines every minute near game time, every 5 minutes otherwise; the board itself every 3 minutes */
   setInterval(()=>{if(document.hidden)return;const soon=SNAP.some(G=>{const t=new Date(G.tip).getTime();return Date.now()>t-4*3600e3&&Date.now()<t+4*3600e3});
     if(soon||Date.now()-LIVE.last>5*60000)refreshAll()},60000);
