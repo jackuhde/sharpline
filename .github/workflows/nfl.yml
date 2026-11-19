@@ -1,0 +1,29 @@
+name: NFL data
+on:
+  schedule:
+    - cron: "23 */3 * * *"   # every 3 hours: new finals, roster status, and pregame prop lines
+  workflow_dispatch:
+  push:
+    paths: ["scripts/build-nfl.mjs", ".github/workflows/nfl.yml"]
+permissions:
+  contents: write
+concurrency: nfl
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/build-nfl.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "sharpline-bot"
+          git config user.email "sharpline-bot@users.noreply.github.com"
+          git add data/nfl
+          git diff --cached --quiet && exit 0
+          git commit -m "Update NFL data"
+          git pull --rebase -q origin main
+          git push -q origin HEAD:main
