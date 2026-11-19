@@ -126,8 +126,12 @@ function accHTML(){const A=LSg("sl_pred_agg",{}),days=Object.keys(A).sort();cons
     <div class="hint" style="margin-top:8px">Calibration: if "Actual" stays close to "Expected" in each row, the percentages mean what they say. ${all[0]+all[1]<300?`<b style="color:var(--gold)">Only ${all[0]+all[1]} graded so far; rows under about 100 are mostly noise.</b>`:""}</div>
     <div class="list tk-t" style="margin-top:10px"><div class="tr th"><span>Day</span><span>N</span><span>W-L-P</span><span>Correct</span></div>${days.slice(-10).reverse().map(d=>tr(d,A[d].all||[0,0,0,0])).join("")}</div></div>`}
 
-window.TR2={_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
+/* sections under the tracker: your performance vs the model's numbers, the model's own Top List record, prediction accuracy, backtest */
+function extras(box){if(!box)return;try{if(BETS.length)box.insertAdjacentHTML("beforeend",perfHTML(filter(BETS)))}catch(e){console.warn(e)}
+  try{if(window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.html())}catch(e){console.warn(e)}
+  try{box.insertAdjacentHTML("beforeend",accHTML())}catch(e){console.warn(e)}
+  try{if(window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.backtestHTML())}catch(e){console.warn(e)}}
+window.TR2={extras,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
 setTimeout(()=>{paintSlip();
-  /* add the performance and model-accuracy sections under the tracker */
-  const r0=window.renderTrack;if(typeof r0==="function")window.renderTrack=function(){r0();const box=document.getElementById("trackBox");if(box&&BETS.length)box.insertAdjacentHTML("beforeend",perfHTML(filter(BETS)));if(box&&window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.html());if(box)box.insertAdjacentHTML("beforeend",accHTML());if(box&&window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.backtestHTML())}},0);
+},0);
 })();
