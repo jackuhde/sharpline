@@ -92,7 +92,7 @@ function matchupHTML(){loadDVP();if(PF.gi<0)return"";const G=SNAP[PF.gi];if(!G)r
   const who=PF.id&&LIVE.ids[PF.id]||{},raw=String(who.pos||"").toUpperCase(),pos=raw==="C"?"C":/^(G|PG|SG)$/.test(raw)?"G":/^(F|SF|PF)$/.test(raw)?"F":raw.includes("C")?"C":raw.includes("G")?"G":raw.includes("F")?"F":null;
   const posName={G:"guards",F:"forwards",C:"centers"}[pos];
   if(!DVP)return`<section class="pf-card pf-load"><i></i><i></i><i></i><span>Loading matchup data…</span></section>`;
-  const T=DVP.teams&&DVP.teams[opp];
+  const T=DVP.teams&&(DVP.teams[opp]||Object.entries(DVP.teams).filter(([k])=>k.split(" ").pop()===opp.split(" ").pop()).map(([,v])=>v)[0]);
   if(!pos||!T)return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>Not available yet</h3></div></div><div class="pf-empty">${!pos?"ESPN doesn't list a position for him.":"Matchup stats haven't been built for this opponent yet."}</div></section>`;
   const D=T[pos],L=DVP.league[pos],rows=[["pts","Points"],["reb","Rebounds"],["ast","Assists"],["tpm","3-pointers"],["stl","Steals"],["blk","Blocks"]];
   const hot=STAT_COMP[PF.st]||[],ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
