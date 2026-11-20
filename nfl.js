@@ -222,15 +222,55 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
     <div class="cv-t"><div class="cv-r cv-hd"><span>Where every line ended up</span><span>Lines</span></div>${Object.entries(why).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="cv-r"><span>${h(W[k]||k)}</span><span>${v}</span></div>`).join("")}</div>
     <div class="cv-t"><div class="cv-r cv-hd"><span>Backtest by stat (out of sample, ${N.model?N.model.lines:0} lines)</span><span>Right side</span></div>${N.model?Object.entries(N.model.byStat).sort((a,b)=>(b[1].hit||0)-(a[1].hit||0)).map(([k,b])=>`<div class="cv-r"><span>${h(LBL[k]||k)} ${trusted(k)?"<b class='pos'>trusted</b>":""}</span><span>${b.hit!=null?pc1(b.hit)+" of "+b.picks:"no edge"}</span></div>`).join(""):""}</div>
     <p class="hint">At standard −110 a side has to win 52.4% to break even. Only stats that beat 54% on 100+ out-of-sample picks can reach the Top List. Opponent, game-script and usage adjustments are switched on only for stats where they improved out-of-sample accuracy.</p></details>`;
-  const card=(x,i,w)=>`<div class="nf-pick ${w?"watch":""}" data-nfrow="${h(x.key)}"><div class="nf-rk">${i+1}</div>${jersey(x.id)}<div class="nf-pm"><div class="nf-pn"><span class="nf-name" data-nfprof="${x.id}">${h(x.name)}</span> <small>${h(x.posL)} · ${h(T(x.tid)[0])} ${x.c.side==="home"?"vs":"@"} ${h(T(x.c.opp)[0])}</small>${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
-      <div class="nf-pl"><b class="pick ${x.side}">${x.yn?(x.st==="td2"?"2+ TDs":"Anytime TD"):`${x.side==="o"?"Over":"Under"} ${x.l}`}</b> ${h(x.yn?"":LBL[x.st])}${x.alt?` <span class="nf-alt">your line · DraftKings ${x.dkL}${x.far?" · far from DraftKings, rough":""}</span>`:""}</div>
-      <div class="nf-nums"><span><i>Sharpline</i><b>${pc(x.p)}</b></span><span><i>Proj</i><b>${x.yn?"–":r1(x.P.m)}</b></span><span><i>Fair</i><b>${am(x.fair)}</b></span>${x.price!=null?`<span><i>${h(x.bk||"Your price")}</i><b>${am(x.price)}</b></span><span><i>Implied</i><b>${pc(RK.imp(x.price))}</b></span><span><i>EV</i><b class="${evc(x.ev)}">${evs(x.ev)}</b></span>`:`<span><i>Price</i><b class="ev-na">needs one</b></span>`}</div>
-      <div class="nf-sub">${h(btNote(x.st))} · DraftKings line ${fresh(Date.parse(x.upd))}</div></div>
-      <div class="nf-act"><button class="addbtn" data-nfpx="${h(x.key)}">${x.price!=null?"Edit price":"Enter price"}</button>${x.price!=null?`<button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn" data-nfparlay="${h(x.key)}">+ Parlay</button>`:""}</div></div>`;
-  return`${weekNav()}${cov}
-    ${soon.length?`<div class="eyebrow tk-h">${soonDay} · ${h(soonT)}</div><p class="hint">Strongest sides on backtested stats for the next game. A side is a bet only if your book's price is better than "Fair".</p><div class="nf-list">${soon.map((x,i)=>card(x,i,x.price==null)).join("")}</div>`:""}
-    ${sel.length?`<div class="eyebrow tk-h">Top NFL bets · priced, positive EV</div><div class="nf-list">${sel.map((x,i)=>card(L.find(y=>y.key===x.key)||x,i)).join("")}</div>`:`<div class="empty"><b>No NFL bet qualifies yet</b>${priced.length?"None of the prices you entered clear your minimum EV on a trusted stat.":"Nothing is priced. Enter your book's odds on the lines below or scan a screenshot."}</div>`}
-    ${watch.length?`<div class="eyebrow tk-h">Worth price-checking · strongest model sides on trusted stats</div><p class="hint">Not recommendations: no price yet. "Fair" is the worst price at which the bet still breaks even by Sharpline's chance.</p><div class="nf-list">${watch.map((x,i)=>card(x,i,1)).join("")}</div>`:""}`}
+  /* ---------- NBA-style pieces: the same tiles, cards, grades and buttons as the NBA Top List ---------- */
+  const minPct=Math.round(minE*100),bets=(typeof BETS!=="undefined"?BETS:[]).filter(b=>b.sport==="nfl"||(b.spec&&b.spec.sport==="nfl")||(b.legs&&b.legs.length&&b.legs.every(l=>l.sport==="nfl"||(l.spec&&l.spec.sport==="nfl"))));
+  const S=typeof trackStats==="function"?trackStats(bets):{n:0},open=bets.filter(b=>!b.res).length,first=pre.slice().sort((a,b)=>Date.parse(a.date)-Date.parse(b.date))[0];
+  const injN=Object.keys(N.inj||{}).length,best=sel[0]||null;
+  const kick=e=>new Date(e.date).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"});
+  const tile=(k,v,sub,act)=>`<div class="dt"${act?` data-v="${act}"`:""}><div class="k">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  const dash=`<div class="dash">
+    ${tile(soonE.length?soonDay:"This week",soonE.length?soonE.map(e=>`${e.away.ab} @ ${e.home.ab}`).join(", "):`${pre.length} game${pre.length===1?"":"s"}`,soonE.length?`Kickoff ${kick(soonE[0])} · ${pre.length} games left this week`:first?`Next kickoff ${kick(first)}`:"No games left this week")}
+    ${tile("Best priced edge",best?`<span style="color:var(--over)">${evs(best.ev)}</span>`:"None yet",best?h(best.name+" "+(best.side==="o"?"Over":"Under")+" "+best.l):priced.length?`Below your ${minPct}% minimum`:"Enter a price to see EV")}
+    ${tile("Your NFL record",S.n?`${S.W}-${S.L}${S.P?"-"+S.P:""}`:"No bets yet",S.n?`ROI ${(S.roi>=0?"+":"")+(S.roi*100).toFixed(1)}% · ${open} open`:open?`${open} open`:"Track bets to see results","track")}
+    ${tile("Injury report",injN?`${injN} listed`:"None listed","ESPN, this week's teams")}</div>`;
+  const grade=ev=>ev==null?null:ev>=.08?"S":ev>=.04?"A":ev>=.02?"B":ev>=-.015?"C":ev>=-.05?"D":"F";
+  const conf=x=>{const b=N.model&&N.model.byStat[x.st];const n=x.P&&x.P.n||0;const lv=!trusted(x.st)||n<4||x.far?"Low":b&&b.hit>=.58&&n>=6?"High":"Medium";return{lv}};
+  const ev110=x=>x.p!=null?x.p*(1+100/110)-1:null;
+  const card=(x,i,w)=>{const gEv=x.ev!=null?x.ev:ev110(x),g=grade(gEv),assumed=x.ev==null&&gEv!=null,cf=conf(x),op=x.c?T(x.c.opp)[0]:"",tm=T(x.tid)[0],sd=x.side==="o"?"Over":"Under";
+    const head=x.yn?`${x.name} ${x.st==="td2"?"2+ TDs":"Anytime TD"}`:`${x.name} ${sd} ${x.l} ${SHORT[x.st]||LBL[x.st]}`;
+    const cell=(k,v,c)=>`<div class="st"><div class="k">${k}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div></div>`;
+    const bk=typeof BOOK!=="undefined"?BOOK:"your book";const need=x.p!=null?RK.fairAm(x.p/(1+minE)):null;
+    const call=x.price!=null?(x.ev>=minE?`Best price: ${h(x.bk||bk)} ${am(x.price)}`:`${h(x.bk||bk)} ${am(x.price)} · needs ${am(need)} or better to qualify`):`No price yet · bet it at ${am(x.fair)} or better · ${am(need)} to clear your ${minPct}%`;
+    const last=x.P&&x.P.last&&x.P.last.length?x.P.last.join(", "):null,mv=x.lo!=null&&x.lo!==x.l&&!x.alt?`DraftKings opened ${x.lo}, now ${x.l}.`:"";
+    const det=`<details class="tdet"><summary>Why Sharpline rates it</summary><ul>
+      <li><b>Projection:</b> ${x.yn?"touchdown rate this season":r1(x.P&&x.P.m)+" against a line of "+x.l}. ${h(((x.P&&x.P.parts)||[]).join("; "))}</li>
+      <li><b>Backtest:</b> ${h(btNote(x.st))}.</li>
+      ${last?`<li><b>Recent games:</b> ${h(last)}${x.P.hits!=null&&x.P.n?` · ${x.P.hits} of ${x.P.n} over ${x.alt?x.dkL:x.l}`:""}.</li>`:""}
+      ${x.price!=null?`<li><b>Price:</b> ${h(x.bk||bk)} ${am(x.price)} implies ${pc1(RK.imp(x.price))}; Sharpline has ${pc1(x.p)}.</li>`:`<li><b>Price:</b> ESPN's free feed has DraftKings' line but not its price, so EV needs your book's odds.</li>`}
+      ${mv?`<li><b>Line move:</b> ${mv}</li>`:""}${x.alt?`<li><b>Your line:</b> priced at ${x.l}; DraftKings is at ${x.dkL}${x.far?", far enough that the estimate is rough":""}.</li>`:""}
+      ${x.inj?`<li><b>Injury:</b> ${h(x.inj.st)}${x.inj.txt?" · "+h(x.inj.txt):""}.</li>`:""}
+      <li><b>Freshness:</b> DraftKings line updated ${ago(Date.parse(x.upd))}.</li></ul></details>`;
+    return`<div class="top${w?" lean":""}" data-nfrow="${h(x.key)}"><div class="rank">${i+1}</div>
+      <div class="kind">${g?`<span class="grade g-${g} md" title="${assumed?"Graded at a standard -110 price; enter your odds for the real grade":"Graded at your price"}">${g}</span>${assumed?'<span class="mine">at -110</span>':""}`:""} ${w?'<span class="lean-tag">'+(x.price!=null?"Not an edge yet":"Needs a price")+'</span>':`<span class="conf c-${cf.lv}">${cf.lv} confidence</span>`} ${x.yn?"Touchdown":sd+" · "+h(LBL[x.st])} ${x.price!=null?'<span class="mine">Your odds</span>':""}${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
+      <div class="face" data-nfprof="${x.id}">${nflAvatar(x.id)}<div><h3 style="margin:0">${h(head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${h(tm)} ${x.c&&x.c.side==="home"?"vs":"@"} ${h(op)} · ${h(LBL[x.st]||"")} · ${h(kick(x.e))}</div></div></div>
+      <div style="margin-top:10px"><span class="pick n">${call}</span></div>
+      <div class="stats">${cell("Sharpline",pc(x.p))}${cell("Price implies",x.price!=null?pc(RK.imp(x.price)):"52% at -110")}${cell(x.ev!=null?"Expected value":"EV at -110",gEv!=null?evs(gEv):"–",gEv==null?null:gEv>=0?"var(--over)":"var(--under)")}</div>
+      <div class="stats s2">${cell("Projection",x.yn?"–":r1(x.P&&x.P.m))}${cell("Fair price",am(x.fair))}${cell("Confidence",cf.lv)}</div>
+      ${det}
+      <div class="act">${x.price!=null?`<button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn leg" data-nfparlay="${h(x.key)}">+ Parlay</button>`:""}<button class="addbtn mine-btn${x.price!=null?" in":""}" data-nfpx="${h(x.key)}">${x.price!=null?"✎ Edit "+h(bk)+"'s odds":"✎ Enter "+h(bk)+"'s odds"}</button></div></div>`};
+  return`${weekNav()}${dash}
+    <div class="scanline" style="margin:12px 2px;font:700 12.5px Archivo">Scanned ${all} DraftKings props from ${new Set(L.map(x=>x.id)).size} players in ${loaded} games. ${mod} priced by the model.</div>${cov}
+    ${soon.length?`<div class="eyebrow tk-h">${soonDay} · ${h(soonT)}</div><p class="hint">Strongest sides on backtested stats for the next game. A side is a bet only if your book's price beats "Fair".</p><div class="nf-tops">${soon.map((x,i)=>card(x,i,!(x.price!=null&&x.ev>=minE))).join("")}</div>`:""}
+    ${sel.length?`<div class="eyebrow tk-h">Top NFL bets · priced, positive EV</div><div class="nf-tops">${sel.map((x,i)=>card(L.find(y=>y.key===x.key)||x,i)).join("")}</div>`:`<div class="hint" style="margin:14px 2px"><b style="color:var(--ink)">No bet qualifies right now.</b> ${priced.length?"None of the prices you entered clear your minimum EV on a trusted stat.":"Sharpline won't fill the list without prices. Closest to qualifying, one per player (not recommendations):"}</div>`}
+    ${watch.length?`${sel.length?`<div class="eyebrow tk-h">Worth price-checking</div>`:""}<div class="nf-tops">${watch.map((x,i)=>card(x,i,1)).join("")}</div>`:""}`}
+
+/* the NBA jersey avatar, in NFL team colors */
+let nfUid=0;function nflAvatar(id){const a=ath(id),t=a?T(a[2]):T(""),c1=t[2]||"#333",c2=t[3]||"#999",num=a&&a[3]?String(a[3]):((a&&a[0]||"?").split(" ").map(w=>w[0]).join("").slice(0,2)),fs=num.length>2?24:num.length>1?30:34,k="nfj"+(nfUid++);
+  const inj=N.inj[id],ring=inj&&inj.lv==="out"?"st-out":inj?"st-q":"";
+  return`<span class="jav ${ring}"><svg viewBox="0 0 100 100" aria-label="${h(a?a[0]:"")}, ${h(t[0])}${a&&a[3]?" number "+h(a[3]):""}"><defs><clipPath id="${k}"><rect width="100" height="100" rx="24"/></clipPath></defs><g clip-path="url(#${k})">
+  <rect width="100" height="100" fill="${c1}"/><g transform="translate(50 106) scale(1.32) translate(-50 -104)"><g class="jsy"><path d="M23 106V64c0-11 6-17 13-19l3-15h8c1 9 1 13 3 13s2-4 3-13h8l3 15c7 2 13 8 13 19v42z" fill="#f4f1ea"/>
+  <path d="M39 30c1 10 5 16 11 16s10-6 11-16" fill="none" stroke="${c2}" stroke-width="3.2" stroke-linecap="round"/><path d="M36 45c-4 2-8 7-9 14M64 45c4 2 8 7 9 14" fill="none" stroke="${c2}" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+  <text x="50" y="80" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="${fs}" fill="${c1}" stroke="${c2}" stroke-width="1.2" paint-order="stroke">${h(num)}</text></g></g></g></svg></span>`}
 
 function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g);const f=N.f;
   let rows=L.filter(x=>(f.pos==="all"||x.pos===f.pos)&&(f.st==="all"||x.st===f.st)&&(!f.q||(x.name+" "+T(x.tid)[0]+" "+T(x.tid)[1]).toLowerCase().includes(f.q.toLowerCase()))&&(f.side==="all"||x.side===f.side||f.side==="priced"&&x.price!=null));
