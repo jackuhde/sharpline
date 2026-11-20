@@ -138,7 +138,9 @@ async function summary(eid,maxAge){const B=N.box[eid];if(B&&Date.now()-B.ts<(max
     if(cat.name==="defensive"){v.tkl=at("soloTackles");v.ast=Math.max(0,at("totalTackles")-at("soloTackles"));v.sacks=at("sacks")}})}));
   const teams=((j.boxscore||{}).teams||[]).map(t=>({id:t.team.id,ab:t.team.abbreviation,s:Object.fromEntries((t.statistics||[]).map(x=>[x.name,x.displayValue]))}));
   const hc=(j.header&&j.header.competitions&&j.header.competitions[0])||{};const st=(hc.status||{}).type||{};
-  const out={ts:Date.now(),players,teams,state:st.state,completed:!!st.completed,period:+((hc.status||{}).period||0),clockSec:num((hc.status||{}).clock),
+  const hs=hc.status||{},dc=String(hs.displayClock||""),dcm=dc.match(/^(\d+):(\d{2})/),dcs=dcm?(+dcm[1])*60+(+dcm[2]):null;
+  /* ESPN's summary sometimes leaves the numeric clock at 0; the display clock ("5:45") is the reliable one */
+  const out={ts:Date.now(),players,teams,state:st.state,completed:!!st.completed,period:+(hs.period||0),clockSec:dcs!=null?dcs:num(hs.clock),detail:st.shortDetail||st.detail||"",half:/half/i.test(st.shortDetail||st.detail||""),
     comp:(hc.competitors||[]).map(c=>({id:c.id||c.team&&c.team.id,home:c.homeAway==="home",score:+c.score||0})),drives:j.drives&&j.drives.current,sit:j.situation};
   N.box[eid]=out;return out}
 function statVal(row,st){if(!row)return 0;const v=row.v;if(st==="tkl")return row.tkl;if(st==="ast")return row.ast;if(st==="tklAst")return row.tkl+row.ast;if(st==="sacks")return row.sacks;if(st==="pLng")return null;if(st==="td2")return v.rTD+v.recTD;
@@ -158,10 +160,12 @@ async function gradeAll(){if(!N.stats)await loadStatic();if(!N.stats)return 0;le
 
 /* ---------- live chance for tracked NFL bets (used by the tracker's live panel) ---------- */
 function fracLeft(B){if(!B||!B.period)return 1;if(B.period>4)return Math.max(0,(B.clockSec||0)/600)*.15;return Math.max(0,((4-B.period)*900+(B.clockSec||0))/3600)}
-function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=gameOf(sp.ev)||N.liveEv&&N.liveEv[sp.ev];const B=N.box[sp.ev];
+betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=gameOf(sp.ev)||N.liveEv&&N.liveEv[sp.ev];const B=N.box[sp.ev];
   if(!B){summary(sp.ev,20000).then(()=>window.LiveUI&&LiveUI.paintTracker());return e&&e.state==="pre"?{st:"pre"}:null}
+  /* keep the box score fresh: refetch in the background when it's over 20 seconds old */
+  if(Date.now()-(B.ts||0)>20000&&!betChance.busy[sp.ev]){betChance.busy[sp.ev]=1;summary(sp.ev,20000).catch(()=>{}).finally(()=>{delete betChance.busy[sp.ev];window.LiveUI&&LiveUI.paintTracker()})}
   if(B.state==="pre")return{st:"pre"};if(B.completed)return{st:"post"};const H=B.comp.find(c=>c.home),A=B.comp.find(c=>!c.home);
-  const fl=fracLeft(B),clock=B.period>4?"OT":`Q${B.period} ${Math.floor((B.clockSec||0)/60)}:${String(Math.round((B.clockSec||0)%60)).padStart(2,"0")}`,score=e?`${e.away.ab} ${A.score}, ${e.home.ab} ${H.score}`:`${A.score}-${H.score}`;
+  const fl=fracLeft(B),clock=B.detail&&!/^final/i.test(B.detail)?B.detail:B.period>4?"OT":`Q${B.period} ${Math.floor((B.clockSec||0)/60)}:${String(Math.round((B.clockSec||0)%60)).padStart(2,"0")}`,score=e?`${e.away.ab} ${A.score}, ${e.home.ab} ${H.score}`:`${A.score}-${H.score}`;
   if(sp.kind==="prop"){const row=B.players[sp.ath],cur=row?statVal(row,sp.stat):0;if(cur==null)return{st:"na",why:"No live box stat for this market",clock,score};
     if(cur>sp.line&&sp.side==="o")return{st:"done",p:1,clock,score,now:`${cur} already over ${sp.line}`};if(cur>sp.line&&sp.side==="u")return{st:"done",p:0,clock,score,now:`${cur}, past ${sp.line}`};
     const Ms=M.STATS[sp.stat==="td2"?"td":sp.stat];if(!Ms)return{st:"na",why:"Not modeled live",clock,score};const g=e||{};const c=ctxFor(g,sp.ath)||{};
