@@ -235,7 +235,8 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
     ${tile("Injury report",injN?`${injN} listed`:"None listed","ESPN, this week's teams")}</div>`;
   const grade=ev=>ev==null?null:ev>=.08?"S":ev>=.04?"A":ev>=.02?"B":ev>=-.015?"C":ev>=-.05?"D":"F";
   const conf=x=>{const b=N.model&&N.model.byStat[x.st];const n=x.P&&x.P.n||0;const lv=!trusted(x.st)||n<4||x.far?"Low":b&&b.hit>=.58&&n>=6?"High":"Medium";return{lv}};
-  const ev110=x=>x.p!=null?x.p*(1+100/110)-1:null;
+  /* -110 is only a fair stand-in when the side is near a coin flip; lopsided props (70%+) are priced far past -110, so they get no stand-in grade */
+  const ev110=x=>x.p!=null&&x.p<=.62?x.p*(1+100/110)-1:null;
   const card=(x,i,w)=>{const gEv=x.ev!=null?x.ev:ev110(x),g=grade(gEv),assumed=x.ev==null&&gEv!=null,cf=conf(x),op=x.c?T(x.c.opp)[0]:"",tm=T(x.tid)[0],sd=x.side==="o"?"Over":"Under";
     const head=x.yn?`${x.name} ${x.st==="td2"?"2+ TDs":"Anytime TD"}`:`${x.name} ${sd} ${x.l} ${SHORT[x.st]||LBL[x.st]}`;
     const cell=(k,v,c)=>`<div class="st"><div class="k">${k}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div></div>`;
@@ -251,10 +252,10 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
       ${x.inj?`<li><b>Injury:</b> ${h(x.inj.st)}${x.inj.txt?" · "+h(x.inj.txt):""}.</li>`:""}
       <li><b>Freshness:</b> DraftKings line updated ${ago(Date.parse(x.upd))}.</li></ul></details>`;
     return`<div class="top${w?" lean":""}" data-nfrow="${h(x.key)}"><div class="rank">${i+1}</div>
-      <div class="kind">${g?`<span class="grade g-${g} md" title="${assumed?"Graded at a standard -110 price; enter your odds for the real grade":"Graded at your price"}">${g}</span>${assumed?'<span class="mine">at -110</span>':""}`:""} ${w?'<span class="lean-tag">'+(x.price!=null?"Not an edge yet":"Needs a price")+'</span>':`<span class="conf c-${cf.lv}">${cf.lv} confidence</span>`} ${x.yn?"Touchdown":sd+" · "+h(LBL[x.st])} ${x.price!=null?'<span class="mine">Your odds</span>':""}${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
+      <div class="kind">${g?`<span class="grade g-${g} md" title="${assumed?"Graded at a standard -110 price; enter your odds for the real grade":"Graded at your price"}">${g}</span>${assumed?'<span class="mine">at -110</span>':""}`:""} ${!g&&x.price==null?'<span class="mine">Lopsided line: books price this well past -110</span>':""}${w?'<span class="lean-tag">'+(x.price!=null?"Not an edge yet":"Needs a price")+'</span>':`<span class="conf c-${cf.lv}">${cf.lv} confidence</span>`} ${x.yn?"Touchdown":sd+" · "+h(LBL[x.st])} ${x.price!=null?'<span class="mine">Your odds</span>':""}${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
       <div class="face" data-nfprof="${x.id}">${nflAvatar(x.id)}<div><h3 style="margin:0">${h(head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${h(tm)} ${x.c&&x.c.side==="home"?"vs":"@"} ${h(op)} · ${h(LBL[x.st]||"")} · ${h(kick(x.e))}</div></div></div>
       <div style="margin-top:10px"><span class="pick n">${call}</span></div>
-      <div class="stats">${cell("Sharpline",pc(x.p))}${cell("Price implies",x.price!=null?pc(RK.imp(x.price)):"52% at -110")}${cell(x.ev!=null?"Expected value":"EV at -110",gEv!=null?evs(gEv):"–",gEv==null?null:gEv>=0?"var(--over)":"var(--under)")}</div>
+      <div class="stats">${cell("Sharpline",pc(x.p))}${cell("Price implies",x.price!=null?pc(RK.imp(x.price)):gEv!=null?"52% at -110":"needs a price")}${cell(x.ev!=null?"Expected value":"EV at -110",gEv!=null?evs(gEv):"–",gEv==null?null:gEv>=0?"var(--over)":"var(--under)")}</div>
       <div class="stats s2">${cell("Projection",x.yn?"–":r1(x.P&&x.P.m))}${cell("Fair price",am(x.fair))}${cell("Confidence",cf.lv)}</div>
       ${det}
       <div class="act">${x.price!=null?`<button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn leg" data-nfparlay="${h(x.key)}">+ Parlay</button>`:""}<button class="addbtn mine-btn${x.price!=null?" in":""}" data-nfpx="${h(x.key)}">${x.price!=null?"✎ Edit "+h(bk)+"'s odds":"✎ Enter "+h(bk)+"'s odds"}</button></div></div>`};
