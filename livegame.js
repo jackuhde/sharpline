@@ -278,6 +278,16 @@ function betChance(spec,home,away){if(spec&&spec.sport==="nfl")return window.NFL
     const s=home_?"o":"u";p=mk&&fr&&(spec.kind==="ml"||(home_?mk.line===spec.line:mk.line===-spec.line))?(mk.sides[s]&&mk.sides[s].p):null}
   const proj=`projected ${ab2(e.homeAb)} ${M.marMean>=0?"by "+r1(M.marMean):"down "+r1(-M.marMean)}, ${r1(M.totMean)} total`;
   return{st:"live",p:p??raw,src:p!=null?"blend":"model",clock,score,now:proj}}
+/* same-game parlays: combined chance with this season's within-game correlations (corr.js) */
+function sgpChance(legs,ps){if(!window.SLCorr)return null;SLCorr.load();
+  if(window.NFL&&!NFL.N.stats&&!sgpChance.t&&legs.some(l=>l.spec&&l.spec.sport==="nfl")){sgpChance.t=1;try{NFL.ensure()}catch(e){}}
+  if(!SLCorr.ready())return null;const A=(window.NFL&&NFL.N.stats&&NFL.N.stats.ath)||{};
+  const L=legs.map((l,i)=>{const s=l.spec||{},a=A[s.ath]||[];return{game:s.ev||l.evid||l.game,ath:s.ath,pos:a[1]||s.pos,tid:a[2],stat:s.sport==="nfl"?s.stat:null,dir:s.side==="u"?-1:1,p:ps[i]}});
+  return SLCorr.joint(L)}
+function sgpNote(J,legs){if(!J)return"Loading this season's correlation data…";const nm=i=>{const l=legs[i];return(l.name||"").split(" ").pop()+" "+(l.pick||"").replace(/^(Over|Under) [\d.]+ /,"")};
+  const top=J.pairs.slice().sort((a,b)=>Math.abs(b.rho)-Math.abs(a.rho))[0];
+  return J.pairs.length?`Adjusted for same-game correlation${top&&Math.abs(top.rho)>=.1?`: ${esc(nm(top.i))} and ${esc(nm(top.j))} move together (${top.rho.toFixed(2)})`:""}. Treated as independent it would be ${Math.round(J.indep*100)}%.${J.unknown?" Some pairs have no measured correlation and count as independent.":""}`:
+    "No measured correlation for these legs, so they're treated as independent."}
 function chanceHTML(b){const legs=b.type==="parlay"?b.legs:null;
   const show=c=>c.st==="done"?`<b class="${c.p?"pos":"neg"}">${c.p?"Won already":"Lost already"}</b> · ${esc(c.now)}`:c.st==="live"?`<b>${Math.round(c.p*100)}%</b> to win · ${esc(c.now)}${c.src==="model"?" · model only, no live price at this line":""}${c.thin?" · few games":""}`:c.st==="na"?esc(c.why):"";
   if(!legs){const c=betChance(b.spec,b.home,b.away);if(!c||c.st==="pre"||c.st==="post")return"";
@@ -285,7 +295,8 @@ function chanceHTML(b){const legs=b.type==="parlay"?b.legs:null;
   const rows=legs.map(l=>({l,c:l.res?null:betChance(l.spec,l.home,l.away)}));if(!rows.some(r=>r.c&&r.c.st!=="pre"&&r.c.st!=="post"))return"";
   let all=1,ok=true;rows.forEach(({l,c})=>{if(l.res==="W"||l.res==="P"||l.res==="V")return;if(l.res==="L"){all=0;return}
     if(c&&(c.st==="live"||c.st==="done"))all*=c.p;else ok=false});
-  const tot=b.sgp?`Same-game legs are correlated, so no combined chance is shown.`:ok?`<b>${Math.round(all*100)}%</b> all remaining legs win (legs treated as independent)`:`Combined chance shown once every pending leg is in progress`;
+  let J=null;if(b.sgp&&ok){J=sgpChance(rows.map(r=>r.l),rows.map(({l,c})=>l.res==="W"||l.res==="P"||l.res==="V"?1:l.res==="L"?0:c?c.p:null))}
+  const tot=b.sgp?(J?`<b>${Math.round(J.p*100)}%</b> all remaining legs win (same-game correlation included)`:`Combined chance shown once every pending leg is in progress`):ok?`<b>${Math.round(all*100)}%</b> all remaining legs win (legs treated as independent)`:`Combined chance shown once every pending leg is in progress`;
   return`<span class="lv-live">Live</span> ${tot}<div class="tlegs">${rows.filter(r=>r.c&&r.c.st!=="pre"&&r.c.st!=="post").map(({l,c})=>`<div>${esc(l.key[0]==="l"?"":l.name.split(" ").pop()+" ")}${esc(l.pick)}: ${show(c)}</div>`).join("")}</div>`}
 /* ---------- hit-chance panel beside each open bet ----------
    Before tip: Sharpline's pregame estimate (legs multiplied, treated as independent; separate games).
@@ -311,18 +322,19 @@ function legState(l){if(l.res==="W"||l.res==="P"||l.res==="V")return{k:"won",p:1
   return{k:"pre",p:l.p??null,txt:pre}}
 function panelHTML(b){const legs=b.type==="parlay"?b.legs:[{...b,res:null,name:b.name,pick:b.pick}];
   const L=legs.map(l=>({l,s:legState(l)})),anyLive=L.some(x=>x.s.k==="live"||x.s.k==="won"||x.s.k==="lost"),dead=L.some(x=>x.s.k==="lost");
-  let p=null;if(!b.sgp||legs.length===1){p=1;for(const x of L){if(x.s.p==null){p=null;break}p*=x.s.p}}
+  let p=null,J=null;if(!b.sgp||legs.length===1){p=1;for(const x of L){if(x.s.p==null){p=null;break}p*=x.s.p}}
+  else if(L.every(x=>x.s.p!=null)){J=sgpChance(legs,L.map(x=>x.s.p));p=J?J.p:null}
   if(dead)p=0;if(p!=null&&anyLive)chPush(b.id,p);
   const H=chHist()[b.id]||[],start=b.p??(H[0]&&H[0][1]),delta=p!=null&&start!=null&&anyLive?p-start:null;
   const cls=p==null?"":p>=.5?"pos":p>=.2?"mid":"neg",pc=v=>v==null?"–":v>=.995?"99%+":v<.005&&v>0?"<1%":Math.round(v*100)+"%";
   const head=dead?"Busted":anyLive?"Live chance to hit":"Pregame chance to hit";
   return`<div class="tp-h"><span class="${anyLive&&!dead?"lv-live":"tp-tag"}">${anyLive&&!dead?"Live":dead?"Final":"Pregame"}</span>${head}</div>
-    <div class="tp-big ${cls}">${b.sgp&&legs.length>1?"–":pc(p)}</div>
-    <div class="tp-sub">${b.sgp&&legs.length>1?"Same-game legs are correlated, so no combined chance.":delta!=null&&Math.abs(delta)>=.005?`<b class="${delta>0?"pos":"neg"}">${delta>0?"▲":"▼"} ${Math.abs(Math.round(delta*100))} pts</b> since tracked (${pc(start)})`:!anyLive?`Updates every 20 seconds once games tip`:"Even with when you tracked it"}</div>
+    <div class="tp-big ${cls}">${pc(p)}</div>
+    <div class="tp-sub">${b.sgp&&legs.length>1&&!anyLive?sgpNote(J,legs):delta!=null&&Math.abs(delta)>=.005?`<b class="${delta>0?"pos":"neg"}">${delta>0?"▲":"▼"} ${Math.abs(Math.round(delta*100))} pts</b> since tracked (${pc(start)})`:!anyLive?`Updates every 20 seconds once games tip`:"Even with when you tracked it"}</div>
     ${spark(H)}
     <div class="tp-legs">${L.map(({l,s})=>`<div class="tp-leg ${s.k}"><div class="tp-lt"><span>${esc(l.key&&l.key[0]==="l"?"":(l.name||"").split(" ").pop()+" ")}${esc(l.pick)}</span><b>${s.k==="won"?"✓":s.k==="lost"?"✕":pc(s.p)}</b></div>
       <div class="tp-bar"><i style="width:${s.p==null?0:Math.round(Math.max(.02,s.p)*100)}%"></i></div><small>${esc(s.txt)}${s.model?" · model only, no live price at this line":""}${s.k==="pre"&&s.p!=null?" · pregame estimate":""}</small></div>`).join("")}</div>
-    <div class="tp-f">${legs.length>1?"Legs treated as independent. ":""}Live chances use the box score, game clock and DraftKings' live price when it has one at your line. Not yet graded for calibration.</div>`}
+    <div class="tp-f">${legs.length>1?(b.sgp?"Same-game legs adjusted with within-game correlations from this season's box scores (NFL). ":"Legs treated as independent. "):""}Live chances use the box score, game clock and DraftKings' live price when it has one at your line. Not yet graded for calibration.</div>`}
 function paintTracker(){document.querySelectorAll("[data-tlive]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tlive);const h=b&&!b.res?chanceHTML(b):"";
   if(el._h!==h){el._h=h;el.innerHTML=h;el.style.display=h?"":"none"}});
   document.querySelectorAll("[data-tpanel]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tpanel);let h="";try{h=b&&!b.res?panelHTML(b):""}catch(e){console.warn(e)}

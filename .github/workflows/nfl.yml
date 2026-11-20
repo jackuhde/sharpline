@@ -19,6 +19,7 @@ jobs:
           node-version: 20
       - run: node scripts/build-nfl.mjs
       - run: node scripts/nfl-backtest.mjs
+      - run: node scripts/nfl-corr.mjs
       - name: Commit if changed
         run: |
           git config user.name "sharpline-bot"

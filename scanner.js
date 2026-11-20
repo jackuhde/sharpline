@@ -25,7 +25,7 @@ const YN=new Set(["td","td1","td2"]);
 function nbaNames(){try{return ocrCtx().names.map(x=>({...x,sport:"nba"}))}catch(e){return[]}}
 function nbaTeams(){return Object.entries(TEAMS).map(([full,v])=>({full,ab:v[0],nick:full.toLowerCase().split(" ").pop(),sport:"nba"}))}
 function ctxAll(){const nfl=window.NFL&&NFL.N.stats;return{names:[...nbaNames(),...(nfl?NFL.scanNames():[])],teams:[...nbaTeams(),...(nfl?NFL.scanTeams():[])]}}
-async function prepNFL(){if(!window.NFL)return;try{await Promise.race([NFL.ensure(),new Promise(r=>setTimeout(r,15000))])}catch(e){}}
+async function prepNFL(){if(window.SLCorr)SLCorr.load();if(!window.NFL)return;try{await Promise.race([NFL.ensure(),new Promise(r=>setTimeout(r,15000))])}catch(e){}}
 
 /* ---------- prediction markets: price in cents plus the exchange fee ---------- */
 function pmCost(leg,book){if(!leg.pm||leg.pm.cents==null)return null;const P=leg.pm.cents/100,q=leg.pm.qty||1;
@@ -117,7 +117,9 @@ function analyzeBet(b){const book=b.book;const legs=b.legs.map(L=>analyzeLeg(L,b
   const games=legs.map(r=>r.A.eid||(r.A.gi!=null?"g"+r.A.gi:null));const sameGame=games.some((g,i)=>g&&games.indexOf(g)!==i);out.sameGame=sameGame||b.sgp;
   const allP=legs.every(r=>r.p!=null);
   if(!allP)out.pNote="At least one leg has no probability, so there's no combined chance.";
-  else if(out.sameGame)out.pNote="Two or more legs are from the same game, so they aren't independent: results in one game move together (a quarterback's yards and his receiver's yards, or a big scoring night and the game total). Sharpline doesn't have a tested correlation model, so it won't give a combined chance, and multiplying the legs would be wrong. The legs are graded one by one below.";
+  else if(out.sameGame){const J=window.SLCorr&&SLCorr.ready()?SLCorr.joint(legs.map(r=>({game:r.A.eid||(r.A.gi!=null?"g"+r.A.gi:null),ath:r.A.athId,pos:r.A.pos,tid:r.A.tid,stat:r.A.sport==="nfl"&&r.leg.mk==="prop"?(r.leg.stat==="td2"?"td":r.leg.stat):null,dir:r.leg.side==="under"||r.leg.side==="no"?-1:1,p:r.p}))):null;
+    if(J&&J.pairs.length){out.p=J.p;out.pNote=`Same-game legs move together, so this uses within-game correlations measured on this season's NFL box scores (treated as independent it would be ${(J.indep*100).toFixed(1)}%).${J.unknown?" Pairs with no measured correlation count as independent.":""}`}
+    else out.pNote="Two or more legs are from the same game, and Sharpline has no measured correlation for this combination (NBA, or game lines), so it won't give a combined chance; multiplying the legs would be wrong."}
   else{out.p=legs.reduce((a,r)=>a*r.p,1);out.pNote="Legs are from different games, so they're treated as independent."}
   if(out.p!=null&&out.parAm!=null){out.ev=out.p*decA(out.parAm)-1;out.implied=impA(out.parAm)}
   if(b.stake!=null&&out.parAm!=null)out.payout=+(b.stake*(b.parlayOdds==null&&mult?mult:decA(out.parAm))).toFixed(2);
