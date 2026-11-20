@@ -163,8 +163,10 @@ function fracLeft(B){if(!B||!B.period)return 1;if(B.period>4)return Math.max(0,(
 betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=gameOf(sp.ev)||N.liveEv&&N.liveEv[sp.ev];const B=N.box[sp.ev];
   if(!B){summary(sp.ev,20000).then(()=>window.LiveUI&&LiveUI.paintTracker());return e&&e.state==="pre"?{st:"pre"}:null}
   /* keep the box score fresh: refetch in the background when it's over 20 seconds old */
-  if(Date.now()-(B.ts||0)>20000&&!betChance.busy[sp.ev]){betChance.busy[sp.ev]=1;summary(sp.ev,20000).catch(()=>{}).finally(()=>{delete betChance.busy[sp.ev];window.LiveUI&&LiveUI.paintTracker()})}
+  if(Date.now()-(B.ts||0)>20000&&!betChance.busy[sp.ev]){betChance.busy[sp.ev]=1;Promise.all([summary(sp.ev,20000),Date.now()-(N.sbTs||0)>20000?loadWeek(true):null]).catch(()=>{}).finally(()=>{delete betChance.busy[sp.ev];window.LiveUI&&LiveUI.paintTracker()})}
   if(B.state==="pre")return{st:"pre"};if(B.completed)return{st:"post"};const H=B.comp.find(c=>c.home),A=B.comp.find(c=>!c.home);
+  /* the scoreboard carries the true game clock; prefer it over the box score's when the game is live there */
+  if(e&&e.state==="in"&&e.period){const ec=String(e.clock||"").match(/^(\d+):(\d{2})/);B.period=e.period;if(ec)B.clockSec=(+ec[1])*60+(+ec[2]);else if(e.clockSec!=null)B.clockSec=e.clockSec;if(e.detail)B.detail=e.detail}
   const fl=fracLeft(B),clock=B.detail&&!/^final/i.test(B.detail)?B.detail:B.period>4?"OT":`Q${B.period} ${Math.floor((B.clockSec||0)/60)}:${String(Math.round((B.clockSec||0)%60)).padStart(2,"0")}`,score=e?`${e.away.ab} ${A.score}, ${e.home.ab} ${H.score}`:`${A.score}-${H.score}`;
   if(sp.kind==="prop"){const row=B.players[sp.ath],cur=row?statVal(row,sp.stat):0;if(cur==null)return{st:"na",why:"No live box stat for this market",clock,score};
     if(cur>sp.line&&sp.side==="o")return{st:"done",p:1,clock,score,now:`${cur} already over ${sp.line}`};if(cur>sp.line&&sp.side==="u")return{st:"done",p:0,clock,score,now:`${cur}, past ${sp.line}`};
