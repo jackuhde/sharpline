@@ -21,4 +21,4 @@ while(ymd(d)<=end){const k=ymd(d);d.setUTCDate(d.getUTCDate()+1);if(out.dates[k]
     if(!out.games.some(x=>x.id===g.id)){out.games.push(g);added++}}
   if(ok)out.dates[k]=1}
 out.games.sort((a,b)=>a.d<b.d?-1:1);out.updated=new Date().toISOString();
-fs.writeFileSync(F,JSON.stringify(out));console.log(`${out.games.length} games (${added} new), ${out.games.filter(g=>g.sp!=null).length} with closing spread`);
+fs.mkdirSync("data/nba",{recursive:true});fs.writeFileSync(F,JSON.stringify(out));console.log(`${out.games.length} games (${added} new), ${out.games.filter(g=>g.sp!=null).length} with closing spread`);
