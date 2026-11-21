@@ -858,6 +858,11 @@ html,body{overscroll-behavior-y:none}
 .sc-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.sc-acts .addbtn[disabled]{opacity:.45}
 .sc-saved{margin-top:14px;border:1px solid var(--line2);border-radius:14px;padding:10px 12px}.sc-saved summary{font:800 13px Archivo;cursor:pointer}
 .sc-saved>div{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.sc-saved>div>span{flex:1}.sc-saved b{display:block;font:800 13px Archivo}.sc-saved small{font:600 11.5px Archivo;color:var(--mute)}
+.gm-box{margin-top:12px;padding:12px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--s2)}.gm-box.dim{color:var(--mute);font:700 12px Archivo}
+.gm-h{font:900 10.5px Archivo;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.gm-h span{color:var(--ink);letter-spacing:0;text-transform:none;font:800 12.5px Archivo}
+.gm-r{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font:700 13px Archivo}.gm-r:first-of-type{margin-top:6px}.gm-r b{font:800 11px Archivo;color:var(--mute);text-transform:uppercase}
+.gm-r em{font:800 10px Archivo;font-style:normal;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}.gm-r em.no{background:var(--s3);color:var(--mute)}.gm-r em.ok{background:rgba(52,199,89,.14);color:var(--over)}
+.gm-d summary{cursor:pointer;font:800 12px Archivo;color:var(--acc);margin-top:6px}.gm-d p{font:600 12px/1.5 Archivo;color:var(--mute);margin:6px 0 0}
 </style>
 </head>
 <body>
@@ -955,9 +960,10 @@ html,body{overscroll-behavior-y:none}
 <script src="sync.js?v=1795800001"></script>
 <script src="tracker2.js?v=1795900001"></script>
 <script src="recs.js?v=1795800001"></script>
+<script src="gamemodel.js?v=1795900002"></script>
 <script src="corr.js?v=1795900001"></script>
 <script src="livegame.js?v=1795900002"></script>
-<script src="nfl.js?v=1795900014"></script>
+<script src="nfl.js?v=1795900015"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
 <script>
@@ -1917,6 +1923,8 @@ function renderLines(){
         return`<div class="mrow" data-lrow="${i}"><div><div class="mk">${L.m} ${gradeTag(gradeNow("l"+i))}${L.p0!=null&&Math.abs(L.p-L.p0)>=.01?` <span class="moved ${L.p>L.p0?"up":"dn"}">${L.p>L.p0?"▲":"▼"} ${(Math.abs(L.p-L.p0)*100).toFixed(0)} pts since research</span>`:""}</div><div class="line2"><span class="pick ${sideCls(L.s)} ${L.t==="pass"?"pass":""}">${L.pick}</span><span class="est"><b>${pct(L.p)}</b> est</span></div></div>
           <div class="r"><div class="big">${fmtAm(toAm(L.p))}</div><div class="sm">fair · need this or better</div>${L.bp!=null?`<div class="sm">best seen ${fmtAm(L.bp)} (${L.bk}) <span style="color:${ev>0.005?"var(--over)":ev<-0.005?"var(--under)":"var(--mute)"}">${ev>=0?"+":""}${(ev*100).toFixed(1)}%</span></div>`:""}</div>
           <div class="why">${L.why}</div>${edHTML("l"+i)}<div>${addBtn("l"+i)}</div></div>`}).join("")}
+      ${window.GameModel?(()=>{const sp=G.mk.find(m=>/spread/i.test(m.k)),tt=G.mk.find(m=>/total/i.test(m.k));const num=t=>{const x=String(t||"").match(/[+-]?\d+(\.\d+)?/);return x?+x[0]:null};
+        return GameModel.html("nba",team(G.home)[0],team(G.away)[0],sp?num(String(sp.b).split(" ").pop()):null,tt?num(String(tt.k).split(" ").pop()):null)})():""}
       <div class="src" style="margin-top:10px;line-height:1.7">Sources: ${G.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(" · ")}</div></div>`});
   const act=cards.filter((c,gi)=>!movedOff(gi)),old=cards.filter((c,gi)=>movedOff(gi));
   document.getElementById("lineList").innerHTML=(act.join("")||`<div class="empty"><b>No games left to start today</b>Games in progress are in Live.</div>`)+(old.length?`<details class="arch"><summary>${old.length} game${old.length===1?"":"s"} started or finished · pregame lines kept for comparison</summary><div class="arch-in">${old.join("")}</div></details>`:"");
