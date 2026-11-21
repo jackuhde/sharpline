@@ -959,11 +959,11 @@ html,body{overscroll-behavior-y:none}
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795800001"></script>
-<script src="tracker2.js?v=1795900001"></script>
+<script src="tracker2.js?v=1795900003"></script>
 <script src="recs.js?v=1795800001"></script>
-<script src="gamemodel.js?v=1795900003"></script>
-<script src="corr.js?v=1795900001"></script>
-<script src="livegame.js?v=1795900002"></script>
+<script src="gamemodel.js?v=1795900004"></script>
+<script src="corr.js?v=1795900002"></script>
+<script src="livegame.js?v=1795900003"></script>
 <script src="nfl.js?v=1795900016"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
@@ -1939,7 +1939,8 @@ function renderLines(){
 
 /* ---------- NBA game lines straight from DraftKings' board: track or add to a parlay ---------- */
 function gmkRec(gi,mi,sd){const G=SNAP[gi],m=G&&G.mk[mi];if(!m)return null;const q=m.q[0]||{},odds=sd==="a"?q.a:q.b;if(odds==null)return null;
-  const fp=m.fair&&m.fair.p,p=fp?fp[sd==="a"?0:1]:null,lbl=sd==="a"?m.a:m.b,E=LIVE.ev[gi]||{};let spec,pick,mkt;
+  const nvp=(a,b)=>{if(a==null||b==null)return null;const ia=1/dec(a),ib=1/dec(b);return[ia/(ia+ib),ib/(ia+ib)]};
+  const fp=m.fair&&m.fair.p||nvp(q.a,q.b),p=fp?fp[sd==="a"?0:1]:null,lbl=sd==="a"?m.a:m.b,E=LIVE.ev[gi]||{};let spec,pick,mkt;
   if(m.k==="Moneyline"){const full=sd==="a"?G.away:G.home;spec={kind:"ml",team:full};pick=`${lbl} ML`;mkt="Moneyline"}
   else if(/^Spread/.test(m.k)){const w=String(lbl).split(" "),full=fullOfAbbr(w[0])||(sd==="a"?G.away:G.home);spec={kind:"sp",team:full,line:+w[1]};pick=lbl;mkt="Spread"}
   else{const L=+m.k.split(" ").pop();spec={kind:"tot",line:L,side:sd==="a"?"o":"u"};pick=`${lbl} ${L}`;mkt="Total"}

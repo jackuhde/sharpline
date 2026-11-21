@@ -281,8 +281,8 @@ function betChance(spec,home,away){if(spec&&spec.sport==="nfl")return window.NFL
 /* same-game parlays: combined chance with this season's within-game correlations (corr.js) */
 function sgpChance(legs,ps){if(!window.SLCorr)return null;SLCorr.load();
   if(window.NFL&&!NFL.N.stats&&!sgpChance.t&&legs.some(l=>l.spec&&l.spec.sport==="nfl")){sgpChance.t=1;try{NFL.ensure()}catch(e){}}
-  if(!SLCorr.ready())return null;const A=(window.NFL&&NFL.N.stats&&NFL.N.stats.ath)||{};
-  const L=legs.map((l,i)=>{const s=l.spec||{},a=A[s.ath]||[];return{game:s.ev||l.evid||l.game,ath:s.ath,pos:a[1]||s.pos,tid:a[2],stat:s.sport==="nfl"?s.stat:null,dir:s.side==="u"?-1:1,p:ps[i]}});
+  if(!SLCorr.ready())return null;if(window.GameModel){GameModel.load("nba");GameModel.load("nfl")}
+  const L=legs.map((l,i)=>SLCorr.legOf(l,ps[i]));
   return SLCorr.joint(L)}
 function sgpNote(J,legs){if(!J)return"Loading this season's correlation data…";const nm=i=>{const l=legs[i];return(l.name||"").split(" ").pop()+" "+(l.pick||"").replace(/^(Over|Under) [\d.]+ /,"")};
   const top=J.pairs.slice().sort((a,b)=>Math.abs(b.rho)-Math.abs(a.rho))[0];

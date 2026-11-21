@@ -17,7 +17,9 @@ function addLeg(key){const b=baseOf(key);if(inSlip(key)){SLIP=SLIP.filter(l=>!(l
   SLIP.push({...R,id:Date.now()+Math.random(),res:null});saveSlip();paintSlip();renderAll();toast(`Added to parlay slip (${SLIP.length} leg${SLIP.length===1?"":"s"})`)}
 function slipCalc(legs){const L=legs.filter(l=>l.odds!=null);const dec=L.reduce((a,l)=>a*amToDec(l.odds),1);
   const sgp=new Set(legs.map(l=>l.evid||l.game)).size<legs.length;const pAll=legs.every(l=>l.p!=null)?legs.reduce((a,l)=>a*l.p,1):null;
-  return{dec,am:L.length===legs.length&&legs.length?decToAm(dec):null,sgp,p:sgp?null:pAll}}
+  let p=sgp?null:pAll,J=null;
+  if(sgp&&pAll!=null&&window.SLCorr){SLCorr.load();if(window.GameModel){GameModel.load("nba");GameModel.load("nfl")}if(SLCorr.ready()){J=SLCorr.joint(legs.map(l=>SLCorr.legOf(l,l.p)));if(J)p=J.p}}
+  return{dec,am:L.length===legs.length&&legs.length?decToAm(dec):null,sgp,p,J,pAll}}
 function paintSlip(){let bar=document.getElementById("slipBar");if(!bar){bar=document.createElement("div");bar.id="slipBar";document.body.appendChild(bar)}
   const C=slipCalc(SLIP);bar.className=SLIP.length?"on":"";bar.innerHTML=SLIP.length?`<button data-slipopen="1"><b>Parlay slip</b> ${SLIP.length} leg${SLIP.length===1?"":"s"}${C.am!=null?` · ${sgnAm(C.am)}`:""}</button>`:""}
 function slipSheet(){let el=document.getElementById("slipSheet");if(!el){el=document.createElement("div");el.id="slipSheet";el.className="sheet";document.body.appendChild(el)}
@@ -25,14 +27,16 @@ function slipSheet(){let el=document.getElementById("slipSheet");if(!el){el=docu
   el.innerHTML=`<div class="sheet-bg" data-slipclose="1"></div><div class="sheet-in"><div class="sheet-h"><div><div class="eyebrow">Parlay</div><h2>${SLIP.length}-leg slip</h2></div><button class="x" data-slipclose="1">×</button></div>
     ${SLIP.length?`<div class="list">${SLIP.map(l=>`<div class="slip-l"><div><b>${h(l.key[0]==="l"?"":l.name+" · ")}${h(l.pick)}</b><small>${h(l.game)}${l.p!=null?` · Sharpline ${Math.round(l.p*100)}%`:""}</small></div>
       <div class="slip-o"><input type="number" inputmode="decimal" data-slipodds="${l.id}" value="${l.odds??""}" placeholder="-110"><button class="x" data-sliprm="${l.id}" aria-label="Remove">×</button></div></div>`).join("")}</div>
-      <div class="slip-sum"><div><small>Legs multiplied</small><b>${C.am!=null?sgnAm(C.am):"enter all odds"}</b></div>
-        <div><label>Parlay odds you got</label><input type="number" inputmode="decimal" id="slipOdds" placeholder="${C.am!=null?C.am:"+600"}"></div>
+      <div class="slip-sum"><div><small>${C.sgp?"Legs multiplied (an SGP pays less)":"Legs multiplied"}</small><b>${C.am!=null?sgnAm(C.am):"enter all odds"}</b></div>
+        <div><label>Parlay odds you got</label><input type="number" inputmode="decimal" id="slipOdds" placeholder="${C.sgp?"book's SGP odds":C.am!=null?C.am:"+600"}"></div>
         <div><label>Stake $</label><input type="number" inputmode="decimal" id="slipStake" value="${stake}"></div></div>
-      ${C.sgp?`<p class="hint">Same-game legs are often correlated, so the book's same-game parlay price can differ a lot from the legs multiplied. Enter the parlay odds you actually got. Sharpline won't show a combined win chance for same-game parlays.</p>`:C.p!=null?`<p class="hint">If the legs were independent, Sharpline's chance that all ${SLIP.length} win is about ${(C.p*100).toFixed(1)}%. The legs multiplied pay ${C.am!=null?sgnAm(C.am):"–"}, which needs ${C.am!=null?(100/amToDec(C.am)).toFixed(1)+"%":"–"}.</p>`:""}
+      ${C.sgp?`<div class="hint"><b style="color:var(--ink)">Same-game parlay.</b> Legs in one game move together, so books don't pay the legs multiplied: they shorten the price, and Fliff's SGP price is the one that counts. Enter the odds your book gives you.
+        ${C.pAll==null?"<br>At least one leg has no Sharpline chance, so there's no combined chance.":C.p!=null?`<br>Sharpline's chance all ${SLIP.length} hit, correlation included: <b style="color:var(--ink)">${(C.p*100).toFixed(1)}%</b>${C.pAll!=null?` (treated as independent it would be ${(C.pAll*100).toFixed(1)}%)`:""}. Fair SGP price: <b style="color:var(--ink)">${sgnAm(decToAm(1/C.p))}</b>; take it only at that or better.${C.J&&C.J.unknown?" Some leg pairs (for example a player prop with a game line, or NBA props) have no measured correlation and count as independent.":""}`:"Loading correlation data…"}
+        <span id="slipEv"></span></div>`:C.p!=null?`<p class="hint">If the legs were independent, Sharpline's chance that all ${SLIP.length} win is about ${(C.p*100).toFixed(1)}%. The legs multiplied pay ${C.am!=null?sgnAm(C.am):"–"}, which needs ${C.am!=null?(100/amToDec(C.am)).toFixed(1)+"%":"–"}.</p>`:""}
       <div class="slip-b"><button class="ghost" data-slipclear="1">Clear slip</button><button class="go2" data-sliptrack="1" ${SLIP.length<2?"disabled":""}>Track parlay</button></div>`
     :`<div class="empty"><b>Slip is empty</b>Tap "+ Parlay" on any prop or line to add legs.</div>`}</div>`;
   el.classList.add("on")}
-function trackParlay(){if(SLIP.length<2)return;const C=slipCalc(SLIP),o=+document.getElementById("slipOdds").value||C.am,stake=+document.getElementById("slipStake").value||UNIT;
+function trackParlay(){if(SLIP.length<2)return;const C=slipCalc(SLIP);if(C.sgp&&!+document.getElementById("slipOdds").value){toast("Enter the same-game parlay odds your book gave you");document.getElementById("slipOdds").focus();return}const o=+document.getElementById("slipOdds").value||C.am,stake=+document.getElementById("slipStake").value||UNIT;
   if(o==null||!isFinite(o)){toast("Enter the parlay odds you got");return}
   const legs=SLIP.map(l=>({key:l.key,name:l.name,pick:l.pick,game:l.game,mkt:l.mkt,odds:l.odds,p:l.p,spec:l.spec,ev:l.ev,evid:l.evid,home:l.home,away:l.away,tm:l.tm,ath:l.ath,date:l.date,res:null}));
   BETS.unshift({id:Date.now(),type:"parlay",sgp:C.sgp,date:DATA_DATE,key:"x"+Date.now(),name:`${legs.length}-leg ${C.sgp?"same-game ":""}parlay`,pick:legs.map(l=>(l.key[0]==="l"?"":l.name.split(" ").pop()+" ")+l.pick).join(" + "),
@@ -140,4 +144,8 @@ function addLegObj(R){if(!R)return;if(R.odds==null){toast("Enter your book's pri
 window.TR2={extras,addLegObj,sportOf,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
 setTimeout(()=>{paintSlip();
 },0);
+/* typing the book's parlay odds shows EV against Sharpline's chance (correlation included for same-game parlays) */
+document.addEventListener("input",e=>{if(e.target.id!=="slipOdds")return;const out=document.getElementById("slipEv");if(!out)return;const C=slipCalc(SLIP),o=+e.target.value;
+  if(!o||Math.abs(o)<100||C.p==null){out.innerHTML="";return}const ev=C.p*amToDec(o)-1;
+  out.innerHTML=`<br>At ${sgnAm(o)}: EV <b style="color:${ev>=0?"var(--over)":"var(--under)"}">${ev>=0?"+":"−"}${Math.abs(ev*100).toFixed(1)}%</b> (needs ${(100/amToDec(o)).toFixed(1)}%).`});
 })();

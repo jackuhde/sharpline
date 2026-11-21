@@ -42,5 +42,7 @@ out.markets.ml={trusted:out.markets.spread.trusted,k:out.markets.spread.k,note:"
 const M=fit(G);Object.assign(out,{avg:M.avg,hfa:M.hfa,R:M.R,sdM:CFG.sdM,sdT:CFG.sdT});
 /* residual spread of the model on unseen games, for reference */
 const res=rows.map(r=>r.mar-r.P.m),rt=rows.map(r=>r.tot-r.P.t),sd=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)/Math.max(1,a.length));out.residSd={margin:+sd(res).toFixed(2),total:+sd(rt).toFixed(2)};
+/* how a home cover and an over move together against the closing line (Gaussian, shrunk by n/(n+40)) */
+{const a=G.filter(g=>g.sp!=null&&g.tot!=null).map(g=>[g.hs-g.as+g.sp,g.hs+g.as-g.tot]);const n=a.length,mx=a.reduce((q,v)=>q+v[0],0)/n,my=a.reduce((q,v)=>q+v[1],0)/n;let xy=0,xx=0,yy=0;a.forEach(([x,y])=>{xy+=(x-mx)*(y-my);xx+=(x-mx)**2;yy+=(y-my)**2});out.rhoMT=+((xy/Math.sqrt(xx*yy))*n/(n+40)).toFixed(3);out.rhoN=n}
 fs.mkdirSync(`data/${sport}`,{recursive:true});fs.writeFileSync(`data/${sport}/gamemodel.json`,JSON.stringify(out));
 console.log(sport,`${G.length} games, ${rows.length} tested, hfa ${M.hfa}, resid sd`,out.residSd);for(const[k,v]of Object.entries(out.markets))console.log(k,JSON.stringify(v));

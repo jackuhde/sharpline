@@ -22,5 +22,5 @@ function html(sp,home,away,spH,tot,btn){btn=btn||(()=>"");const P=project(sp,hom
     ${tot!=null?row("Total",lean(ovr,"Over "+tot,"Under "+tot)+` (projects ${r1(P.t)})`,"total",btn("tot",ovr>=.5?"over":"under")):""}
     <details class="gm-d"><summary>How it's built and how it tested</summary><p>Each team's offense and defense rating comes from this season's scores, fitted only on games before the one predicted. Tested on every game from early in the season on: ${Object.entries(mk).filter(([k])=>k!=="ml").map(([k,v])=>`<b>${k}</b>: ${h(v.note)}`).join("; ")}. DraftKings' closing line has been the better predictor so far, so these numbers are for reference and don't reach the Top List. If a later backtest passes, they will.</p></details></div>`}
 const h=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-window.GameModel={load,project,html,onload:sp=>{try{if(sp==="nfl"&&window.NFL)NFL.paint();if(sp==="nba"&&typeof renderLines==="function")renderLines()}catch(e){}}};
+window.GameModel={load,project,html,rhoMT:sp=>{load(sp);const m=M[sp];return m&&m.rhoMT!=null?m.rhoMT:null},onload:sp=>{try{if(sp==="nfl"&&window.NFL)NFL.paint();if(sp==="nba"&&typeof renderLines==="function")renderLines()}catch(e){}}};
 })();

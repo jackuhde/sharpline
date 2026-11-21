@@ -10,7 +10,11 @@ function load(url){if(DATA||loading||typeof fetch==="undefined")return loading;l
 function setData(p){DATA=p}
 const grp=p=>p==="FB"?"RB":p==="PK"?"K":p;
 /* leg: {game, ath, pos, tid, stat, dir (+1 over/yes, -1 under/no), p} */
-function rho(a,b){if(!DATA||a.game==null||a.game!==b.game||!a.stat||!b.stat||a.ath==null||b.ath==null)return null;
+function rho(a,b){if(a.game==null||a.game!==b.game||!a.stat||!b.stat)return null;
+  /* game lines: moneyline and spread both ride the final margin (same latent variable); total rides points scored */
+  const ga=/^G:/.test(a.stat),gb=/^G:/.test(b.stat);if(ga||gb){if(!(ga&&gb))return null;if(a.stat===b.stat)return .95;
+    const r=window.GameModel&&GameModel.rhoMT(a.sport||b.sport);return r}
+  if(!DATA||a.ath==null||b.ath==null)return null;
   if(a.ath===b.ath){if(a.stat===b.stat)return .95;const[x,y]=[a.stat,b.stat].sort();const v=DATA[`S|${x}|${y}`];return v?v[0]:null}
   const rel=a.tid===b.tid?"T":"O",k1=`${grp(a.pos)}:${a.stat}`,k2=`${grp(b.pos)}:${b.stat}`;const v=DATA[`${rel}|${k1<=k2?k1:k2}|${k1<=k2?k2:k1}`];return v?v[0]:null}
 function Phi(x){const t=1/(1+.2316419*Math.abs(x)),d=.3989423*Math.exp(-x*x/2),p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p}
@@ -31,5 +35,11 @@ function joint(legs,opt){opt=opt||{};if(!legs.length||legs.some(l=>l.p==null))re
   const cut=live.map(l=>invPhi(1-l.p)),N=opt.n||40000,r=rng(opt.seed||1234567);let hit=0;const z=Array(n);
   for(let s=0;s<N;s++){for(let i=0;i<n;i++)z[i]=gauss(r);let ok=true;for(let i=0;i<n&&ok;i++){let x=0;for(let k=0;k<=i;k++)x+=L[i][k]*z[k];if(x<=cut[i])ok=false}if(ok)hit++}
   return{p:hit/N,indep,pairs,unknown}}
-root.SLCorr={load,setData,rho,joint,ready:()=>!!DATA};
+/* a tracked or slip leg in the shape joint() needs. dir: +1 for the home side / over / yes, -1 for the away side / under */
+function legOf(l,p){const s=l.spec||{},sport=s.sport||l.sport||"nba",game=s.ev||l.evid||l.game;
+  if(s.kind==="ml"||s.kind==="sp"){const home=s.teamName?s.teamName===l.home:s.team===l.home;return{game,sport,stat:"G:mar",dir:home?1:-1,p}}
+  if(s.kind==="tot")return{game,sport,stat:"G:tot",dir:s.side==="u"?-1:1,p};
+  const A=(sport==="nfl"&&window.NFL&&NFL.N.stats&&NFL.N.stats.ath)||{},a=A[s.ath]||[];
+  return{game,sport,ath:s.ath,pos:a[1]||s.pos,tid:a[2],stat:sport==="nfl"?(s.stat==="td2"?"td":s.stat):null,dir:s.side==="u"||s.side==="no"?-1:1,p}}
+root.SLCorr={load,setData,rho,joint,legOf,ready:()=>!!DATA};
 })(typeof window!=="undefined"?window:module.exports);
