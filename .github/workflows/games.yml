@@ -1,0 +1,31 @@
+name: Game model
+on:
+  schedule:
+    - cron: "41 10 * * *"   # daily, after the night's games are final
+  workflow_dispatch:
+  push:
+    paths: ["scripts/build-nba-games.mjs", "scripts/game-model.mjs", ".github/workflows/games.yml"]
+permissions:
+  contents: write
+concurrency: games
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/build-nba-games.mjs
+      - run: node scripts/game-model.mjs nba
+      - run: node scripts/game-model.mjs nfl
+      - name: Commit if changed
+        run: |
+          git config user.name "sharpline-bot"
+          git config user.email "sharpline-bot@users.noreply.github.com"
+          git add data/nba data/nfl/gamemodel.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update game model"
+          git pull --rebase -q origin main
+          git push -q origin HEAD:main
