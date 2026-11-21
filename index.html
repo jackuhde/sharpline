@@ -858,6 +858,7 @@ html,body{overscroll-behavior-y:none}
 .sc-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.sc-acts .addbtn[disabled]{opacity:.45}
 .sc-saved{margin-top:14px;border:1px solid var(--line2);border-radius:14px;padding:10px 12px}.sc-saved summary{font:800 13px Archivo;cursor:pointer}
 .sc-saved>div{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.sc-saved>div>span{flex:1}.sc-saved b{display:block;font:800 13px Archivo}.sc-saved small{font:600 11.5px Archivo;color:var(--mute)}
+.gm-pl{font:800 11.5px Archivo;margin-left:6px}.mk-bt{display:inline-flex;gap:8px;margin-left:8px}.mk-bt .lnk{font:800 11.5px Archivo}
 .gm-box{margin-top:12px;padding:12px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--s2)}.gm-box.dim{color:var(--mute);font:700 12px Archivo}
 .gm-h{font:900 10.5px Archivo;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.gm-h span{color:var(--ink);letter-spacing:0;text-transform:none;font:800 12.5px Archivo}
 .gm-r{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font:700 13px Archivo}.gm-r:first-of-type{margin-top:6px}.gm-r b{font:800 11px Archivo;color:var(--mute);text-transform:uppercase}
@@ -960,10 +961,10 @@ html,body{overscroll-behavior-y:none}
 <script src="sync.js?v=1795800001"></script>
 <script src="tracker2.js?v=1795900001"></script>
 <script src="recs.js?v=1795800001"></script>
-<script src="gamemodel.js?v=1795900002"></script>
+<script src="gamemodel.js?v=1795900003"></script>
 <script src="corr.js?v=1795900001"></script>
 <script src="livegame.js?v=1795900002"></script>
-<script src="nfl.js?v=1795900015"></script>
+<script src="nfl.js?v=1795900016"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
 <script>
@@ -1918,13 +1919,16 @@ function renderLines(){
       ${E&&E.odds&&!st?`<div class="liveodds"><span class="fr fr-live">${E.odds.book} live · ${ago(LIVE.oddsTs)}</span>${G.liveMove?`<span class="mv">${G.liveMove.replace(/^\S+ since open: /,"Since open: ")}</span>`:""}</div>`:!st?`<div class="liveodds"><span class="fr fr-${(Date.now()-boardTs())/6e4>90?"aging":"recent"}">From research at ${clock(boardTs())}</span></div>`:""}
       ${movedOff(gi)?`<div class="gh-note">Pregame lines, kept for comparison. ${gameStatus(gi).k==="final"?"This game is over.":`Current in-game prices are in <button class="lnk" data-golive="1">Live</button>.`}</div>`:""}
       <div class="notes">${G.notes.map(n=>`<span class="note">${n}</span>`).join("")}</div>
-      ${!ms.length&&G.mk.length?`<div class="mkt-t">${G.mk.map(m=>{const q=m.q[0]||{},fp=m.fair&&m.fair.p;return`<div class="mkt-r"><b>${esc2(m.k)}</b><span>${esc2(m.a)} <i>${fmtAm(q.a)}</i>${fp?` <small>fair ${pct(fp[0])}</small>`:""}</span><span>${esc2(m.b)} <i>${fmtAm(q.b)}</i>${fp?` <small>fair ${pct(fp[1])}</small>`:""}</span></div>`}).join("")}<div class="sm" style="margin-top:6px">DraftKings prices. Fair is DraftKings' own price with the vig removed, so neither side is an edge at DraftKings; compare it with ${poss(BOOK)} price.</div></div>`:""}
+      ${!ms.length&&G.mk.length?`<div class="mkt-t">${G.mk.map(m=>{const q=m.q[0]||{},fp=m.fair&&m.fair.p;const mi=G.mk.indexOf(m),bt=sd=>!st&&(sd==="a"?q.a:q.b)!=null?`<span class="mk-bt"><button class="lnk" data-gmk="${gi}|${mi}|${sd}|t">Track</button><button class="lnk" data-gmk="${gi}|${mi}|${sd}|p">Parlay</button></span>`:"";
+          return`<div class="mkt-r"><b>${esc2(m.k)}</b><span>${esc2(m.a)} <i>${fmtAm(q.a)}</i>${fp?` <small>fair ${pct(fp[0])}</small>`:""}${bt("a")}</span><span>${esc2(m.b)} <i>${fmtAm(q.b)}</i>${fp?` <small>fair ${pct(fp[1])}</small>`:""}${bt("b")}</span></div>`}).join("")}<div class="sm" style="margin-top:6px">DraftKings prices. Fair is DraftKings' own price with the vig removed, so neither side is an edge at DraftKings; compare it with ${poss(BOOK)} price.</div></div>`:""}
       ${ms.map(({L,i})=>{const ev=L.bp!=null?evOf(L.p,L.bp):null;
         return`<div class="mrow" data-lrow="${i}"><div><div class="mk">${L.m} ${gradeTag(gradeNow("l"+i))}${L.p0!=null&&Math.abs(L.p-L.p0)>=.01?` <span class="moved ${L.p>L.p0?"up":"dn"}">${L.p>L.p0?"▲":"▼"} ${(Math.abs(L.p-L.p0)*100).toFixed(0)} pts since research</span>`:""}</div><div class="line2"><span class="pick ${sideCls(L.s)} ${L.t==="pass"?"pass":""}">${L.pick}</span><span class="est"><b>${pct(L.p)}</b> est</span></div></div>
           <div class="r"><div class="big">${fmtAm(toAm(L.p))}</div><div class="sm">fair · need this or better</div>${L.bp!=null?`<div class="sm">best seen ${fmtAm(L.bp)} (${L.bk}) <span style="color:${ev>0.005?"var(--over)":ev<-0.005?"var(--under)":"var(--mute)"}">${ev>=0?"+":""}${(ev*100).toFixed(1)}%</span></div>`:""}</div>
           <div class="why">${L.why}</div>${edHTML("l"+i)}<div>${addBtn("l"+i)}</div></div>`}).join("")}
       ${window.GameModel?(()=>{const sp=G.mk.find(m=>/spread/i.test(m.k)),tt=G.mk.find(m=>/total/i.test(m.k));const num=t=>{const x=String(t||"").match(/[+-]?\d+(\.\d+)?/);return x?+x[0]:null};
-        return GameModel.html("nba",team(G.home)[0],team(G.away)[0],sp?num(String(sp.b).split(" ").pop()):null,tt?num(String(tt.k).split(" ").pop()):null)})():""}
+        const ml=G.mk.findIndex(m=>m.k==="Moneyline"),si=G.mk.indexOf(sp),ti=G.mk.indexOf(tt);
+        const btn=(k,side)=>{if(st)return"";const mi=k==="ml"?ml:k==="sp"?si:ti;if(mi<0)return"";const sd=k==="tot"?(side==="over"?"a":"b"):(side==="home"?"b":"a");return` <button class="lnk gm-pl" data-gmk="${gi}|${mi}|${sd}|p">+ Parlay</button>`};
+        return GameModel.html("nba",team(G.home)[0],team(G.away)[0],sp?num(String(sp.b).split(" ").pop()):null,tt?num(String(tt.k).split(" ").pop()):null,btn)})():""}
       <div class="src" style="margin-top:10px;line-height:1.7">Sources: ${G.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(" · ")}</div></div>`});
   const act=cards.filter((c,gi)=>!movedOff(gi)),old=cards.filter((c,gi)=>movedOff(gi));
   document.getElementById("lineList").innerHTML=(act.join("")||`<div class="empty"><b>No games left to start today</b>Games in progress are in Live.</div>`)+(old.length?`<details class="arch"><summary>${old.length} game${old.length===1?"":"s"} started or finished · pregame lines kept for comparison</summary><div class="arch-in">${old.join("")}</div></details>`:"");
@@ -1932,6 +1936,18 @@ function renderLines(){
 }
 
 
+
+/* ---------- NBA game lines straight from DraftKings' board: track or add to a parlay ---------- */
+function gmkRec(gi,mi,sd){const G=SNAP[gi],m=G&&G.mk[mi];if(!m)return null;const q=m.q[0]||{},odds=sd==="a"?q.a:q.b;if(odds==null)return null;
+  const fp=m.fair&&m.fair.p,p=fp?fp[sd==="a"?0:1]:null,lbl=sd==="a"?m.a:m.b,E=LIVE.ev[gi]||{};let spec,pick,mkt;
+  if(m.k==="Moneyline"){const full=sd==="a"?G.away:G.home;spec={kind:"ml",team:full};pick=`${lbl} ML`;mkt="Moneyline"}
+  else if(/^Spread/.test(m.k)){const w=String(lbl).split(" "),full=fullOfAbbr(w[0])||(sd==="a"?G.away:G.home);spec={kind:"sp",team:full,line:+w[1]};pick=lbl;mkt="Spread"}
+  else{const L=+m.k.split(" ").pop();spec={kind:"tot",line:L,side:sd==="a"?"o":"u"};pick=`${lbl} ${L}`;mkt="Total"}
+  return{id:Date.now()+Math.random(),type:"straight",date:DATA_DATE,key:`g:${gi}|${mi}|${sd}|${DATA_DATE}`,name:mu(G),game:mu(G),tip:G.tip,mkt,pick,book:"DraftKings",stake:UNIT,res:null,
+    odds,p,push:0,ev:p!=null?evOf(p,odds):null,grade:null,conf:null,src:"board",spec,home:G.home,away:G.away,ev2:null,evid:E.id||null}}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-gmk]");if(!t)return;e.preventDefault();const[gi,mi,sd,act]=t.dataset.gmk.split("|");const R=gmkRec(+gi,+mi,sd);if(!R){toast("No price for that side");return}
+  if(act==="p"){window.TR2&&TR2.addLegObj(R);return}
+  if(BETS.some(b=>b.key===R.key&&!b.res)){toast("Already tracked");return}BETS.unshift(R);saveBets();renderAll();toast(`Tracked ${R.pick} ${fmtAm(R.odds)}`)});
 
 /* ---------- your book's odds from any Top List card ----------
    Same editor as the Props tab. Your line and odds replace DraftKings' price for that bet: the grade, the edge and its
