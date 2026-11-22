@@ -29,6 +29,49 @@ function sdFor(st,l){l=Math.max(.5,+l||0);switch(st){
 function overAt(st,L0,p0,L){if(L===L0)return p0;
   if(COUNT[st]){const lam=poisMean(p0,L0);return poisOver(lam,L)}
   const sd=sdFor(st,L0),m=L0-sd*invPhi(1-p0);return 1-Phi((L-m)/sd)}
+/* ---------- full price of one prop at any line (Nov 22 2026) ----------
+   Spread of outcomes per stat, checked out of sample: the normal curve's spread was fit on games before Nov 9 and scored on
+   later games (log score of the actual result). Where the fitted scale did better on the later games it is used; Points and
+   Pts+Reb did not improve, so they keep 1.0. Count stats (3-Pointers, Steals, Blocks) use a Poisson.
+   Combined stats (Pts+Reb+Ast...) are fit on the combined total itself, so the correlation between points, rebounds and
+   assists is already in their spread; they are never built by adding independent parts. */
+const SD_SCALE={"Rebounds":.84,"Assists":.86,"Pts+Reb+Ast":.86,"Pts+Ast":.9,"Reb+Ast":.8};
+const sdFit=(st,l)=>sdFor(st,l)*(SD_SCALE[st]||1);
+function poisPmf(lam,k){let t=Math.exp(-lam);for(let i=0;i<k;i++)t*=lam/(i+1);return t}
+/* Over, Under and push chances at line L, given the no-vig Over chance p0 at line L0. They always add to 1.
+   Whole-number lines get a push chance (landing exactly on L); Over means beating L, Under means falling short of it.
+   Also returns the implied mean and an 80% range for the result. */
+function probsAt(st,L0,p0,L){L=L==null?L0:L;const whole=Number.isInteger(L);let over,push=0,mean,lo,hi;
+  if(COUNT[st]){const lam=poisMean(p0,L0);mean=lam;over=poisOver(lam,L);if(whole)push=poisPmf(lam,L);
+    let c=0,k=0;while(c+poisPmf(lam,k)<.1){c+=poisPmf(lam,k);k++}lo=k;while(c+poisPmf(lam,k)<.9){c+=poisPmf(lam,k);k++}hi=k}
+  else{const sd=sdFit(st,L0);mean=L0-sd*invPhi(1-p0);
+    if(whole){over=1-Phi((L+.5-mean)/sd);push=Phi((L+.5-mean)/sd)-Phi((L-.5-mean)/sd)}else over=L===L0?p0:1-Phi((L-mean)/sd);
+    lo=Math.max(0,mean-1.2816*sd);hi=mean+1.2816*sd}
+  over=Math.min(.999,Math.max(.001,over));push=Math.max(0,Math.min(1-over,push));
+  return{over,under:Math.max(0,1-over-push),push,mean,lo,hi}}
+/* expected profit per $1 with a push chance: a push returns the stake */
+function evPush(p,push,a){return p*(dec(a)-1)-(1-p-(push||0))}
+/* the worst American price that still breaks even, given win chance p and push chance */
+function fairPrice(p,push){if(!(p>0))return NaN;return toAm(1+(1-p-(push||0))/p)}
+/* ---------- letter grades from the conservative edge (Nov 22 2026) ----------
+   A grade is earned by the expected return at the LOW end of the win chance (p minus its uncertainty u), not by the
+   projection's distance from the line or by the midpoint estimate alone:
+     S  conservative EV >= 7%    A  >= 3.5%    B  >= 1%    C  >= -1%    D  >= -5%    F below, or data missing
+   Gates, applied after: S needs High confidence, a current price, no injury question and a stat whose fair price is
+   validated (1,000+ graded lines); A needs at least Medium confidence and a current price with no injury question;
+   anything with an injury question or a price that needs verifying tops out at C; a stale price or missing data is F.
+   There is no limit on how many A or S grades a slate can have. */
+const GRADE_ORDER=["F","D","C","B","A","S"];
+function gradeBet(b){if(!b||!(b.p>0)||!isFinite(dec(b.o)))return{g:"F",ev:null,evLo:null,why:["no usable price or chance"]};
+  const push=b.push||0,u=Math.max(0,b.u||0),ev=evPush(b.p,push,b.o),pLo=Math.max(.001,b.p-u),evLo=evPush(pLo,push,b.o),why=[];
+  let g=evLo>=.07?5:evLo>=.035?4:evLo>=.01?3:evLo>=-.01?2:ev>=-.05?1:0;
+  const conf=b.conf||"Low",fresh=b.fresh||"live";
+  if(b.missing){g=0;why.push("missing data")}
+  if(fresh==="stale"||fresh==="started"){g=0;why.push(fresh==="started"?"game started":"price is stale")}
+  if(g>=5&&!(conf==="High"&&fresh==="live"&&!b.inj&&b.validated)){g=4;why.push("S needs high confidence, a live price, no injury question and a validated stat")}
+  if(g>=4&&!((conf==="High"||conf==="Medium")&&fresh!=="aging"&&!b.inj)){g=3;why.push("A needs medium or high confidence, a current price and no injury question")}
+  if(g>=3&&(b.inj||fresh==="aging")){g=2;why.push(b.inj?"injury question":"price needs verifying")}
+  return{g:GRADE_ORDER[g],ev,evLo,pLo,why}}
 /* Top List selection. Q: qualifying candidates already sorted best first, each {base, ath (player key), gi (game), ev, conf}.
    opts: {max, perPlayer: "1" | "1x" | number, perGame, minEdge}. Pass 1 spreads across players and games; pass 2 lets other
    games fill remaining slots past the per-game limit; with perPlayer "1", a second prop from a player only when its edge is
@@ -68,6 +111,6 @@ function expertWeight(r){if(!r||!r.graded||!(r.n>=200))return{w:0,why:!r||!r.gra
   return{w,why:"graded record"}}
 /* blend: market chance moved toward the expert's side by the weight; each source counted once */
 function blendExperts(pMkt,picks){const seen=new Set();let p=pMkt;for(const k of picks||[]){if(!k||seen.has(k.src))continue;seen.add(k.src);const w=expertWeight(k.rec).w;if(w>0)p=p+w*((k.side==="o"?1:0)-p)*.1}return p}
-const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,overlaps,expertWeight,blendExperts};
+const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,overlaps,probsAt,evPush,fairPrice,sdFit,gradeBet,GRADE_ORDER,expertWeight,blendExperts};
 root.SLRank=api;if(typeof module!=="undefined")module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

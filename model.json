@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T17:22:03.461Z",
+ "updated": "2026-11-22T17:51:31.989Z",
  "games": 241,
  "lines": 19887,
  "through": "2026-11-21",
@@ -232,6 +232,78 @@
     "roi": 0.4202
    }
   ]
+ },
+ "mktCal": {
+  "Points": {
+   "n": 2769,
+   "overGap": -0.0236,
+   "underGap": 0.0236,
+   "se": 0.0095,
+   "validated": true
+  },
+  "Assists": {
+   "n": 2032,
+   "overGap": -0.0091,
+   "underGap": 0.0091,
+   "se": 0.011,
+   "validated": true
+  },
+  "Rebounds": {
+   "n": 2580,
+   "overGap": -0.0093,
+   "underGap": 0.0093,
+   "se": 0.0098,
+   "validated": true
+  },
+  "3-Pointers": {
+   "n": 2235,
+   "overGap": 0.0079,
+   "underGap": -0.0079,
+   "se": 0.0104,
+   "validated": true
+  },
+  "Steals": {
+   "n": 865,
+   "overGap": -0.0496,
+   "underGap": 0.0496,
+   "se": 0.0165,
+   "validated": false
+  },
+  "Blocks": {
+   "n": 413,
+   "overGap": -0.0314,
+   "underGap": 0.0314,
+   "se": 0.0239,
+   "validated": false
+  },
+  "Pts+Ast": {
+   "n": 2115,
+   "overGap": -0.0223,
+   "underGap": 0.0223,
+   "se": 0.0109,
+   "validated": true
+  },
+  "Pts+Reb": {
+   "n": 2611,
+   "overGap": -0.0305,
+   "underGap": 0.0305,
+   "se": 0.0098,
+   "validated": true
+  },
+  "Reb+Ast": {
+   "n": 2084,
+   "overGap": -0.0105,
+   "underGap": 0.0105,
+   "se": 0.0109,
+   "validated": true
+  },
+  "Pts+Reb+Ast": {
+   "n": 2183,
+   "overGap": -0.0336,
+   "underGap": 0.0336,
+   "se": 0.0107,
+   "validated": true
+  }
  },
  "center": {
   "Points": {

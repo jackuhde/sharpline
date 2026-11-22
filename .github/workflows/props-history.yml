@@ -18,12 +18,12 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/collect-props.mjs
-      - run: node scripts/props-model/fit.mjs data/props-history.json model.json && node scripts/props-model/audit.mjs > /dev/null
+      - run: node scripts/props-model/fit.mjs data/props-history.json model.json && node scripts/props-model/audit.mjs > /dev/null && node scripts/props-model/grades.mjs > /dev/null
       - name: Commit if changed
         run: |
           git config user.name "sharpline-bot"
           git config user.email "sharpline-bot@users.noreply.github.com"
-          git add data/props-history.json data/alts-history.json model.json data/nba/audit.json
+          git add data/props-history.json data/alts-history.json model.json data/nba/audit.json data/nba/grades.json
           git diff --cached --quiet && exit 0
           git commit -m "Update prop line history and refit the prop model"
           git pull --rebase -q origin main

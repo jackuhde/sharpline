@@ -14,7 +14,7 @@ function log(items){if(!items||!items.length||typeof DATA_DATE==="undefined")ret
     const k=[DATA_DATE,e.id,normN(c.name),c.st,c.side,c.line,c.price].join("|");if(have.has(k))return;
     L.push({k,id:Date.now()+rank,d:DATA_DATE,ts:new Date().toISOString(),ver:(typeof PM_META!=="undefined"&&PM_META&&PM_META.updated)||"built-in",ev:e.id,home:e.home,away:e.away,
       name:c.name,ath:athOf(c.name),st:c.st,line:c.line,side:c.side,price:c.price,book:"DraftKings",p:+c.p.toFixed(4),pRaw:c.pRaw!=null?+c.pRaw.toFixed(4):null,
-      evAt:+c.ev.toFixed(4),conf:c.conf&&c.conf.lv||null,rank:rank+1,res:null});have.add(k);ch=1});
+      evAt:+c.ev.toFixed(4),evLo:c.evLo!=null?+c.evLo.toFixed(4):null,grade:c.grade||null,conf:c.conf&&c.conf.lv||null,rank:rank+1,res:null});have.add(k);ch=1});
   if(ch)LSs(KEY,L)}
 const CLOSE={};
 async function closeFor(evId){if(CLOSE[evId])return CLOSE[evId];try{const r=await SharpLive.propBets(evId);CLOSE[evId]=r;return r}catch(e){return null}}
@@ -47,6 +47,8 @@ function html(){const L=LSg(KEY,[]);const head=`<div class="eyebrow tk-h">Sharpl
     <div class="hint" style="margin-top:8px">${g.length} graded${open?`, ${open} waiting`:""}. Wins expected from the logged chances: ${A.expW.toFixed(1)}, actual: ${A.W}. ${g.length<100?`<b style="color:var(--gold)">Under 100 graded picks: too few to judge the model. Watch CLV first.</b>`:""}</div>
     ${g.length?`<div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>By stat</span>")}${by(r=>STAT_LBL[r.st]||r.st)}</div>
     <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>Sharpline's chance</span>")}${by(pb,["Under 52%","52 to 55%","55 to 58%","58% and up"])}</div>
+    <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>Grade when shown</span>")}${by(r=>r.grade?"Grade "+r.grade:"Before grades were logged",["Grade S","Grade A","Grade B","Before grades were logged"])}</div>
+    <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>Side</span>")}${by(r=>r.side==="o"?"Over":"Under",["Over","Under"])}</div>
     <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>EV when logged</span>")}${by(eb,["2 to 3%","3 to 5%","5 to 8%","8% and up"])}</div>
     <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>Side</span>")}${by(r=>r.side==="o"?"Over":"Under",["Over","Under"])}</div>`:""}
     <div class="eyebrow" style="margin:14px 0 6px">Latest logged picks</div><div class="list">${recent.map(r=>`<div class="tb${r.res?" done":""}"><div class="nm">${h(r.name)} · ${r.side==="o"?"Over":"Under"} ${r.line} ${h(STAT[r.st]||r.st)} ${r.res?`<span class="rc r-${r.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[r.res]}</span>`:""}</div>

@@ -1,3 +1,141 @@
+# Pick picker rebuild, Nov 22 2026 (third pass)
+
+Reproduce with `node scripts/props-model/grades.mjs` (writes data/nba/grades.json), `audit.mjs` and `fit.mjs`, and test with `node tests/grade.test.js`. All three scripts rerun nightly.
+
+**Data.** Every graded DraftKings NBA player prop from Oct 25 to Nov 21 2026 (19,000+ closing lines, plus opening prices). Each week is priced only with what was known before it:
+- Validation period: Nov 9 to 15.
+- Untouched test period: Nov 16 to 21.
+
+The grade thresholds were set in rank.js before either period was scored and were not tuned on them.
+
+## 1. Root cause of the Under bias and the poor grades
+
+**Under bias.** Terms in the model moved every prop the same way, independent of the player:
+- an intercept learned from the first two weeks
+- flags on every combo and count stat
+- uncentered season and recent averages, which run below what players are scoring
+
+Fit on earlier weeks, these pushed 87% of markets toward the Under. That push was 2 to 3 times bigger than what happened, and the old k rule (floor 0.3) let it through. Because the same terms hit Points, Pts+Reb, Pts+Ast, Pts+Reb+Ast and Reb+Ast alike, one player's whole set cleared together.
+
+**D and F grades.** These are mostly correct, not a bug:
+- At DraftKings' own price, the model's chance is about DraftKings' no-vig chance, so the expected return is roughly minus the vig (DraftKings prop vig is often 5 to 7%).
+- The old grade scale also assigned A and B to Unders that lost: B went 49% with a -7.8% ROI, and A had only 25 picks.
+- The old scale capped S at 3 per night.
+
+**Other issues found in the live code:**
+- Without the player model (short game log), the app fell back to an averages-only projection. That projection ran low and leaned Under. Those rows now use the market price.
+- A different line at another book was priced from that same averages projection. It is now priced from DraftKings' current line along the stat's own distribution.
+- Pushes on whole-number lines were approximated by splitting a normal curve. They are now exact (Poisson for counts).
+- The published bias report and the app now use the same model artifacts. A test (tests/grade.test.js) checks that index.html's built-in weights, features and defaults match model.json.
+
+## 2. What changed (files and functions)
+
+- **rank.js**
+  - `probsAt`: Over, Under and push at any line, plus the mean and an 80% range.
+  - `sdFit`: per-stat spread checked out of sample. Rebounds, Assists, PRA, Pts+Ast and Reb+Ast are tighter; Points and Pts+Reb are unchanged.
+  - `evPush` and `fairPrice`: EV with a push, and the break-even price.
+  - `gradeBet`: the new S/A/B/C/D/F scale.
+  - `selectTop` and `overlaps`: correlation-aware selection.
+- **index.html**
+  - `propModel`: centered features, no level terms.
+  - `applyProjections`: falls back to the market instead of the averages projection.
+  - `recHTML`: exact probabilities and grades.
+  - `gradeOf`, `uncOf`, `gradeWhy`, `needFor`: new.
+  - `baseGrade`: updated.
+  - `topItems`: only B, A and S; ranked by conservative EV.
+  - Coverage panel: new "grade" step.
+  - Side balance check.
+  - `topCard`: explanation, projection range and price targets.
+  - The S cap of 3 per night is removed.
+- **recs.js**: logs grade and conservative EV with every pick; record shown by grade and by side.
+- **scripts/props-model**
+  - `fit.mjs`: no level terms, walk-forward k, market calibration `mktCal`.
+  - `audit.mjs` and `grades.mjs`: new.
+- **tests/grade.test.js**: 127 new checks. Existing suites still pass.
+
+## 3. How a grade is earned
+
+A grade comes from the expected return at the LOW end of the win chance. The low end subtracts three things:
+- How much DraftKings' no-vig price has overrated that side of that stat this season, plus 1.28 standard errors.
+- Half of the model's own move away from DraftKings.
+- Extra room when the line differs from the posted one.
+
+| Grade | Conservative expected return |
+|---|---|
+| S | 7%+ |
+| A | 3.5%+ |
+| B | 1%+ |
+| C | -1%+ |
+| D | down to -5% |
+| F | below -5%, or a stale price or missing data |
+
+Gates:
+- **S:** High confidence, a live price, no injury question, and a stat with 1,000+ validated lines.
+- **A:** at least Medium confidence and a current price.
+- **Injury question or a price needing verification:** tops out at C.
+- **3-pointer, steal and block prices away from the posted line:** top out at B; they were overconfident in testing.
+
+Only B, A and S reach the Top List. There is no cap on A or S.
+
+## 4. Before and after (walk-forward, DraftKings closing prices, Nov 9 to 21, 9,850 markets)
+
+| | Before | After |
+|---|---|---|
+| Side shown on all markets, Over / Under | 13.1% / 86.9% | 49.0% / 51.0% |
+| Positive-EV candidates, Over / Under | 0% / 100% (673) | none |
+| Recommended, Over / Under | 0% / 100% (121) | none |
+| Grade counts | S 0, A 25, B 96, C 1,857, D 3,653, F 4,219 | S 0, A 0, B 0, C 0, D 1,358, F 8,492 |
+| Recommended picks' result | 121 picks, 54.5% won, +2.9% ROI (all in the validation week; 0 in the test week) | 0 picks |
+| Old B grade | 96 picks, 49% won, -7.8% ROI | |
+| Brier, model vs DraftKings | 0.2468 vs 0.2466 | 0.2466 vs 0.2466 |
+| Log loss, model vs DraftKings | 0.6867 vs 0.6863 | 0.6863 vs 0.6863 |
+| Same player 2+ times among picks | 40 player-nights, up to 4 on one player | 0 |
+
+**After, there are more F grades because the scale is honest.** Nearly every DraftKings prop costs more than 5% in vig against its fair chance.
+
+**At DraftKings opening prices (6,149 markets):** the old model's 74 picks won 63.5% (+21.7% ROI) but had -3.7% closing-line value. That is 74 Unders in one week, so I treat it as luck, not evidence.
+
+## 5. Does the model have a measurable predictive advantage?
+
+**Against DraftKings' own price: no.** Out of sample it ties the market:
+- Brier 0.2466 and log loss 0.6863, both equal to DraftKings.
+
+Inputs tried and tested out of sample, none beating the market in both periods:
+- season and last-10 averages, recent hit rate, minutes trend
+- bench role, back-to-backs, teammates out
+- game total, spread, opponent injuries, starter, home/away
+
+Every free input is already in DraftKings' line. Betting DraftKings at DraftKings' price cannot be graded B or better, and the app no longer pretends it can.
+
+**Against a stale or softer price: yes, and this is where A and S grades come from.** The free feed has only DraftKings, so another book was simulated with a real stale price: DraftKings' own opening line and odds on 9,161 props whose line later moved. Sharpline priced that old number from DraftKings' later line, exactly as the app does when you enter another book's line. Each bet was graded and settled on the real result.
+
+Pricing quality: log loss 0.6715 vs 0.6856 for the stale price itself. Calibration by bin was within about 2 points from 35% to 65%.
+
+| Grade | Fit period (before Nov 9) | Validation (Nov 9-15) | Test (Nov 16-21) | All |
+|---|---|---|---|---|
+| S | 5 bets, +16.7% | 320, 60.9% won, +14.5% | 258, 64.7% won, +19.8% | 583, +16.9% |
+| A | 357, +21.9% | 175, 57.7% won, +5.2% | 182, 68.1% won, +24.7% | 714, +18.5% |
+| B | 142, +10.0% | 189, 66.1% won, +20.9% | 171, 59.6% won, +9.0% | 502, +13.8% |
+| C | 132, +10.7% | 149, -2.5% | 175, +6.8% | 456, +4.9% |
+| D | 2,053, +7.0% | 645, +4.6% | 459, -5.4% | 3,157, +4.7% |
+
+(Numbers before the 3-pointer/steal/block cap. With it, A and S together: 1,250 bets, +18.7%; +22.7% in the test week.)
+
+The recommended stale-line bets were 34.6% Over and 65.4% Under. That follows the data: DraftKings overrated Overs in 9 of 10 stats this season, by 0.9 to 5 points.
+
+**Limitation:** this assumes the stale price can still be bet, the way a slower book like Fliff often lags DraftKings. Real results at Fliff will be logged by the app (Tracker, Sharpline's record by grade) and are the true test.
+
+## 6. Remaining limitations
+
+- **No free second sportsbook feed.** A and S grades appear only when you enter or scan another book's price. On a DraftKings-only slate the Top List is usually empty, and it says so. It also shows the price you would need for B or A on the closest props.
+- **Unproven categories:** Steals and Blocks have fewer than 1,000 lines, so they are never S. 3-Pointers, Steals and Blocks away from the posted line top out at B.
+- **Milestone (25+) lines in the stored history look mislabeled** (example: 3+ rebounds at -145 for a player whose main line is 8.5). They are not used for any pick or test.
+- Market calibration uses the whole season. The Over shortfall has varied week to week (0.5 to 3.3 points), so Over grades are conservative.
+- I couldn't load the live site from my browser this session. The live path was traced in the code and run headless against the published files with no errors.
+- One month of data. Every number here is labeled with its sample size. None of it proves long-run profit.
+
+---
+
 # NBA prop model bias audit, Nov 22 2026 (second pass)
 
 Reproduce: `node scripts/props-model/audit.mjs` (writes data/nba/audit.json). Every number below comes from that script on 19,887 graded DraftKings lines this season, using pre-game information only.

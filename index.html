@@ -953,14 +953,14 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1795900001"></script>
-<script src="rank.js?v=1795900004"></script>
+<script src="rank.js?v=1795900005"></script>
 <script src="nfl-model.js?v=1795900005"></script>
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795800001"></script>
 <script src="tracker2.js?v=1795900003"></script>
-<script src="recs.js?v=1795800001"></script>
+<script src="recs.js?v=1795900006"></script>
 <script src="gamemodel.js?v=1795900004"></script>
 <script src="corr.js?v=1795900002"></script>
 <script src="livegame.js?v=1795900004"></script>
@@ -1075,12 +1075,16 @@ function recHTML(key){const gi0=key[0]==="l"?LINES[+key.slice(1)].g:key[0]==="p"
   let a=sgd("a"),b=sgd("b");const assumed=[];
   if(a==null||(a>-100&&a<100)){a=-110;assumed.push("a")}if(b==null||(b>-100&&b<100)){b=-110;assumed.push("b")}
   let sides,far=false,Lshow,disagree=null;const oneSide=assumed.length===1?(assumed[0]==="a"?1:0):null;
-  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const anc=anchorsOf(key,m),pOs=anc.map(a=>clampP(shiftP(m.pO,a,L,m.sd)));const pO=Math.min(...pOs),pOu=Math.max(...pOs);
-    if(anc.length>1)disagree=[Math.min(...anc),Math.max(...anc)];sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:1-pOu,o:b,c:"u"}]}
+  let ouPush=null;
+  if(m.type==="ou"){const L=num(v.L)!=null?Math.abs(num(v.L)):m.l;Lshow=L;far=Math.abs(L-m.l)>(m.per>=.07?1.5:3);const anc=anchorsOf(key,m);
+    /* exact Over / Under / push at the entered line from the stat's own distribution (rank.js probsAt), anchored at each posted line */
+    const PR=anc.map(a=>SLRank.probsAt(m.st,a,m.pO,L)),pO=Math.min(...PR.map(r=>r.over)),pU=Math.min(...PR.map(r=>r.under));ouPush=Math.max(...PR.map(r=>r.push));
+    if(anc.length>1)disagree=[Math.min(...anc),Math.max(...anc)];sides=[{lbl:"Over "+L,p:pO,o:a,c:"o"},{lbl:"Under "+L,p:pU,o:b,c:"u"}]}
   else if(m.type==="sp"){const L=sgd("L")??m.lnA;far=Math.abs(L-m.lnA)>3;const pA=clampP(shiftP(m.pA,-m.lnA,-L,m.sd));sides=[{lbl:m.A+" "+fmtPt(L),p:pA,o:a,c:"n"},{lbl:m.B+" "+fmtPt(-L),p:1-pA,o:b,c:"n"}]}
   else{if(assumed.length===2){recCls[key]="na";recBest[key]=null;return`<span style="color:var(--mute)">Enter both teams' odds to compare.</span><small>My estimate: ${m.A} ${pct(m.pA)} · ${m.B} ${pct(1-m.pA)}</small>`}
     sides=[{lbl:m.A+" ML",p:m.pA,o:a,c:"n"},{lbl:m.B+" ML",p:1-m.pA,o:b,c:"n"}]}
-  let push=0;if(m.type!=="ml"){const Lp=m.type==="ou"?Lshow:(sgd("L")??m.lnA);if(Number.isInteger(Lp)){push=Math.min(.15,m.type==="ou"?pushAt(m.pO,m.l,Lp,m.sd):pushAt(m.pA,-m.lnA,-Lp,m.sd));sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
+  let push=0;if(m.type==="ou")push=ouPush||0;
+  else if(m.type!=="ml"){const Lp=sgd("L")??m.lnA;if(Number.isInteger(Lp)){push=Math.min(.15,pushAt(m.pA,-m.lnA,-Lp,m.sd));sides.forEach(x=>x.p=Math.max(.01,x.p-push/2))}}
   sides.forEach(x=>{x.push=push;x.ev=evPush(x.p,push,x.o)});const best=oneSide!=null?sides[oneSide]:(sides[0].ev>=sides[1].ev?sides[0]:sides[1]);
   const evs=x=>(x.ev>=0?"+":"")+(x.ev*100).toFixed(1)+"%";
   const real=!assumed.length||oneSide!=null;
@@ -1092,14 +1096,16 @@ function recHTML(key){const gi0=key[0]==="l"?LINES[+key.slice(1)].g:key[0]==="p"
   const notes=[];if(oneSide!=null)notes.push("only one side given, so only that side is graded");else if(assumed.length&&m.type!=="ml")notes.push("blank odds assumed -110");if(far)notes.push("line is far from the posted number, so this estimate is rough");if(push)notes.push(`whole number: about ${pct(push)} push chance counted`);if(disagree)notes.push(`books disagree (${disagree[0]} to ${disagree[1]}), so the less favorable line is used`);
   const gap=lineGap(key,best,m,Lshow,sgd("L")),why=explain(key,best,gap,real);
   const T3=threeNums(key,best,m,real),conf=confFor(key,best,T3,far,disagree);
-  const grade=capGrade(fo?"F":real?gradeFor(key,best.ev,far):baseGrade(key),conf);
-  recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade,conf};
+  const GB=fo?{g:"F",why:["projection only"]}:real?gradeOf(key,best,conf,{far,L:Lshow,l0:m.l,st:m.st}):null;
+  const grade=GB?GB.g:baseGrade(key);
+  recCls[key]=tier;recBest[key]={...best,assumed:!real,L:Lshow,gap,why,grade,conf,gb:GB};
   return`<div class="rec-in"><div class="rgl">${gradeTag(grade,"lg")}<div><div class="lw">Take</div><div class="ls">${best.lbl}</div>${gap&&gap.d!==0?`<div class="gp ${gap.d>0?"up":"dn"}">${gap.d>0?"▲":"▼"} ${Math.abs(gap.d)} pt${Math.abs(gap.d)===1?"":"s"} ${gap.d>0?"better":"worse"} than market (${gap.ref})</div>`:""}</div></div>
     <div class="cf"><b>${!real?"–":fo?pct(best.p):evs(best)}</b><span>${fo?"its own no-vig":"difference"}</span></div></div>
     <div class="gauge"><i style="left:${pos}%"></i></div>
     <div class="tw">${word}</div>
     <div class="ex">${why}</div>
     ${t3HTML(T3,best,conf)}
+    ${GB&&GB.ev!=null?`<div class="ex">${gradeWhy(GB,best)}</div>`:""}
     <small>${pct(best.p)} to hit · ${detail}${notes.length?" · "+notes.join(" · "):""}</small>`}
 /* ---------- three separate numbers for the side I'd take ----------
    Market fair: book or prediction-market prices with the vig removed, moved to this line along the bell curve.
@@ -1117,7 +1123,7 @@ function threeNums(key,best,m,real){const k=key[0],i=+key.slice(1),out={mkt:null
       else if(q1){pO=q1.o!=null?imp(q1.o)-.02:1-(imp(q1.u)-.02);l0=q1.l;out.mktSrc=q1.src+" one side only";out.mk1=1}}
     else{const C=custOf(i);if(!C.fo){pO=devig(C.o,C.u)[0];l0=C.l;out.mktSrc=C.bk+" "+fmtAm(C.o)+"/"+fmtAm(C.u)}}
     if(pO!=null){const po=shiftP(pO,l0,L,sdFor(st,l0));out.mkt=adj(isOver(best.lbl)?po:1-po)}
-    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,MDx=PROPS[i]&&propModel(PROPS[i],L),po=MDx?MDx.pm+catK(PROPS[i].st)*(MDx.p-MDx.pm):pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
+    if(k==="p"&&SUG[i].pt){const pt=SUG[i].pt,MDx=PROPS[i]&&propModel(PROPS[i],L),MD0=SUG[i].model,po=MDx?MDx.pm+catK(PROPS[i].st)*(MDx.p-MDx.pm):MD0?SLRank.probsAt(PROPS[i].st,SUG[i].l,MD0.pm+catK(PROPS[i].st)*(MD0.p-MD0.pm),L).over:pt.pOver(L);out.proj=adj(isOver(best.lbl)?po:1-po);out.projSrc=`projects ${pt.m}`;out.disagree=pt.disagree;out.pt=pt}
     else{const pr=projP(name,st,L);if(pr){out.proj=adj(isOver(best.lbl)?pr.pO:1-pr.pO);out.projSrc=`avg ${pr.m}${pr.basis?" ("+pr.basis+")":""}`}}
     if(k==="c")out.basis=custOf(i).fo?"projection only (no other book)":"market price you entered";
     else{const priced=PROPS[i].q.some(q=>q.o!=null||q.u!=null||q.oc!=null||q.uc!=null);out.basis=out.mk1===2?"market price":out.mk1===1?"one-sided or thin market price":priced?"market price":SUG[i].proj!=null?"blend: 70% book line, 30% projection":"book line only (50/50)"}
@@ -1245,7 +1251,8 @@ function propCand(i){const x=PROPS[i],g=SUG[i],k="p"+i;if(!x||!g||!g.model||YN[x
   const MD=g.model,kk=catK(x.st),pmS=side==="o"?MD.pm:1-MD.pm,pA=p,pRawS=side==="o"?MD.p:1-MD.p;
   const lbl=(side==="o"?"Over ":"Under ")+line,conf=baseConf(k,lbl,pA,price,line);
   const q=x.q.find(q=>q.live&&q.l===line)||x.q.find(q=>q.l===line)||{};
-  return{src:mine?"saved":"live",key:k,base:k,ath:normN(x.p),name:x.p,tm:x.tm,opp:oppOf(x),gi:x.g,st:x.st,side,line,price,book,mine,
+  const GB=gradeOf(k,{lbl,p:pA,o:price,push:mine&&recBest[k]?recBest[k].push||0:0},conf,{L:line,l0:g.l});
+  return{grade:GB.g,evLo:GB.evLo,gb:GB,src:mine?"saved":"live",key:k,base:k,ath:normN(x.p),name:x.p,tm:x.tm,opp:oppOf(x),gi:x.g,st:x.st,side,line,price,book,mine,
     ev:evOf(pA,price),evRaw:line===g.l?evOf(pRawS,price):null,p:pA,pRaw:pRawS,pm:pmS,imp:imp(price),kk,proj:g.proj,conf,fresh,parts:MD.parts,hits:MD.hits,n10:MD.n,
     inj:x.live&&x.live.lv!=="out"?x.live.txt:null,mates:x.mates,lOpen:q.lOpen??null,oOpen:q.oOpen??null,uOpen:q.uOpen??null,
     head:`${x.p} ${lbl} ${STAT[x.st]||x.st}`,why:g.why}}
@@ -1256,7 +1263,7 @@ function propCand(i){const x=PROPS[i],g=SUG[i],k="p"+i;if(!x||!g||!g.model||YN[x
 const REASONS={unmatched:"Player not matched to a roster",started:"Game started or final",yesno:"Yes/No market (not modeled pregame)",unsupported:"Stat not modeled",
   oneSided:"Only one side priced",noLog:"Fewer than 3 games or game log not loaded",out:"Player ruled out",inj:"Injury question (questionable or doubtful)",
   stale:"Price out of date",neg:"No edge at the posted price",thin:"Edge below your minimum after the accuracy adjustment",conf:"Hidden by your confidence filter",
-  dup:"Duplicate of a market already counted",line2:"Second line posted for the same player and stat (only the main line is priced)",capP:"Qualified, held back: one per player",overlap:"Qualified, held back: same player and same stat as a stronger pick (they win or lose together)",capG:"Qualified, held back: per-game limit",capN:"Qualified, beyond the top 10",shown:"On the Top List"};
+  dup:"Duplicate of a market already counted",line2:"Second line posted for the same player and stat (only the main line is priced)",grade:"Positive EV, but grade C or lower once the uncertainty in the chance is counted",capP:"Qualified, held back: one per player",overlap:"Qualified, held back: same player and same stat as a stronger pick (they win or lose together)",capG:"Qualified, held back: per-game limit",capN:"Qualified, beyond the top 10",shown:"On the Top List"};
 function slateReport(shown){const R={games:[],raw:0,alts:0,markets:[],byReason:{},by:{game:{},stat:{},side:{},book:{}},ev:{raw0:0,adj0:0,adj2:0,adj4:0}};
   const shownSet=new Set((shown||[]).map(c=>c.base)),qual=new Set((topItems.qual||[]).map(c=>c.base));
   SNAP.forEach((G,gi)=>{const e=LIVE.ev[gi],rows=LIVE.props[gi];R.games.push({gi,label:mu(G),state:e?e.state:"?",loaded:!!rows,markets:rows?rows.length:0,alts:rows&&rows.alts?rows.alts.length:0,total:rows&&rows.count||0});
@@ -1277,12 +1284,15 @@ function slateReport(shown){const R={games:[],raw:0,alts:0,markets:[],byReason:{
     if(!why&&!c)why="noLog";
     if(c){m.side=c.side;m.ev=c.ev;if(g&&g.model&&g.model.pAdj!=null){const d=g.model.pAdj-g.model.pm;m.lean=d>.005?"o":d<-.005?"u":null}m.evRaw=c.evRaw;m.p=c.p;m.price=c.price;m.base=c.base;m.conf=c.conf&&c.conf.lv;
       if(c.evRaw!=null&&c.evRaw>0)R.ev.raw0++;if(c.ev>0)R.ev.adj0++;if(c.ev>=.02)R.ev.adj2++;if(c.ev>=.04)R.ev.adj4++;
-      if(c.inj)why="inj";else if(c.fresh.lv==="stale")why="stale";else if(c.ev<=0)why="neg";else if(c.ev<SET.minEdge)why="thin";else if(!passConf(c.conf))why="conf";
+      if(c.inj)why="inj";else if(c.fresh.lv==="stale")why="stale";else if(c.ev<=0)why="neg";else if(c.ev<SET.minEdge)why="thin";else if(!passConf(c.conf))why="conf";else if(!TOP_GRADES.includes(gradeOfCand(c)))why="grade";
       else if(shownSet.has(c.base))why="shown";else{const why2=(topItems.held||{})[c.base];why=why2||"capN"}}
     m.why=why;R.markets.push(m);R.byReason[why]=(R.byReason[why]||0)+1;
     const bump=(k,v)=>{const b=R.by[k][v]=R.by[k][v]||{total:0,priced:0,pos:0,qual:0,shown:0};b.total++;if(c)b.priced++;if(c&&c.ev>0)b.pos++;if(c&&["shown","capP","overlap","capG","capN"].includes(why))b.qual++;if(why==="shown")b.shown++};
     bump("game",mu(G));bump("stat",st);if(m.side)bump("side",m.side==="o"?"Over":"Under");bump("book","DraftKings")})});
   return R}
+/* only B, A and S grades are recommended; C is borderline and D/F are never listed (they stay visible on the Props board) */
+const TOP_GRADES=["B","A","S"];
+function gradeOfCand(c){if(c.grade)return c.grade;try{c.grade=gradeNow(c.base)}catch(e){c.grade="F"}return c.grade}
 function topItems(){
   const pool=[];PROPS.forEach((x,i)=>{const c=propCand(i);if(c)pool.push(c)});
   const have=new Set(pool.map(c=>c.base));
@@ -1297,7 +1307,7 @@ function topItems(){
   topItems.scan={props:live.length,players:new Set(live.map(x=>normN(x.p))).size,games:gi.size,priced:pool.filter(c=>c.src!=="built"&&c.parts).length,
     noLog:live.filter(x=>{const P=projOf(x.p);return!P||!P.g10||P.g10.length<3}).length,started:live.filter(x=>started(x.g)).length};
   topItems.verify=pool.filter(c=>c.ev>=SET.minEdge&&(c.fresh.lv==="stale"||c.inj));
-  const ok=pool.filter(c=>c.ev>0&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj),Q=ok.filter(c=>c.ev>=SET.minEdge&&passConf(c.conf)).sort((a,b)=>b.ev-a.ev);
+  const ok=pool.filter(c=>c.ev>0&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj),Q=ok.filter(c=>c.ev>=SET.minEdge&&passConf(c.conf)&&TOP_GRADES.includes(gradeOfCand(c))).sort((a,b)=>(b.evLo??b.ev)-(a.evLo??a.ev)||b.ev-a.ev);
   topItems.hidden=ok.filter(c=>c.ev>=SET.minEdge&&!passConf(c.conf)).length;
   /* selection rules live in rank.js (selectTop) so they can be tested on their own */
   Q.forEach(c=>{c.confLv=c.conf&&c.conf.lv});
@@ -1305,7 +1315,7 @@ function topItems(){
   const byBase=Object.fromEntries(Q.map(c=>[c.base,c])),out=SEL.out.map(o=>{const c=byBase[o.base];if(o.corr){const first=SEL.out.find(x=>x.ath===o.ath&&x.base!==o.base);c.corr=first?byBase[first.base].head:null}return c}),taken=new Set(out.map(c=>c.base));
   topItems.qual=Q;topItems.held=SEL.held;
   /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
-  const shown=new Set(out.map(c=>c.ath));topItems.watch=out.length>=5?[]:ok.concat(pool.filter(c=>c.ev<=0&&c.ev>-.03&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj&&c.parts))
+  const shown=new Set(out.map(c=>c.ath));topItems.watch=out.length>=5?[]:ok.concat(pool.filter(c=>c.ev<=0&&c.ev>-.08&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj&&c.parts))
     .filter(c=>!taken.has(c.base)&&c.parts).sort((a,b)=>b.ev-a.ev).filter(c=>!shown.has(c.ath)&&(shown.add(c.ath),true)).slice(0,Math.min(5,8-out.length));
   topItems.qualified=Q.length;
   return out}
@@ -1571,7 +1581,11 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   if(pt.yn){const q=x.q.find(q=>q.o!=null);if(q&&pt.mMarket!=null)pO=Math.min(pt.mMarket+.07,Math.max(pt.mMarket-.07,pO))}
   const MD=pt.yn?null:propModel(x,g.l);g.model=MD;
   const bestAt=side=>{const lv=x.q.some(q=>q.live&&q.l===g.l&&(side==="o"?q.o:q.u)!=null);const pr=x.q.filter(q=>q.l===g.l&&(!lv||q.live)).map(q=>side==="o"?q.o:q.u).filter(v=>v!=null);return pr.length?pr.reduce((b,o)=>dec(o)>dec(b)?o:b,pr[0]):null};
-  let so;if(MD){pO=MD.pm+catK(x.st)*(MD.p-MD.pm);MD.pAdj=pO;g.capped=false;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}else so=pt.yn?pO>=.5:raw>=.5;
+  let so;if(MD){pO=MD.pm+catK(x.st)*(MD.p-MD.pm);MD.pAdj=pO;g.capped=false;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}
+  /* no player model (short game log, or no DraftKings two-sided price at this line): with a market price, use it as is rather than
+     the averages-only projection, which ran low (it lost about 6% in the backtest and leaned Under) */
+  else if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){pO=pt.pm;g.noModel=true;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}
+  else so=pt.yn?pO>=.5:raw>=.5;
   g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
   /* best posted price for the chosen side at this line */
   /* when DraftKings has a live price at this line, research prices from earlier in the day are out of date */
@@ -1602,21 +1616,36 @@ function reliability(key){const k=key[0],i=+key.slice(1);let pen=0,why=[];
   else if(k==="c"){const C=custOf(i);if(!C)return{pen:9,why:[]};if(C.fo){if(!projP(C.p,C.st,C.l))return{pen:9,why:["no outside line"]};pen++;why.push("projection only")}if(VOLATILE.includes(C.st)){pen++;why.push("volatile stat")}}
   else{const L=LINES[i];const G=SNAP[L.g];const mk=G.mk.find(m=>m.k.startsWith(L.m));if(!mk||!mk.fair){pen++;why.push("no market fair line")}}
   return{pen,why}}
-/* Scale (expected return per $1 at the price): S 8%+, A 4%+, B 2%+, C -1.5%+, D -4%+, F below (A from 4%: where the season backtest's edges held up).
-   Every screen grades through gradeNow, so the same prop at the same price always gets the same letter, and a better price never lowers it.
-   Then a step down per reliability issue, and capped by confidence. S is kept rare: at most 3 per night
-   from the board, the biggest qualifying edges; the rest of those show as A. Odds you enter yourself can still earn S. */
-let S_KEYS=new Set();
+/* Grades come from rank.js gradeBet: the expected return at the LOW end of the win chance, where the low end subtracts
+   (1) how much DraftKings' no-vig price has overrated this side of this stat this season, plus 1.28 standard errors
+       (model.json mktCal), (2) half of the model's own move away from DraftKings (only partly proven, catK),
+   (3) extra room when the line is away from the posted one. S 7%+, A 3.5%+, B 1%+, C -1%+, D down to -5%, F below.
+   S and A also need confidence, a current price and no injury question. No per-night limit on A or S. */
+let S_KEYS=new Set();function pickSKeys(){}
+function uncOf(st,side,p,pm,L,l0){const C=PM_META&&PM_META.mktCal&&PM_META.mktCal[st];let u=0;
+  if(C){u+=Math.max(0,-(side==="o"?C.overGap:C.underGap))+1.28*C.se}else u+=.03;
+  if(pm!=null)u+=.5*Math.abs(p-pm);
+  if(L!=null&&l0!=null&&L!==l0)u+=.02*Math.abs(L-l0)/SLRank.sdFit(st,l0);
+  return u}
+function gradeOf(key,best,conf,o){o=o||{};const k=key[0],i=+key.slice(1);if(k==="l"){const g=gradeFor(key,best.ev,o.far);return{g:capGrade(g,conf),ev:best.ev,evLo:null,why:[]}}
+  const st=o.st||(k==="p"?PROPS[i].st:(custOf(i)||{}).st),side=/^Over/.test(best.lbl)?"o":"u";
+  let pm=null;if(k==="p"&&SUG[i]&&SUG[i].model){const MD=SUG[i].model;pm=(side==="o"?MD.pm:1-MD.pm);if(o.L!=null&&o.l0!=null&&o.L!==o.l0){const r=SLRank.probsAt(st,o.l0,MD.pm,o.L);pm=side==="o"?r.over:r.under}}
+  const f=freshOf(key),inj=k==="p"&&(PROPS[i].live&&PROPS[i].live.lv!=="out"||/questionable|doubtful/i.test(PROPS[i].flag||""));
+  const C=PM_META&&PM_META.mktCal&&PM_META.mktCal[st];
+  const gb=SLRank.gradeBet({p:best.p,push:best.push||0,o:best.o,u:uncOf(st,side,best.p,pm,o.L,o.l0),conf:conf&&conf.lv,fresh:f.lv==="aging"?"aging":f.lv==="stale"?"stale":f.lv==="started"?"started":"live",inj,validated:!!(C&&C.validated)&&!STALE});
+  if(COUNT_ST[st]&&o.L!=null&&o.l0!=null&&o.L!==o.l0&&["S","A"].includes(gb.g)){gb.g="B";gb.why.push("3-pointer, steal and block prices away from the posted line are unproven (overconfident in testing)")}
+  if(o.far&&gb.g!=="F"){gb.g=SLRank.GRADE_ORDER[Math.max(0,SLRank.GRADE_ORDER.indexOf(gb.g)-1)];gb.why.push("line far from the posted one")}
+  return gb}
+function gradeWhy(GB,best){const sg=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+  return`Grade ${GB.g}: ${sg(GB.ev)} expected return at ${fmtAm(best.o)}${GB.evLo!=null?`; ${sg(GB.evLo)} if the true chance is only ${pct(GB.pLo)}, the low end of the estimate`:""}.`+
+    (GB.pLo!=null?` Still worth it at ${fmtAm(SLRank.fairPrice(GB.pLo,best.push||0))} or better.`:"")+(GB.why&&GB.why.length?` Held back: ${GB.why.join("; ")}.`:"")}
+/* game lines keep the old EV scale (their own backtest is separate) */
 function gradeFor(key,ev,far){if(ev==null)return"F";
-  let g=ev>=.08?5:ev>=.04?4:ev>=.02?3:ev>=-.015?2:ev>=-.04?1:0;const r=reliability(key);g-=r.pen;if(far)g--;if(g>=5&&!S_KEYS.has(key)&&!(EDV[key]&&EDV[key].a))g=4;return GRADES[Math.max(0,g)]}
-function pickSKeys(){S_KEYS=new Set(["*"]);const c=[];
-  PROPS.forEach((x,i)=>{const g=SUG[i];if(g.bp==null)return;const ev=evOf(g.p,g.bp);if(ev<.08)return;const k="p"+i;const r=reliability(k);if(r.pen)return;
-    if(g.p<.5||g.capped)return;/* S needs Sharpline and the market on the same side, without leaning on the cap */
-    const cf=baseConf(k,(g.s==="o"?"Over ":"Under ")+g.l,g.p,g.bp,g.l);if(cf&&cf.lv==="High")c.push([ev,k])});
-  LINES.forEach((L,i)=>{if(L.bp==null)return;const ev=evOf(L.p,L.bp);if(ev>=.08)c.push([ev,"l"+i])});
-  c.sort((a,b)=>b[0]-a[0]);S_KEYS=new Set(c.slice(0,3).map(x=>x[1]))}
+  let g=ev>=.08?5:ev>=.04?4:ev>=.02?3:ev>=-.015?2:ev>=-.04?1:0;const r=reliability(key);g-=r.pen;if(far)g--;return GRADES[Math.max(0,Math.min(4,g))]}
 function baseGrade(key){const k=key[0],i=+key.slice(1);
-  if(k==="p"){const g=SUG[i];if(g.bp==null)return"F";return capGrade(gradeFor(key,evOf(g.p,g.bp)),baseConf(key,g.s==="o"?"Over "+g.l:"Under "+g.l,g.p,g.bp,g.l))}
+  if(k==="p"){const g=SUG[i];if(g.bp==null)return"F";const lbl=(g.s==="o"?"Over ":"Under ")+g.l;const G=gradeOf(key,{lbl,p:g.p,o:g.bp,push:0},baseConf(key,lbl,g.p,g.bp,g.l),{L:g.l,l0:g.l}).g;
+    /* without the player model the chance is only a price or an average: never above C */
+    return g.model?G:GRADES[Math.min(2,GRADES.indexOf(G))]}
   if(k==="l"){const L=LINES[i];if(L.bp==null)return"F";return capGrade(gradeFor(key,evOf(L.p,L.bp)),baseConf(key,L.pick,L.p,L.bp,parseFloat(L.pick.split(" ")[1])))}
   return"F"}
 function baseConf(key,lbl,p,o,L){try{const best={lbl,p,o,L,push:0};return confFor(key,best,threeNums(key,best,model(key),true),false)}catch(e){return null}}
@@ -1744,6 +1773,8 @@ function saveSettings(){const v=id=>document.getElementById(id).value;
   LS.set("sl_set",SET);Object.keys(SAVED).forEach(k=>syncFind(k));document.getElementById("setSheet").classList.remove("on");renderAll();toast("Settings saved")}
 
 /* ---------- top list ---------- */
+/* the price at which the conservative chance pLo earns expected return t (grade B 1%, A 3.5%, S 7%) */
+function needFor(pLo,t,push){return toAm(1+(t+1-pLo-(push||0))/pLo)}
 function needAm(p,e){let a=toAm(p/(1+Math.max(e,.005)));a=Math.ceil(a);if(a>-100&&a<100)a=a<0?100:-100;for(let i=0;i<40&&evOf(p,a)<e;i++){a=a<0?(a+1>-100?100:a+1):a+1}return a}
 /* one color rule everywhere: green = positive EV past your minimum, amber = small or zero, red = negative */
 const r1=v=>Math.round(v*1000)/1000,fmtEv=v=>{const x=r1(v)*100;return(x>0?"+":x<0?"−":"")+Math.abs(x).toFixed(1)+"%"};
@@ -1761,15 +1792,18 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
         <li><b>Price:</b> ${x.mine?`your ${BOOK} odds ${fmtAm(x.price)}`:`DraftKings ${fmtAm(x.price)}, the best price posted for this side`}; it implies ${pct1(x.imp)} with the vig. ${mv}</li>
         ${x.hits!=null?`<li><b>Recent form:</b> cleared ${x.line} in ${x.hits} of his last ${x.n10}.</li>`:""}
         ${x.mates?`<li><b>Lineup:</b> ${esc2(x.mates.join(", "))} out tonight.</li>`:""}
+        ${x.gb&&x.gb.ev!=null?`<li><b>Grade:</b> ${gradeWhy(x.gb,{o:x.price,push:0})}</li>`:""}
+        ${x.pm!=null?`<li><b>Versus the market:</b> DraftKings' no-vig price says ${pct1(x.pm)}; Sharpline says ${pct1(x.p)}${Math.abs(x.p-x.pm)<.005?". No model difference: the edge is entirely the price you're getting":`, a ${(Math.abs(x.p-x.pm)*100).toFixed(1)}-point difference from the inputs above`}.</li>`:""}
+        <li><b>What would end it:</b> the price moving past ${x.gb&&x.gb.pLo!=null?fmtAm(SLRank.fairPrice(x.gb.pLo,0)):"fair"}, a minutes or role change, or an injury update. Grades recalculate on every refresh.</li>
         <li><b>Freshness:</b> ${esc2(x.fresh.txt)}.</li>
         ${x.corr?`<li><b>Same player:</b> also listed as ${esc2(x.corr)}. These tend to win or lose together.</li>`:""}
       </ul></details>`:`<div class="why"><b style="color:var(--ink)">Why:</b> ${x.why||""}</div>`;
   return`<div class="top${watch?" lean":""}" data-key="${x.key}"><div class="rank">${n}</div>${freshTag(x.fresh)}
     <div class="kind">${gradeTag(gradeNow(x.base),"md")} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
     <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${esc2(x.head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${esc2(sub)}</div></div></div>
-    <div style="margin-top:10px"><span class="pick n">${watch?`${x.book} ${fmtAm(x.price)} now · needs ${fmtAm(needAm(x.p,SET.minEdge))} or better to qualify`:`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
+    <div style="margin-top:10px"><span class="pick n">${watch?(x.gb&&x.gb.pLo!=null?`${x.book} ${fmtAm(x.price)} now · at another book, grade B at ${fmtAm(needFor(x.gb.pLo,.01))} or better, A at ${fmtAm(needFor(x.gb.pLo,.035))}`:`${x.book} ${fmtAm(x.price)} now · needs ${fmtAm(needAm(x.p,SET.minEdge))} or better to qualify`):`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
     <div class="stats">${cell("Sharpline",pct(x.p))}${cell("Price implies",pct(x.imp))}${cell("Expected value",sgn(x.ev),x.ev>=0?"var(--over)":"var(--under)")}</div>
-    <div class="stats s2">${cell("Projection",x.proj!=null?x.proj:"–")}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
+    <div class="stats s2">${(()=>{if(!isProp||x.line==null||x.p==null)return cell("Projection",x.proj!=null?x.proj:"–");const r=SLRank.probsAt(x.st,x.line,x.side==="o"?x.p:1-x.p,x.line);return cell("Projection",`${r.mean.toFixed(1)} <small>(${Math.round(r.lo)}-${Math.round(r.hi)})</small>`)})()}${cell("Fair price",fmtAm(toAm(x.p)))}${cell("Confidence",x.conf?x.conf.lv:"–")}</div>
     ${det}
     <div class="act">${addBtn(x.key)}${oddsBtn(x.base)}${x.src==="saved"&&SAVED[x.base]?`<button class="rmsave" data-unsave="${x.base}">Remove</button>`:""}</div></div>`}
 /* is a short list a quiet night, missing data, or the model not running as fitted? checked in that order of seriousness */
@@ -1801,7 +1835,7 @@ function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]|
     avail=priced-n("out")-n("inj")-n("stale"),qual=n("shown")+n("capP")+n("overlap")+n("capG")+n("capN");
   const loaded=R.games.filter(g=>g.loaded).length,step=(lbl,v,note)=>`<div class="fn"><span>${lbl}</span><b>${v}</b>${note?`<small>${note}</small>`:""}</div>`;
   const tbl=(title,obj)=>`<div class="cv-t"><div class="cv-h">${title}</div><div class="cv-r cv-hd"><span></span><span>Markets</span><span>Priced</span><span>+EV</span><span>Qualified</span><span>Shown</span></div>${Object.entries(obj).sort((a,b)=>b[1].total-a[1].total).map(([k,b])=>`<div class="cv-r"><span>${esc2(STAT_LBL[k]||k)}</span><span>${b.total}</span><span>${b.priced}</span><span>${b.pos}</span><span>${b.qual}</span><span>${b.shown}</span></div>`).join("")}</div>`;
-  const order=["shown","capP","overlap","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
+  const order=["shown","capP","overlap","capG","capN","grade","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
   const V=slateVerdict(R,{loaded,modelable,priced,qual,shown:shownN});
   return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b><div class="verdict v-${V.k}"><b>${V.t}</b> ${V.d}</div></summary>
     <div class="funnel">
@@ -1814,7 +1848,8 @@ function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]|
       ${step("Current price, no injury question",avail)}
       ${step("Positive EV before the accuracy adjustment",R.ev.raw0)}
       ${step("Positive EV after it",R.ev.adj0)}
-      ${step(`At least ${(SET.minEdge*100).toFixed(0)}% EV (your minimum)`,R.ev.adj2>=0?n("shown")+n("capP")+n("overlap")+n("capG")+n("capN")+n("conf"):"–")}
+      ${step(`At least ${(SET.minEdge*100).toFixed(0)}% EV (your minimum)`,R.ev.adj2>=0?n("shown")+n("capP")+n("overlap")+n("capG")+n("capN")+n("conf")+n("grade"):"–")}
+      ${step("Grade B or better (edge still there at the low end of the chance)",n("shown")+n("capP")+n("overlap")+n("capG")+n("capN"))}
       ${step("Qualified",qual)}
       ${step("Shown",shownN,n("capP")+n("overlap")?`${n("capP")+n("overlap")} more qualified from players already listed`:"")}
     </div>
@@ -1832,7 +1867,7 @@ function renderTop(){
   let REP=null;try{REP=slateReport(items);topItems.report=REP}catch(e){console.warn("report",e)}
   try{window.SLRecs&&SLRecs.log(items)}catch(e){console.warn("recs",e)}
   box.innerHTML=head+coverageHTML(REP,items.length)+items.map((x,n)=>topCard(x,n+1,false)).join("");
-  if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets.${WL.length?" Closest to qualifying, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
+  if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets. At DraftKings' own price a prop is almost never better than C: tested on games it hadn't seen, the model ties DraftKings' price. A and S grades come from a better price or a stale line at another book, which held up in testing (A and S grades on old lines DraftKings had already moved away from: +18.7% return on 1,250 bets, +22.7% in the final test week). Enter or scan ${poss(BOOK)} odds on any prop and it is graded at once.${WL.length?" Price targets for the closest props, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
   if(!items.length&&!WL.length&&!S.props)box.innerHTML=`<div class="empty"><b>No priced props yet</b>DraftKings posts player props through the day. Scan screenshots or enter a book's odds meanwhile.</div>`;
   if(topItems.verify&&topItems.verify.length)box.insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>
     `<div class="vrow"><div><b>${esc2(x.head)}</b><div class="sub">${x.inj?esc2(x.inj):`Price from ${esc2(x.fresh.txt.toLowerCase())}. It may have moved.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`).join("")}</div>`);

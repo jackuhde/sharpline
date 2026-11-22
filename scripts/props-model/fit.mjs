@@ -66,9 +66,14 @@ function biasOf(L){const side=(f)=>{const o={n:0,w:0,pl:0},u={n:0,w:0,pl:0};L.fo
     return{over:f2(o),under:f2(u),underShare:o.n+u.n?+(u.n/(o.n+u.n)).toFixed(3):null}};
   const byWeek=[...new Set(base.map(r=>wk(r.d)))].sort((a,b)=>a-b).map(W=>{const x=base.filter(r=>wk(r.d)===W);return{from:x.map(r=>r.d).sort()[0],n:x.length,overWon:+(x.filter(r=>r.over).length/x.length).toFixed(3),overPriced:+(x.reduce((a,r)=>a+r.pm,0)/x.length).toFixed(3)}});
   return{rawModel:side(r=>r.pr),afterK:side(r=>r.p),favorsOverRaw:+(L.filter(r=>r.pr>r.pm).length/L.length).toFixed(3),byWeek}}
+/* How well DraftKings' own no-vig price predicted results, per stat and side, over every graded closing line. The app uses this
+   as the uncertainty on a fair price: a side DraftKings has overpriced (Overs, most stats) gets that shortfall subtracted, plus
+   1.28 standard errors, before a grade is given. Stats with fewer than 1,000 lines are not "validated" for S grades. */
+const mktCal={};[...new Set(base.map(r=>r.st))].forEach(st=>{const a=base.filter(r=>r.st===st),n=a.length,gap=a.reduce((s,r)=>s+(r.over-r.pm),0)/n,
+  se=Math.sqrt(a.reduce((s,r)=>s+r.pm*(1-r.pm),0)/n/n);mktCal[st]={n,overGap:+gap.toFixed(4),underGap:+(-gap).toFixed(4),se:+se.toFixed(4),validated:n>=1000}});
 const W=fit(S);
 const out={updated:new Date().toISOString(),games:games.length,lines:base.length,through:dates.at(-1),split:mid,
-  catK,catRec,calib,center:W.mu,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
+  catK,catRec,calib,mktCal,center:W.mu,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
   bias:biasOf(oos),
   overs:{n:base.length,hit:+(base.filter(r=>r.over).length/base.length).toFixed(3),fair:+(base.reduce((a,r)=>a+r.pm,0)/base.length).toFixed(3)}};
 fs.writeFileSync(OUT,JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1));
