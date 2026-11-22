@@ -1533,14 +1533,13 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
   return{yn:1,m:null,mPlayer:rate,mMarket:pm,Lm:.5,w,why,mkt,disagree:rate!=null&&pm!=null&&Math.abs(rate-pm)>.2,
     pOver:()=>Math.min(.95,Math.max(.01,p))}}
 /* every board prop takes its pick, chance and tier from tonight's projection */
-/* ================= prop model (since Nov 19, 2026) =================
+/* ================= prop model (since Nov 19, 2026; rebuilt Nov 22) =================
    Fit on every DraftKings pregame prop line this season (scripts/props-model, refit nightly into model.json).
-   It starts from DraftKings' own no-vig chance at the same line and adjusts it with what the backtest showed matters:
-   Overs hit about 2 points less often than DraftKings prices them, players who have cleared the number in most of
-   their last 10 games are overpriced, and season and recent averages, minutes trend, bench role, back-to-backs and
-   teammates ruled out each shift it a little. The old average-based projection lost about 6% at closing prices in the
-   same backtest, so it is no longer used to pick sides when this model can run. */
-const PM_DEFAULT={b0:0,mkt:0.9985,gapS:0.0587,gap10:0.0104,hot:-0.0725,bench:-0.1041,miss:0.0656,minTr:0.0938,b2b:-0.0226,combo:-0.1125,count:-0.0752};
+   It starts exactly at DraftKings' own no-vig chance and adjusts it only by how this player, tonight, differs from the typical
+   prop of the same stat (season and recent averages against the line, recent hit rate, minutes, bench role, back-to-back,
+   teammates out). Each stat then counts only the share of those moves that held up when tested week by week on games the
+   model hadn't seen (catK). There is no term that moves every prop one way: the old ones produced about 95% Unders. */
+const PM_DEFAULT={b0:0,mkt:1,gapS:0.0818,gap10:0.0493,hot:-0.1078,bench:-0.072,miss:0.0907,minTr:0.1086,b2b:0.0179};
 let PMW=PM_DEFAULT,PM_META=null;
 fetch("model.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.weights&&j.weights.mkt!=null){PMW=j.weights;PM_META=j;if(PROPS.length){applyProjections();renderAll()}}}).catch(()=>{});
 const etDay=t=>new Date(t).toLocaleDateString("en-CA",{timeZone:"America/New_York"});
@@ -1554,13 +1553,15 @@ function propModel(x,L){const st=x.st,c=STAT_COMP[st];if(!c||YN[st]||L==null)ret
   const pm=devig(q.o,q.u)[0],lgt=p=>Math.log(p/(1-p)),sg=z=>1/(1+Math.exp(-z)),W=PMW;
   const f={mkt:lgt(Math.min(.97,Math.max(.03,pm))),gapS:cl((s-L)/sd,2),gap10:cl((s10-L)/sd,2),hot:hr-.5,bench:P.min<24?1:0,miss:Math.min(3,outMates.length),
     minTr:cl(min3/P.min-1,.5),b2b:b2b?1:0,combo:c.length>1?1:0,count:COUNT_ST[st]?1:0};
+  /* each feature is measured against its average for this stat (model.json center), so nothing shifts every prop one way */
+  const C=(PM_META&&PM_META.center&&PM_META.center[st])||{};Object.keys(C).forEach(k=>{if(f[k]!=null)f[k]-=C[k]});
   const z=Object.keys(f).reduce((a,k)=>a+(W[k]||0)*f[k],W.b0||0),p=sg(z);
   /* what moved it, in points of Over chance */
   const d=k=>p-sg(z-(W[k]||0)*f[k]),r1=v=>Math.round(v*10)/10,parts=[];
   const base=sg((W.b0||0)+(W.mkt||0)*f.mkt)-pm;if(Math.abs(base)>=.005)parts.push([base,"DraftKings Overs hit less often than priced"]);
   const lab={gapS:`season average ${r1(s)}`,gap10:`last-10 average ${r1(s10)}`,hot:`cleared ${L} in ${hits} of his last ${P.g10.length} (books overprice streaks)`,bench:"bench minutes",
     miss:`${outMates.join(", ")} out`,minTr:`minutes trend (${r1(min3)} last 3 vs ${r1(P.min)})`,b2b:"second night of a back-to-back",combo:"combo stat"};
-  Object.keys(lab).forEach(k=>{if(!f[k])return;const v=d(k);if(Math.abs(v)>=.005)parts.push([v,lab[k]])});parts.sort((a,b)=>Math.abs(b[0])-Math.abs(a[0]));
+  Object.keys(lab).forEach(k=>{if(!f[k]||Math.abs(f[k])<1e-9)return;const v=d(k);if(Math.abs(v)>=.005)parts.push([v,lab[k]])});parts.sort((a,b)=>Math.abs(b[0])-Math.abs(a[0]));
   return{p,pm,q,parts,hits,n:P.g10.length}}
 function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null)g.why0=g.why;
   const pt=projTonight(i);g.pt=pt;if(!pt){g.proj=null;return}

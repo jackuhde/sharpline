@@ -2,7 +2,7 @@
 // Uses every graded DraftKings line this season (data/props-history.json), pre-game information only (rows.mjs).
 // Before vs after are scored the same way: walk-forward by week, each week priced by a model and per-stat k fit only on
 // earlier weeks. "Before" is the old k rule (floor 0.3, pulled toward 0.8) and the old Top List rule; "after" is the new k
-// rule (shrunk toward the market, no floor), no intercept, and the overlap-aware Top List. Writes data/nba/audit.json.
+// rule (shrunk toward the market, no floor), no level terms with features centered per stat, and the overlap-aware Top List. Writes data/nba/audit.json.
 import fs from "node:fs";import {createRequire} from "node:module";import {buildRows,appModel} from "./rows.mjs";import {dec,evOf,sdFor} from "./lib.mjs";
 const require=createRequire(import.meta.url);const RK=require("../../rank.js");
 const OLD=(()=>{try{const src=fs.readFileSync(process.argv[2]||"scripts/props-model/rank-before-audit.js","utf8");const m={exports:{}};new Function("module","window",src)(m,undefined);return m.exports}catch(e){return null}})();
@@ -12,9 +12,17 @@ const F={mkt:r=>lg(Math.min(.97,Math.max(.03,r.pm))),gapS:r=>cl((r.s-r.l)/sdFor(
   hot:r=>(r.hitRate10??.5)-.5,bench:r=>r.min<24?1:0,miss:r=>Math.min(3,r.miss),minTr:r=>cl(r.min3/r.min-1,.5),b2b:r=>r.b2b?1:0,
   combo:r=>/\+/.test(r.st)?1:0,count:r=>/3-Pointers|Steals|Blocks/.test(r.st)?1:0};
 const names=Object.keys(F);const memo={};
-function fit(W,b0=true){const key=W+":"+b0;if(memo[key])return memo[key];const tr=base.filter(r=>wk(r.d)<W),X=tr.map(r=>[1,...names.map(n=>F[n](r))]),y=tr.map(r=>r.over);let w=new Array(names.length+1).fill(0);w[1]=1;
-  for(let it=0;it<500;it++){const g=new Array(w.length).fill(0);X.forEach((x,i)=>{const p=sg(x.reduce((a,v,j)=>a+v*w[j],0));x.forEach((v,j)=>g[j]+=(p-y[i])*v)});w=w.map((v,j)=>v-.5*(g[j]/X.length+(j>1?2*v/X.length:0)));if(!b0)w[0]=0}return memo[key]=w}
-const pred=(w,r)=>sg(w[0]+names.reduce((a,k,j)=>a+w[j+1]*F[k](r),0));
+/* before: the pre-audit model (intercept, combo/count flags, raw features). after: no level terms, features centered per stat
+   on the training weeks, DraftKings' no-vig chance as a fixed starting point (same as fit.mjs) */
+const NEW=["gapS","gap10","hot","bench","miss","minTr","b2b"];
+function fit(W,old=true){const key=W+":"+old;if(memo[key])return memo[key];const tr=base.filter(r=>wk(r.d)<W);let xr,nm=old?names:["mkt",...NEW];
+  if(old)xr=r=>[1,...names.map(n=>F[n](r))];else{const A={},mu={};tr.forEach(r=>{const a=A[r.st]=A[r.st]||{n:0};a.n++;NEW.forEach(n=>a[n]=(a[n]||0)+F[n](r))});
+    for(const st in A){mu[st]={};NEW.forEach(n=>mu[st][n]=A[st][n]/A[st].n)}xr=r=>[1,F.mkt(r),...NEW.map(n=>F[n](r)-((mu[r.st]||{})[n]||0))]}
+  const X=tr.map(xr),y=tr.map(r=>r.over);let w=new Array(nm.length+1).fill(0);w[1]=1;
+  for(let it=0;it<500;it++){const g=new Array(w.length).fill(0);X.forEach((x,i)=>{const p=sg(x.reduce((a,v,j)=>a+v*w[j],0));x.forEach((v,j)=>g[j]+=(p-y[i])*v)});
+    w=w.map((v,j)=>old?v-.5*(g[j]/X.length+(j>1?2*v/X.length:0)):j<2?v:v-.5*(g[j]/X.length+2*v/X.length))}
+  w.xr=xr;w.nm=nm;return memo[key]=w}
+const pred=(w,r)=>sg(w.xr(r).reduce((a,v,j)=>a+v*w[j],0));
 const base=rows.filter(r=>r.gp>=3&&r.s!=null);
 const wk=d=>Math.floor((Date.parse(d+"T12:00:00Z")-Date.parse("2026-10-19T12:00:00Z"))/(7*864e5));
 const weeks=[...new Set(base.map(r=>wk(r.d)))].sort((a,b)=>a-b),trainable=weeks.filter(W=>base.filter(r=>wk(r.d)<W).length>=4000);
@@ -37,7 +45,7 @@ function score(rule){const L=[];evalWeeks.forEach(W=>{const w=fit(W,rule==="befo
   const ll=(y,p)=>-(y?Math.log(p):Math.log(1-p));const sided=L.map(x=>({p:x.side==="o"?x.p:1-x.p,y:x.won}));
   const bins=[[.4,.5],[.5,.52],[.52,.54],[.54,.56],[.56,.6],[.6,1]].map(([lo,hi])=>{const a=sided.filter(x=>x.p>=lo&&x.p<hi);return a.length?{range:`${lo}-${hi}`,n:a.length,predicted:pct(a.reduce((s,x)=>s+x.p,0)/a.length),actual:pct(a.filter(x=>x.y).length/a.length)}:null}).filter(Boolean);
   const byPlayer=Object.entries(group(picks,x=>x.r.name)).map(([k,a])=>({player:k,...rec(a),under:a.filter(x=>x.side==="u").length})).sort((a,b)=>b.n-a.n).slice(0,8);
-  return{lines:L.length,from:base.filter(r=>wk(r.d)===evalWeeks[0]).map(r=>r.d).sort()[0],marketsLeaningOver:pct(L.filter(x=>x.p>x.r.pm).length/L.length),marketsLeaningUnder:pct(L.filter(x=>x.p<x.r.pm).length/L.length),
+  return{rowSide:{over:pct(L.filter(x=>x.side==="o").length/L.length),under:pct(L.filter(x=>x.side==="u").length/L.length)},lines:L.length,from:base.filter(r=>wk(r.d)===evalWeeks[0]).map(r=>r.d).sort()[0],marketsLeaningOver:pct(L.filter(x=>x.p>x.r.pm).length/L.length),marketsLeaningUnder:pct(L.filter(x=>x.p<x.r.pm).length/L.length),
     picks2:{all:rec(picks),over:rec(picks.filter(x=>x.side==="o")),under:rec(picks.filter(x=>x.side==="u")),underShare:picks.length?pct(picks.filter(x=>x.side==="u").length/picks.length):null},
     picks4:{all:rec(picks.filter(x=>x.ev>=.04)),underShare:picks.filter(x=>x.ev>=.04).length?pct(picks.filter(x=>x.ev>=.04&&x.side==="u").length/picks.filter(x=>x.ev>=.04).length):null},
     byStat:Object.fromEntries(Object.entries(group(picks,x=>x.r.st)).map(([k,a])=>[k,{over:rec(a.filter(x=>x.side==="o")),under:rec(a.filter(x=>x.side==="u"))}])),

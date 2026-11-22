@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T15:55:47.983Z",
+ "updated": "2026-11-22T16:58:56.117Z",
  "lines": 19887,
  "walkForwardFrom": "2026-11-09",
  "facts": {
@@ -181,6 +181,10 @@
   "underShare": 96.2
  },
  "before": {
+  "rowSide": {
+   "over": 13.1,
+   "under": 86.9
+  },
   "lines": 9850,
   "from": "2026-11-09",
   "marketsLeaningOver": 12.2,
@@ -411,15 +415,19 @@
   ]
  },
  "after": {
+  "rowSide": {
+   "over": 49,
+   "under": 51
+  },
   "lines": 9850,
   "from": "2026-11-09",
-  "marketsLeaningOver": 11.5,
-  "marketsLeaningUnder": 60.3,
+  "marketsLeaningOver": 14.8,
+  "marketsLeaningUnder": 10.2,
   "picks2": {
    "all": {
-    "n": 7,
-    "hit": 57.1,
-    "roi": 5.8
+    "n": 0,
+    "hit": null,
+    "roi": null
    },
    "over": {
     "n": 0,
@@ -427,11 +435,11 @@
     "roi": null
    },
    "under": {
-    "n": 7,
-    "hit": 57.1,
-    "roi": 5.8
+    "n": 0,
+    "hit": null,
+    "roi": null
    },
-   "underShare": 100
+   "underShare": null
   },
   "picks4": {
    "all": {
@@ -441,26 +449,13 @@
    },
    "underShare": null
   },
-  "byStat": {
-   "Pts+Reb": {
-    "over": {
-     "n": 0,
-     "hit": null,
-     "roi": null
-    },
-    "under": {
-     "n": 7,
-     "hit": 57.1,
-     "roi": 5.8
-    }
-   }
-  },
+  "byStat": {},
   "byEvBand": [
    {
     "band": "2-4%",
-    "n": 7,
-    "hit": 57.1,
-    "roi": 5.8
+    "n": 0,
+    "hit": null,
+    "roi": null
    },
    {
     "band": "4-6%",
@@ -475,82 +470,32 @@
     "roi": null
    }
   ],
-  "byPlayer": [
-   {
-    "player": "Collin Sexton",
-    "n": 1,
-    "hit": 0,
-    "roi": -100,
-    "under": 1
-   },
-   {
-    "player": "Daniel Gafford",
-    "n": 1,
-    "hit": 100,
-    "roi": 82.6,
-    "under": 1
-   },
-   {
-    "player": "Bennedict Mathurin",
-    "n": 1,
-    "hit": 100,
-    "roi": 87.7,
-    "under": 1
-   },
-   {
-    "player": "Kel'el Ware",
-    "n": 1,
-    "hit": 100,
-    "roi": 90.9,
-    "under": 1
-   },
-   {
-    "player": "Mario Hezonja",
-    "n": 1,
-    "hit": 0,
-    "roi": -100,
-    "under": 1
-   },
-   {
-    "player": "Isaiah Stewart",
-    "n": 1,
-    "hit": 100,
-    "roi": 79.4,
-    "under": 1
-   },
-   {
-    "player": "Zach Collins",
-    "n": 1,
-    "hit": 0,
-    "roi": -100,
-    "under": 1
-   }
-  ],
+  "byPlayer": [],
   "leanCalibration": {
    "leanUnder": {
-    "n": 4342,
-    "predictedUnder": 51.3,
-    "actualUnder": 50.2,
-    "dkUnder": 49.9
+    "n": 0,
+    "predictedUnder": null,
+    "actualUnder": null,
+    "dkUnder": null
    },
    "leanOver": {
-    "n": 138,
-    "predictedOver": 45.6,
-    "actualOver": 41.3,
-    "dkOver": 45
+    "n": 23,
+    "predictedOver": 47.3,
+    "actualOver": 39.1,
+    "dkOver": 46.7
    }
   },
   "shiftByWeek": [
    {
     "from": "2026-11-09",
-    "modelShiftPts": -0.84,
-    "rawShiftPts": -2.18,
+    "modelShiftPts": 0.01,
+    "rawShiftPts": 0.28,
     "realizedOverMinusDkPts": -0.54
    },
    {
     "from": "2026-11-16",
-    "modelShiftPts": -0.4,
-    "rawShiftPts": -1.01,
+    "modelShiftPts": 0.02,
+    "rawShiftPts": 0.57,
     "realizedOverMinusDkPts": -0.99
    }
   ],
@@ -561,39 +506,39 @@
   "calibration": [
    {
     "range": "0.4-0.5",
-    "n": 1641,
-    "predicted": 48.3,
-    "actual": 48.1
+    "n": 225,
+    "predicted": 49.2,
+    "actual": 49.3
    },
    {
     "range": "0.5-0.52",
-    "n": 2646,
+    "n": 3926,
     "predicted": 51,
-    "actual": 49.7
+    "actual": 50.4
    },
    {
     "range": "0.52-0.54",
-    "n": 2278,
-    "predicted": 52.9,
-    "actual": 54.8
+    "n": 2504,
+    "predicted": 52.7,
+    "actual": 55
    },
    {
     "range": "0.54-0.56",
-    "n": 1181,
+    "n": 1073,
     "predicted": 54.9,
-    "actual": 56.6
+    "actual": 55.6
    },
    {
     "range": "0.56-0.6",
-    "n": 1147,
+    "n": 1155,
     "predicted": 57.7,
-    "actual": 58
+    "actual": 58.9
    },
    {
     "range": "0.6-1",
-    "n": 950,
+    "n": 967,
     "predicted": 63.6,
-    "actual": 62
+    "actual": 62.2
    }
   ]
  },
@@ -627,10 +572,10 @@
    "examples": []
   },
   "after": {
-   "slates": 3,
+   "slates": 0,
    "slatesWithAPlayerTwice": 0,
    "overlappingSamePlayerPairs": 0,
-   "mostPicksOnOnePlayer": 1,
+   "mostPicksOnOnePlayer": 0,
    "examples": []
   }
  },
