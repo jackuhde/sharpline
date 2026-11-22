@@ -58,6 +58,12 @@ function gradeNfl(x){if(!x)return{g:null,why:"no prop"};
   if(x.inj&&x.inj.lv==="out")gb.g="F",gb.why.push("ruled out");
   if(assumed&&["S","A","B"].includes(gb.g)){gb.g="C";gb.why.push(`graded at an assumed ${NFL_STANDIN}; enter your odds for a real grade`)}
   return{...gb,assumed,o}}
+/* slate grades: every modeled prop in games not started, ranked by EV at your price (else the assumed -115), graded by
+   position: S top 3%, A next 9%, B next 18%, C next 30%, D next 25%, F the rest. Relative ("best options this week"), shown
+   with a dashed outline; the value grade above stays on each card. */
+let NREL={},NREL_N=0;
+function computeRelNfl(){NREL={};const L=allProps().filter(x=>x.p!=null&&x.e&&x.e.state==="pre"&&!(x.yn&&x.price==null)).map(x=>{const GN=gradeNfl(x);return{key:x.key,ev:GN.ev??-9,mv:Math.abs(x.p-.5)}}).filter(r=>r.ev>-9);
+  L.sort((a,b)=>b.ev-a.ev||b.mv-a.mv);NREL_N=L.length;L.forEach((r,j)=>{const q=(j+.5)/L.length;NREL[r.key]={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",rank:j+1}})}
 const trusted=st=>{const b=N.model&&N.model.byStat&&N.model.byStat[st];return!!(b&&b.picks>=100&&b.hit>=.54)};
 function btNote(st){const b=N.model&&N.model.byStat&&N.model.byStat[st];if(!b)return"Not backtested";if(!b.picks||b.hit==null)return`Backtest: no edge found (${b.n} lines)`;
   return`Backtest: right side ${pc1(b.hit)} of ${b.picks} picks${trusted(st)?"":" · not enough to trust"}`}
@@ -270,7 +276,7 @@ function gameChip(e,on){const s=e.state==="in"?`<em class="nf-lv">${h(e.detail)}
 const fresh=t=>`<span class="nf-fr ${t&&Date.now()-t<10*60000?"ok":"old"}">${ago(t)}</span>`;
 const evc=v=>v==null?"ev-na":v>=((typeof SET!=='undefined'&&SET.minEdge)||.02)?"ev-pos":v>-.01?"ev-mid":"ev-neg";
 
-function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pre"),loaded=pre.filter(e=>N.props[e.id]).length;
+function topHTML(){computeRelNfl();const L=allProps();const pre=N.events.filter(e=>e.state==="pre"),loaded=pre.filter(e=>N.props[e.id]).length;
   const cand=L.filter(x=>x.p!=null&&!x.why&&x.e.state==="pre"&&!(x.inj&&(x.inj.lv==="out"||x.inj.lv==="doubt")));
   const priced=cand.filter(x=>x.price!=null&&x.ev!=null),minE=(typeof SET!=='undefined'&&SET.minEdge)||.02;
   const qual=priced.filter(x=>x.ev>=minE&&(trusted(x.st)||x.yn)&&["B","A","S"].includes(gradeNfl(x).g)).sort((a,b)=>(gradeNfl(b).evLo??b.ev)-(gradeNfl(a).evLo??a.ev));
@@ -319,7 +325,7 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
       ${GN.g?`<li><b>Grade ${GN.g}:</b> ${evs(GN.ev)} at ${am(GN.o)}${GN.assumed?" (assumed)":""}; ${evs(GN.evLo)} at the low end of the chance (${pc1(GN.pLo)}).${GN.why&&GN.why.length?" Held back: "+h(GN.why.join("; "))+".":""}</li>`:`<li><b>No grade:</b> ${h(GN.why)}.</li>`}
       <li><b>Freshness:</b> DraftKings line updated ${ago(Date.parse(x.upd))}.</li></ul></details>`;
     return`<div class="top${w?" lean":""}" data-nfrow="${h(x.key)}"><div class="rank">${i+1}</div>
-      <div class="kind">${g?`<span class="grade g-${g} md" title="${assumed?`Graded at an assumed ${NFL_STANDIN}; enter your odds for the real grade`:"Graded at your price"}">${g}</span>${assumed?`<span class="mine">at ${NFL_STANDIN}</span>`:""}`:`<span class="mine">${h(GN.why)}</span>`}${w?'<span class="lean-tag">'+(x.price!=null?"Not an edge yet":"Needs a price")+'</span>':`<span class="conf c-${cf.lv}">${cf.lv} confidence</span>`} ${x.yn?"Touchdown":sd+" · "+h(LBL[x.st])} ${x.price!=null?'<span class="mine">Your odds</span>':""}${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
+      <div class="kind">${NREL[x.key]?`<span class="grade g-${NREL[x.key].g} md rel" title="Slate grade: #${NREL[x.key].rank} of ${NREL_N} props this week">${NREL[x.key].g}</span><span class="mine">#${NREL[x.key].rank} of ${NREL_N} · value grade ${g||"–"}${assumed?` at ${NFL_STANDIN}`:""}</span>`:g?`<span class="grade g-${g} md" title="${assumed?`Graded at an assumed ${NFL_STANDIN}; enter your odds for the real grade`:"Graded at your price"}">${g}</span>${assumed?`<span class="mine">at ${NFL_STANDIN}</span>`:""}`:`<span class="mine">${h(GN.why)}</span>`}${w?'<span class="lean-tag">'+(x.price!=null?"Not an edge yet":"Needs a price")+'</span>':`<span class="conf c-${cf.lv}">${cf.lv} confidence</span>`} ${x.yn?"Touchdown":sd+" · "+h(LBL[x.st])} ${x.price!=null?'<span class="mine">Your odds</span>':""}${x.inj?` <span class="inj inj-${x.inj.lv==="quest"?"quest":"doubt"}">${h(x.inj.st)}</span>`:""}</div>
       <div class="face" data-nfprof="${x.id}">${nflAvatar(x.id)}<div><h3 style="margin:0">${h(head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${h(tm)} ${x.c&&x.c.side==="home"?"vs":"@"} ${h(op)} · ${h(LBL[x.st]||"")} · ${h(kick(x.e))}</div></div></div>
       <div style="margin-top:10px"><span class="pick n">${call}</span></div>
       <div class="stats">${cell("Sharpline",pc(x.p))}${cell("Price implies",x.price!=null?pc(RK.imp(x.price)):gEv!=null?pc(RK.imp(NFL_STANDIN))+" at "+NFL_STANDIN:"needs a price")}${cell(x.ev!=null?"Expected value":"EV at "+NFL_STANDIN,gEv!=null?evs(gEv):"–",gEv==null?null:gEv>=0?"var(--over)":"var(--under)")}</div>
@@ -340,7 +346,7 @@ let nfUid=0;function nflAvatar(id){const a=ath(id),t=a?T(a[2]):T(""),c1=t[2]||"#
   <path d="M39 30c1 10 5 16 11 16s10-6 11-16" fill="none" stroke="${c2}" stroke-width="3.2" stroke-linecap="round"/><path d="M36 45c-4 2-8 7-9 14M64 45c4 2 8 7 9 14" fill="none" stroke="${c2}" stroke-width="3" stroke-linecap="round" opacity=".9"/>
   <text x="50" y="80" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="${fs}" fill="${c1}" stroke="${c2}" stroke-width="1.2" paint-order="stroke">${h(num)}</text></g></g></g></svg></span>`}
 
-function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g);const f=N.f;
+function propsHTML(){computeRelNfl();const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g);const f=N.f;
   let rows=L.filter(x=>(f.pos==="all"||x.pos===f.pos)&&(f.st==="all"||x.st===f.st)&&(!f.q||(x.name+" "+T(x.tid)[0]+" "+T(x.tid)[1]).toLowerCase().includes(f.q.toLowerCase()))&&(f.side==="all"||x.side===f.side||f.side==="priced"&&x.price!=null));
   const so={gap:(a,b)=>(trusted(b.st)?1:0)-(trusted(a.st)?1:0)||(b.p??-1)-(a.p??-1),ev:(a,b)=>(b.ev??-9)-(a.ev??-9),line:(a,b)=>b.l-a.l,name:(a,b)=>a.name.localeCompare(b.name),stat:(a,b)=>STAT_ORDER.indexOf(a.st)-STAT_ORDER.indexOf(b.st)||(b.p??0)-(a.p??0)}[f.sort]||(()=>0);rows.sort(so);
   const stats=STAT_ORDER.filter(s=>L.some(x=>x.st===s)),games=N.events;
@@ -348,7 +354,7 @@ function propsHTML(){const L=allProps().filter(x=>N.f.g==="all"||x.e.id===N.f.g)
   const row=x=>{const isY=x.yn;return`<div class="nf-tr" data-nfrow="${h(x.key)}"><div class="c-pl">${jersey(x.id,"sm")}<div><span class="nf-name" data-nfprof="${x.id}">${h(x.name)}</span>${x.inj?` <span class="inj inj-${x.inj.lv==="out"?"out":x.inj.lv==="doubt"?"doubt":"quest"}">${h(x.inj.st)}</span>`:""}<small>${h(x.posL)} · ${h(T(x.tid)[0])}${x.c?` ${x.c.side==="home"?"vs":"@"} ${h(T(x.c.opp)[0])}`:""}</small></div></div>
     <div class="c-st">${h(SHORT[x.st]||x.st)}</div><div class="c-ln"><b>${isY?"Yes":x.l}</b>${x.alt?`<small class="nf-alt">yours · DK ${x.dkL}</small>`:x.lo!=null&&x.lo!==x.l?`<small>opened ${x.lo}</small>`:""}</div>
     <div class="c-pj">${x.P&&x.P.m!=null&&!isY?`<b>${r1(x.P.m)}</b>${bar(x)}`:x.why==="noHist"?"<small>under 2 games</small>":x.why?"<small>not modeled</small>":"–"}</div>
-    <div class="c-ch">${(()=>{const GN=gradeNfl(x);return GN.g?`<span class="grade g-${GN.g}" title="${GN.assumed?"at an assumed "+NFL_STANDIN:"at your price"}">${GN.g}</span> `:""})()}${x.nolean?`<b class="ev-na">No lean</b><small>backtest found no edge</small>`:x.p!=null?`<b class="pick ${x.side}">${isY?"Yes":x.side==="o"?"Over":"Under"} ${pc(x.p)}</b><small>fair ${am(x.fair)}</small>`:`<small>${h(gradeNfl(x).why)}</small>`}</div>
+    <div class="c-ch">${(()=>{const GN=gradeNfl(x),R=NREL[x.key];return R?`<span class="grade g-${R.g} rel" title="Slate grade #${R.rank} of ${NREL_N}; value grade ${GN.g||"–"}">${R.g}</span> `:GN.g?`<span class="grade g-${GN.g}" title="${GN.assumed?"at an assumed "+NFL_STANDIN:"at your price"}">${GN.g}</span> `:""})()}${x.nolean?`<b class="ev-na">No lean</b><small>backtest found no edge</small>`:x.p!=null?`<b class="pick ${x.side}">${isY?"Yes":x.side==="o"?"Over":"Under"} ${pc(x.p)}</b><small>fair ${am(x.fair)}</small>`:`<small>${h(gradeNfl(x).why)}</small>`}</div>
     <div class="c-ev">${x.price!=null?`<b class="${evc(x.ev)}">${evs(x.ev)}</b><small>${am(x.price)} ${h(x.bk||"")}</small>`:x.p!=null?`<button class="lnk" data-nfpx="${h(x.key)}">Enter price</button>`:""}</div>
     <div class="c-bt" title="${h(btNote(x.st))}">${trusted(x.st)?"<b class='pos'>✓</b>":"<small>–</small>"}</div></div>`};
   return`${weekNav()}<div class="nf-filters">

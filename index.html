@@ -580,6 +580,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .sheet{position:fixed;inset:0;z-index:60;display:none}
 .addbtn.mine-btn{border-color:rgba(232,184,75,.45);color:var(--acc2)}
 .sheet.on{display:block}
+.grade.rel{outline:2px dashed currentColor;outline-offset:1px}
 .mlab{display:block;font:800 11px Archivo;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin:12px 0 5px}.msel{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--line2);border-radius:12px;background:var(--bg);color:var(--ink);font:700 15px Archivo}.mrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mrow3>div{min-width:0}.late-tag{font:800 10.5px Archivo;color:var(--mute);border:1px solid var(--line2);border-radius:6px;padding:1px 5px;margin-left:6px}
 .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 .sheet-in{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(620px,100%);max-height:92vh;overflow:auto;background:var(--s1);border:1px solid var(--line2);border-bottom:0;border-radius:24px 24px 0 0;padding:18px 16px 30px;animation:up .3s cubic-bezier(.2,.9,.3,1)}
@@ -965,7 +966,7 @@ html,body{overscroll-behavior-y:none}
 <script src="gamemodel.js?v=1795900004"></script>
 <script src="corr.js?v=1795900002"></script>
 <script src="livegame.js?v=1795900005"></script>
-<script src="nfl.js?v=1795900020"></script>
+<script src="nfl.js?v=1795900021"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
 <script>
@@ -1316,8 +1317,11 @@ function topItems(){
   const byBase=Object.fromEntries(Q.map(c=>[c.base,c])),out=SEL.out.map(o=>{const c=byBase[o.base];if(o.corr){const first=SEL.out.find(x=>x.ath===o.ath&&x.base!==o.base);c.corr=first?byBase[first.base].head:null}return c}),taken=new Set(out.map(c=>c.base));
   topItems.qual=Q;topItems.held=SEL.held;
   /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
-  const shown=new Set(out.map(c=>c.ath));topItems.watch=out.length>=5?[]:ok.concat(pool.filter(c=>c.ev<=0&&c.ev>-.08&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&!c.inj&&c.parts))
-    .filter(c=>!taken.has(c.base)&&c.parts).sort((a,b)=>b.ev-a.ev).filter(c=>!shown.has(c.ath)&&(shown.add(c.ath),true)).slice(0,Math.min(5,8-out.length));
+  /* below the line: the best available tonight by slate grade (S, A, B), overlap-aware, never counted as picks */
+  computeRel();
+  const BA=ok.concat(pool).filter(c=>!taken.has(c.base)&&REL[c.base]&&["S","A","B"].includes(REL[c.base].g)&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&c.fresh.lv!=="aging"&&!c.inj)
+    .sort((a,b)=>REL[a.base].rank-REL[b.base].rank).map(c=>({...c,ev:REL[c.base].ev,conf:"High"}));
+  topItems.watch=SLRank.selectTop(BA.filter((c,j,a)=>a.findIndex(d=>d.base===c.base)===j),{max:Math.max(0,10-out.length),perPlayer:"1x",perGame:"3",minEdge:-1}).out;
   topItems.qualified=Q.length;
   return out}
 function builtConf(x,price){try{const base=x.k+x.i,m=model(base),w=x.pick.split(" ");const lbl=w[1]==="ML"?w[0]+" ML":w[0]+" "+w[1];
@@ -1656,6 +1660,21 @@ function baseGrade(key){const k=key[0],i=+key.slice(1);
 function baseConf(key,lbl,p,o,L){try{const best={lbl,p,o,L,push:0};return confFor(key,best,threeNums(key,best,model(key),true),false)}catch(e){return null}}
 function gradeNow(key){const E=EDV[key];if(E&&E.a&&E.b){recHTML(key);const b=recBest[key];if(b&&b.grade)return b.grade}return baseGrade(key)}
 const gradeTag=(g,sz)=>`<span class="grade g-${g}${sz?" "+sz:""}">${g}</span>`;
+/* ---------- slate grades (Nov 22 2026) ----------
+   A second, relative grade: every prop on tonight's board that hasn't started is ranked against the others by its expected
+   return at the best price you can get (your entered odds, else DraftKings), for the side Sharpline prefers, and graded by
+   where it falls: S top 3%, A next 9%, B next 18%, C next 30%, D next 25%, F the rest. It answers "which are the best options
+   tonight", not "is this a good bet": a slate S can still lose money to the vig, so the value grade and EV stay on every card.
+   Ties break on Sharpline's own move toward that side. */
+let REL={},REL_N=0;
+function relScore(i){const g=SUG[i],key="p"+i;if(!g||g.p==null||started(PROPS[i].g))return null;
+  if(hasMine(key)){recHTML(key);const b=recBest[key];if(b&&!b.assumed)return{ev:b.ev,side:/^Over/.test(b.lbl)?"o":"u"}}
+  if(g.bp==null||YN[PROPS[i].st])return null;const MD=g.model;return{ev:evOf(g.p,g.bp),side:g.s,mv:MD?(g.s==="o"?1:-1)*((MD.pAdj??MD.pm)-MD.pm):0}}
+function computeRel(){REL={};const L=[];PROPS.forEach((x,i)=>{const r=relScore(i);if(r)L.push({key:"p"+i,...r})});
+  L.sort((a,b)=>b.ev-a.ev||(b.mv||0)-(a.mv||0));REL_N=L.length;
+  L.forEach((r,j)=>{const q=(j+.5)/L.length;REL[r.key]={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",rank:j+1,ev:r.ev,side:r.side}})}
+function relTag(key,sz){const R=REL[key];if(!R)return gradeTag(gradeNow(key),sz);const v=gradeNow(key);
+  return`<span class="grade g-${R.g} rel${sz?" "+sz:""}" title="Slate grade: #${R.rank} of ${REL_N} props tonight by expected return. Value grade ${v}.">${R.g}</span>`}
 
 /* ---------- helpers ---------- */
 const sideCls=s=>s==="o"?"o":s==="u"?"u":"n";
@@ -1804,7 +1823,7 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
         ${x.corr?`<li><b>Same player:</b> also listed as ${esc2(x.corr)}. These tend to win or lose together.</li>`:""}
       </ul></details>`:`<div class="why"><b style="color:var(--ink)">Why:</b> ${x.why||""}</div>`;
   return`<div class="top${watch?" lean":""}" data-key="${x.key}"><div class="rank">${n}</div>${freshTag(x.fresh)}
-    <div class="kind">${gradeTag(gradeNow(x.base),"md")} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
+    <div class="kind">${relTag(x.base,"md")}${REL[x.base]?`<span class="mine">#${REL[x.base].rank} of ${REL_N} tonight · value grade ${gradeNow(x.base)}</span>`:""} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
     <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${esc2(x.head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${esc2(sub)}</div></div></div>
     <div style="margin-top:10px"><span class="pick n">${watch?(x.gb&&x.gb.pLo!=null?`${x.book} ${fmtAm(x.price)} now · at another book, grade B at ${fmtAm(needFor(x.gb.pLo,.01))} or better, A at ${fmtAm(needFor(x.gb.pLo,.035))}`:`${x.book} ${fmtAm(x.price)} now · needs ${fmtAm(needAm(x.p,SET.minEdge))} or better to qualify`):`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
     <div class="stats">${cell("Sharpline",pct(x.p))}${cell("Price implies",pct(x.imp))}${cell("Expected value",sgn(x.ev),x.ev>=0?"var(--over)":"var(--under)")}</div>
@@ -1873,7 +1892,7 @@ function renderTop(){
   let REP=null;try{REP=slateReport(items);topItems.report=REP}catch(e){console.warn("report",e)}
   try{window.SLRecs&&SLRecs.log(items)}catch(e){console.warn("recs",e)}
   box.innerHTML=head+coverageHTML(REP,items.length)+items.map((x,n)=>topCard(x,n+1,false)).join("");
-  if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets. At DraftKings' own price a prop is almost never better than C: tested on games it hadn't seen, the model ties DraftKings' price. A and S grades come from a better price or a stale line at another book, which held up in testing (A and S grades on old lines DraftKings had already moved away from: +18.7% return on 1,250 bets, +22.7% in the final test week). Enter or scan ${poss(BOOK)} odds on any prop and it is graded at once.${WL.length?" Price targets for the closest props, one per player (not recommendations):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
+  if(items.length<5)box.insertAdjacentHTML("beforeend",`<div class="hint" style="margin:${items.length?14:4}px 4px 10px"><b style="color:var(--ink)">${items.length?`Only ${items.length} bet${items.length===1?"":"s"} qualif${items.length===1?"ies":"y"} tonight.`:"No bet qualifies right now."}</b> Sharpline won't fill the list with weak bets. At DraftKings' own price a prop is almost never better than C: tested on games it hadn't seen, the model ties DraftKings' price. A and S grades come from a better price or a stale line at another book, which held up in testing (A and S grades on old lines DraftKings had already moved away from: +18.7% return on 1,250 bets, +22.7% in the final test week). Enter or scan ${poss(BOOK)} odds on any prop and it is graded at once.${WL.length?" Best available tonight, ranked against every prop on the slate (slate grades S, A and B; one per player; the value grade and EV on each card say whether it beats the vig):":""}</div>`+WL.map((x,n)=>topCard(x,items.length+n+1,true)).join(""));
   if(!items.length&&!WL.length&&!S.props)box.innerHTML=`<div class="empty"><b>No priced props yet</b>DraftKings posts player props through the day. Scan screenshots or enter a book's odds meanwhile.</div>`;
   if(topItems.verify&&topItems.verify.length)box.insertAdjacentHTML("beforeend",`<div class="eyebrow" style="margin:22px 4px 8px">Needs verification</div><div class="list">${topItems.verify.map(x=>
     `<div class="vrow"><div><b>${esc2(x.head)}</b><div class="sub">${x.inj?esc2(x.inj):`Price from ${esc2(x.fresh.txt.toLowerCase())}. It may have moved.`}</div></div><button class="addbtn" data-jump="${x.base}">Check</button></div>`).join("")}</div>`);
@@ -1897,8 +1916,8 @@ const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}"><span class="pfa" ${pfKeyAttr(key)}>${avatar(x.p,x.tm,"av")}</span>
     <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} ${SNAP[x.g]&&nick(x.tm)===nick(SNAP[x.g].home)?"vs":"@"} ${SNAP[x.g]?team(nick(x.tm)===nick(SNAP[x.g].home)?SNAP[x.g].away:SNAP[x.g].home)[0]:""} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
-    ${(v=>`<div class="r">${g.noLean&&!v.mine?`<span class="pick pass" title="Sharpline's chance equals DraftKings' no-vig price and both sides lose to the vig">No edge · ${g.l}</span>`:`<span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>`}
-      <span class="est"><b>${pct(v.p!=null?v.p:g.p)}</b> ${gradeTag(gradeNow(key))}</span>
+    ${(v=>`<div class="r">${g.noLean&&!v.mine?`<span class="pick pass ${sideCls(g.s)}" title="Sharpline's chance equals DraftKings' no-vig price and both sides lose to the vig; this is the better of the two prices">${g.s==="o"?"▲ Over":"▼ Under"} ${g.l} · no edge</span>`:`<span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>`}
+      <span class="est"><b>${pct(v.p!=null?v.p:g.p)}</b> ${relTag(key)}</span>
       ${v.price!=null?`<span class="evl ${evCls(v.ev)}">${v.mine?BOOK:"DK"} ${fmtAm(v.price)} · ${fmtEv(v.ev)} EV</span>`:`<span class="evl ev-na">no two-sided price</span>`}</div>`)(rowVals(key))}
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div>${(v=>{if(g.bp==null||YN[x.st])return"";const dkEv=evOf(g.p,g.bp),im=imp(g.bp);const b=v.mine?recBest[key]:null;
         return`<div class="cmp"><div><span>DraftKings ${g.s==="o"?"Over":"Under"} ${g.l}</span><b>${fmtAm(g.bp)}</b><small>implies ${pct1(im)} · Sharpline ${pct1(g.p)} · edge ${((g.p-im)*100>=0?"+":"")+((g.p-im)*100).toFixed(1)} pts · EV ${(dkEv>=0?"+":"")+(dkEv*100).toFixed(1)}%</small></div>${b?`<div class="mine"><span>${BOOK} ${b.lbl} (your odds)</span><b>${fmtAm(b.o)}</b><small>implies ${pct1(imp(b.o))} · Sharpline ${pct1(b.p)} · EV ${(b.ev>=0?"+":"")+(b.ev*100).toFixed(1)}%${b.L!==g.l?` · <b style="color:var(--gold)">different line from DraftKings (${g.l})</b>`:""} · ${b.ev>dkEv?"better than DraftKings by "+((b.ev-dkEv)*100).toFixed(1)+" pts of EV":"worse than DraftKings by "+((dkEv-b.ev)*100).toFixed(1)+" pts of EV"}</small></div>`:""}</div>`})(rowVals(key))}<div class="fresh-line">${freshTag(freshOf(key))} ${x.lp?"DraftKings prices update live every few minutes.":"Researched line; DraftKings has not posted this one."}</div>
