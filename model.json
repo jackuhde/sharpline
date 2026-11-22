@@ -1,160 +1,160 @@
 {
- "updated": "2026-11-22T15:52:53.101Z",
- "games": 235,
- "lines": 19293,
- "through": "2026-11-20",
+ "updated": "2026-11-22T15:55:43.008Z",
+ "games": 241,
+ "lines": 19887,
+ "through": "2026-11-21",
  "split": "2026-11-08",
  "catK": {
-  "Points": 0,
-  "Assists": 0.192,
+  "Points": 0.012,
+  "Assists": 0.026,
   "Rebounds": 0,
   "3-Pointers": 0,
-  "Steals": 0.703,
+  "Steals": 0.77,
   "Blocks": 0,
-  "Pts+Ast": 0.152,
-  "Pts+Reb": 0.564,
-  "Reb+Ast": 0.197,
-  "Pts+Reb+Ast": 0.525
+  "Pts+Ast": 0.234,
+  "Pts+Reb": 0.571,
+  "Reb+Ast": 0.168,
+  "Pts+Reb+Ast": 0.571
  },
  "catRec": {
   "Points": {
-   "n": 24,
-   "hit": 0.625,
-   "roi": 0.179,
-   "raw": -0.106
+   "n": 28,
+   "hit": 0.607,
+   "roi": 0.15,
+   "raw": 0.024
   },
   "Assists": {
-   "n": 6,
-   "hit": 0.333,
-   "roi": -0.375,
-   "raw": 0.457
+   "n": 9,
+   "hit": 0.222,
+   "roi": -0.584,
+   "raw": 0.058
   },
   "Rebounds": {
-   "n": 21,
-   "hit": 0.429,
-   "roi": -0.175,
-   "raw": -0.856
+   "n": 25,
+   "hit": 0.48,
+   "roi": -0.106,
+   "raw": -0.657
   },
   "3-Pointers": {
    "n": 181,
    "hit": 0.503,
    "roi": -0.081,
-   "raw": -0.463
+   "raw": -0.375
   },
   "Steals": {
    "n": 25,
    "hit": 0.72,
    "roi": 0.206,
-   "raw": 1.501
+   "raw": 1.632
   },
   "Blocks": {
    "n": 17,
    "hit": 0.471,
    "roi": -0.183,
-   "raw": -0.812
+   "raw": -0.638
   },
   "Pts+Ast": {
-   "n": 376,
-   "hit": 0.473,
-   "roi": -0.116,
-   "raw": 0.184
+   "n": 380,
+   "hit": 0.476,
+   "roi": -0.111,
+   "raw": 0.282
   },
   "Pts+Reb": {
-   "n": 484,
-   "hit": 0.508,
-   "roi": -0.049,
-   "raw": 0.658
+   "n": 488,
+   "hit": 0.512,
+   "roi": -0.041,
+   "raw": 0.664
   },
   "Reb+Ast": {
-   "n": 295,
-   "hit": 0.508,
-   "roi": -0.061,
-   "raw": 0.243
+   "n": 298,
+   "hit": 0.507,
+   "roi": -0.064,
+   "raw": 0.207
   },
   "Pts+Reb+Ast": {
-   "n": 384,
-   "hit": 0.505,
-   "roi": -0.053,
-   "raw": 0.633
+   "n": 388,
+   "hit": 0.508,
+   "roi": -0.048,
+   "raw": 0.686
   }
  },
  "calib": {
   "all": {
-   "n": 14710,
+   "n": 15304,
    "brier": 0.2463,
    "brierMkt": 0.2465,
-   "logloss": 0.6856,
-   "loglossMkt": 0.686
+   "logloss": 0.6857,
+   "loglossMkt": 0.6861
   },
   "byStat": {
    "Points": {
-    "n": 2044,
+    "n": 2124,
     "brier": 0.2497,
     "brierMkt": 0.2497,
-    "logloss": 0.6926,
-    "loglossMkt": 0.6926
+    "logloss": 0.6925,
+    "loglossMkt": 0.6925
    },
    "Assists": {
-    "n": 1514,
-    "brier": 0.246,
-    "brierMkt": 0.246,
-    "logloss": 0.6851,
-    "loglossMkt": 0.6852
+    "n": 1577,
+    "brier": 0.2459,
+    "brierMkt": 0.2459,
+    "logloss": 0.685,
+    "loglossMkt": 0.685
    },
    "Rebounds": {
-    "n": 1906,
-    "brier": 0.2455,
-    "brierMkt": 0.2455,
-    "logloss": 0.684,
-    "loglossMkt": 0.684
+    "n": 1982,
+    "brier": 0.2454,
+    "brierMkt": 0.2454,
+    "logloss": 0.6839,
+    "loglossMkt": 0.6839
    },
    "3-Pointers": {
-    "n": 1638,
-    "brier": 0.2442,
-    "brierMkt": 0.2442,
-    "logloss": 0.6812,
-    "loglossMkt": 0.6812
+    "n": 1703,
+    "brier": 0.2443,
+    "brierMkt": 0.2443,
+    "logloss": 0.6815,
+    "loglossMkt": 0.6815
    },
    "Steals": {
-    "n": 640,
-    "brier": 0.2218,
-    "brierMkt": 0.2229,
-    "logloss": 0.6354,
-    "loglossMkt": 0.6378
+    "n": 665,
+    "brier": 0.2228,
+    "brierMkt": 0.2241,
+    "logloss": 0.6375,
+    "loglossMkt": 0.6402
    },
    "Blocks": {
-    "n": 294,
-    "brier": 0.2356,
-    "brierMkt": 0.2356,
-    "logloss": 0.6638,
-    "loglossMkt": 0.6638
+    "n": 301,
+    "brier": 0.2368,
+    "brierMkt": 0.2368,
+    "logloss": 0.6664,
+    "loglossMkt": 0.6664
    },
    "Pts+Ast": {
-    "n": 1575,
-    "brier": 0.2492,
-    "brierMkt": 0.2493,
-    "logloss": 0.6916,
-    "loglossMkt": 0.6917
+    "n": 1642,
+    "brier": 0.249,
+    "brierMkt": 0.2491,
+    "logloss": 0.6911,
+    "loglossMkt": 0.6913
    },
    "Pts+Reb": {
-    "n": 1928,
-    "brier": 0.2485,
+    "n": 2005,
+    "brier": 0.2484,
     "brierMkt": 0.2491,
-    "logloss": 0.6901,
-    "loglossMkt": 0.6914
+    "logloss": 0.69,
+    "loglossMkt": 0.6913
    },
    "Reb+Ast": {
-    "n": 1559,
-    "brier": 0.2488,
-    "brierMkt": 0.2489,
-    "logloss": 0.6908,
-    "loglossMkt": 0.6909
+    "n": 1626,
+    "brier": 0.249,
+    "brierMkt": 0.2491,
+    "logloss": 0.6912,
+    "loglossMkt": 0.6913
    },
    "Pts+Reb+Ast": {
-    "n": 1612,
+    "n": 1679,
     "brier": 0.2488,
     "brierMkt": 0.2494,
-    "logloss": 0.6908,
+    "logloss": 0.6907,
     "loglossMkt": 0.692
    }
   },
@@ -162,103 +162,103 @@
    {
     "lo": 0.45,
     "hi": 0.5,
-    "n": 1824,
-    "pred": 0.486,
-    "act": 0.4956
+    "n": 1701,
+    "pred": 0.4865,
+    "act": 0.4868
    },
    {
     "lo": 0.5,
     "hi": 0.52,
-    "n": 4147,
+    "n": 4330,
     "pred": 0.5101,
-    "act": 0.504
+    "act": 0.5102
    },
    {
     "lo": 0.52,
     "hi": 0.54,
-    "n": 3575,
+    "n": 3803,
     "pred": 0.5289,
-    "act": 0.5471
+    "act": 0.5435
    },
    {
     "lo": 0.54,
     "hi": 0.56,
-    "n": 1877,
-    "pred": 0.5492,
-    "act": 0.5663
+    "n": 2064,
+    "pred": 0.549,
+    "act": 0.5635
    },
    {
     "lo": 0.56,
     "hi": 0.58,
-    "n": 1108,
-    "pred": 0.5697,
-    "act": 0.5677
+    "n": 1162,
+    "pred": 0.5696,
+    "act": 0.5645
    },
    {
     "lo": 0.58,
     "hi": 0.6,
-    "n": 658,
-    "pred": 0.5891,
-    "act": 0.5851
+    "n": 699,
+    "pred": 0.589,
+    "act": 0.5923
    },
    {
     "lo": 0.6,
     "hi": 0.65,
-    "n": 882,
-    "pred": 0.6204,
-    "act": 0.6179
+    "n": 905,
+    "pred": 0.6206,
+    "act": 0.6166
    },
    {
     "lo": 0.65,
     "hi": 1,
-    "n": 435,
-    "pred": 0.6756,
-    "act": 0.6782
+    "n": 444,
+    "pred": 0.6763,
+    "act": 0.6757
    }
   ],
   "evBands": [
    {
     "lo": -1,
     "hi": 0,
-    "n": 14495,
-    "expRoi": -0.0471,
+    "n": 15037,
+    "expRoi": -0.0466,
     "roi": -0.0375
    },
    {
     "lo": 0,
     "hi": 0.02,
-    "n": 192,
-    "expRoi": 0.0071,
-    "roi": 0.0101
+    "n": 231,
+    "expRoi": 0.0078,
+    "roi": -0.0082
    },
    {
     "lo": 0.02,
     "hi": 0.04,
-    "n": 22,
-    "expRoi": 0.0253,
-    "roi": 0.1117
+    "n": 35,
+    "expRoi": 0.0266,
+    "roi": 0.0615
    },
    {
     "lo": 0.04,
     "hi": 0.06,
     "n": 1,
-    "expRoi": 0.0442,
+    "expRoi": 0.0455,
     "roi": -1
    }
   ]
  },
  "weights": {
   "b0": 0,
-  "mkt": 0.9985,
+  "mkt": 0.9785,
   "gapS": 0.0587,
-  "gap10": 0.0104,
-  "hot": -0.0725,
-  "bench": -0.1041,
-  "miss": 0.0656,
-  "minTr": 0.0938,
-  "b2b": -0.0226,
-  "combo": -0.1125,
-  "count": -0.0752
+  "gap10": 0.0358,
+  "hot": -0.0781,
+  "bench": -0.105,
+  "miss": 0.0624,
+  "minTr": 0.109,
+  "b2b": -0.0076,
+  "combo": -0.1161,
+  "count": -0.0851
  },
  "test": [
   {
@@ -291,32 +291,32 @@
   },
   {
    "split": "week of 2026-11-16, fit on earlier weeks only",
-   "lines": 3948,
+   "lines": 4542,
    "ev2": {
-    "n": 176,
-    "hit": 0.506,
-    "roi": -0.049
+    "n": 202,
+    "hit": 0.52,
+    "roi": -0.027
    },
    "ev4": {
-    "n": 30,
-    "hit": 0.467,
-    "roi": -0.128
+    "n": 39,
+    "hit": 0.513,
+    "roi": -0.042
    }
   }
  ],
  "bias": {
   "rawModel": {
    "over": {
-    "n": 31,
+    "n": 42,
     "hit": 0.452,
-    "roi": -0.135
+    "roi": -0.149
    },
    "under": {
-    "n": 1782,
-    "hit": 0.503,
-    "roi": -0.065
+    "n": 1797,
+    "hit": 0.505,
+    "roi": -0.061
    },
-   "underShare": 0.983
+   "underShare": 0.977
   },
   "afterK": {
    "over": {
@@ -325,13 +325,13 @@
     "roi": null
    },
    "under": {
-    "n": 23,
-    "hit": 0.565,
-    "roi": 0.063
+    "n": 36,
+    "hit": 0.556,
+    "roi": 0.032
    },
    "underShare": 1
   },
-  "favorsOverRaw": 0.236,
+  "favorsOverRaw": 0.243,
   "byWeek": [
    {
     "from": "2026-10-25",
@@ -359,15 +359,15 @@
    },
    {
     "from": "2026-11-16",
-    "n": 3948,
-    "overWon": 0.489,
+    "n": 4542,
+    "overWon": 0.486,
     "overPriced": 0.496
    }
   ]
  },
  "overs": {
-  "n": 19293,
-  "hit": 0.477,
+  "n": 19887,
+  "hit": 0.476,
   "fair": 0.495
  }
 }
