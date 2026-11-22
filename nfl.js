@@ -292,7 +292,7 @@ function topHTML(){const L=allProps();const pre=N.events.filter(e=>e.state==="pr
       <div class="stats">${cell("Sharpline",pc(x.p))}${cell("Price implies",x.price!=null?pc(RK.imp(x.price)):gEv!=null?"52% at -110":"needs a price")}${cell(x.ev!=null?"Expected value":"EV at -110",gEv!=null?evs(gEv):"–",gEv==null?null:gEv>=0?"var(--over)":"var(--under)")}</div>
       <div class="stats s2">${cell("Projection",x.yn?"–":r1(x.P&&x.P.m))}${cell("Fair price",am(x.fair))}${cell("Confidence",cf.lv)}</div>
       ${det}
-      <div class="act">${x.price!=null?`<button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn leg" data-nfparlay="${h(x.key)}">+ Parlay</button>`:""}<button class="addbtn mine-btn${x.price!=null?" in":""}" data-nfpx="${h(x.key)}">${x.price!=null?"✎ Edit "+h(bk)+"'s odds":"✎ Enter "+h(bk)+"'s odds"}</button></div></div>`};
+      <div class="act"><button class="addbtn" data-nftrack="${h(x.key)}">+ Track</button><button class="addbtn leg" data-nfparlay="${h(x.key)}">+ Parlay</button><button class="addbtn mine-btn${x.price!=null?" in":""}" data-nfpx="${h(x.key)}">${x.price!=null?"✎ Edit "+h(bk)+"'s odds":"✎ Enter "+h(bk)+"'s odds"}</button></div></div>`};
   return`${weekNav()}${dash}
     <div class="scanline" style="margin:12px 2px;font:700 12.5px Archivo">Scanned ${all} DraftKings props from ${new Set(L.map(x=>x.id)).size} players in ${loaded} games. ${mod} priced by the model.</div>${cov}
     ${soon.length?`<div class="eyebrow tk-h">${soonDay} · ${h(soonT)}</div><p class="hint">Strongest sides on backtested stats for the next game. A side is a bet only if your book's price beats "Fair".</p><div class="nf-tops">${soon.map((x,i)=>card(x,i,!(x.price!=null&&x.ev>=minE))).join("")}</div>`:""}
@@ -470,7 +470,11 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-nfwk],[dat
   if(d.nfwk){const w=N.week+(+d.nfwk);if(w<1){return}const cal=(N.cal||[]).find(c=>+c.value===N.stype);const max=cal&&cal.entries?cal.entries.length:18;if(w>max){if(N.stype===2){N.stype=3;N.week=1}else return}else N.week=w;N.events=[];N.f.g="all";paint();ensure().then(paint);return}
   if(d.nfg){N.f.g=d.nfg;saveF();paint();return}if(d.nfpos){N.f.pos=d.nfpos;saveF();paint();return}if(d.nfside){N.f.side=d.nfside;saveF();paint();return}
   if(d.nfpx){const x=findRow(d.nfpx);if(x)oddsSheet(x);return}
-  if(d.nftrack){track(betFromProp(findRow(d.nftrack)));return}if(d.nfparlay){const x=findRow(d.nfparlay);if(x&&x.price==null){toast("Enter your book's price first");return}parlay(betFromProp(x));return}
+  /* no price on the board yet: ask for the odds you got, then track or add the leg at that price (the board itself is not changed) */
+  const withOdds=x=>{if(!x)return null;if(x.price!=null)return betFromProp(x);const v=prompt(`Odds you got for ${x.name} ${x.yn?"Anytime TD":(x.side==="o"?"Over ":"Under ")+x.l} (for example -115 or +120)`);
+    const o=Math.round(+String(v||"").replace(/[^\d.+-]/g,""));if(!o||Math.abs(o)<100){if(v!=null)toast("Odds look wrong: use American odds like -115");return null}
+    const b=betFromProp(x);b.odds=o;b.ev=x.p!=null?RK.ev(x.p,o):null;b.src="your odds";return b};
+  if(d.nftrack){const b=withOdds(findRow(d.nftrack));if(b)track(b);return}if(d.nfparlay){const b=withOdds(findRow(d.nfparlay));if(b)parlay(b);return}
   if(d.nflt||d.nflp){const[eid,mk,s]=(d.nflt||d.nflp).split("|");const ev=gameOf(eid);const b=ev&&betFromLine(ev,mk,s);if(d.nflt)track(b);else parlay(b);return}
   if(d.nfprof){e.stopPropagation();openProfile(d.nfprof);return}if(d.nfprofclose){closeProfile();return}
   if(d.nfclose){document.getElementById("nfOdds").classList.remove("on");return}
@@ -483,5 +487,5 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
+window.NFL={N,SHORT,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
 })();

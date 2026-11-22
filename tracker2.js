@@ -38,8 +38,9 @@ function slipSheet(){let el=document.getElementById("slipSheet");if(!el){el=docu
   el.classList.add("on")}
 function trackParlay(){if(SLIP.length<2)return;const C=slipCalc(SLIP);if(C.sgp&&!+document.getElementById("slipOdds").value){toast("Enter the same-game parlay odds your book gave you");document.getElementById("slipOdds").focus();return}const o=+document.getElementById("slipOdds").value||C.am,stake=+document.getElementById("slipStake").value||UNIT;
   if(o==null||!isFinite(o)){toast("Enter the parlay odds you got");return}
-  const legs=SLIP.map(l=>({key:l.key,name:l.name,pick:l.pick,game:l.game,mkt:l.mkt,odds:l.odds,p:l.p,spec:l.spec,ev:l.ev,evid:l.evid,home:l.home,away:l.away,tm:l.tm,ath:l.ath,date:l.date,res:null}));
-  BETS.unshift({id:Date.now(),type:"parlay",sgp:C.sgp,date:DATA_DATE,key:"x"+Date.now(),name:`${legs.length}-leg ${C.sgp?"same-game ":""}parlay`,pick:legs.map(l=>(l.key[0]==="l"?"":l.name.split(" ").pop()+" ")+l.pick).join(" + "),
+  const legs=SLIP.map(l=>({key:l.key,name:l.name,pick:l.pick,game:l.game,mkt:l.mkt,odds:l.odds,p:l.p,spec:l.spec,ev:l.ev,evid:l.evid,home:l.home,away:l.away,tm:l.tm,ath:l.ath,date:l.date,sport:l.sport,late:l.late,res:null}));
+  const allNfl=legs.every(l=>l.spec&&l.spec.sport==="nfl");legs.forEach(l=>{if(l.spec&&l.spec.sport==="nfl")l.sport="nfl"});
+  BETS.unshift({id:Date.now(),type:"parlay",sgp:C.sgp,date:legs.map(l=>l.date).filter(Boolean).sort()[0]||DATA_DATE,sport:allNfl?"nfl":undefined,late:SLIP.some(l=>l.late)||undefined,key:"x"+Date.now(),name:`${legs.length}-leg ${C.sgp?"same-game ":""}parlay`,pick:legs.map(l=>(l.key[0]==="l"?"":l.name.split(" ").pop()+" ")+l.pick).join(" + "),
     game:[...new Set(legs.map(l=>l.game))].join(", "),mkt:"Parlay",odds:Math.round(o),oddsOrig:Math.round(o),userOdds:!!+document.getElementById("slipOdds").value,p:C.p,stake,book:BOOK,res:null,legs,spec:{kind:"parlay"}});
   saveBets();SLIP=[];saveSlip();paintSlip();document.getElementById("slipSheet").classList.remove("on");renderAll();toast("Parlay tracked")}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-pleg],[data-slipopen],[data-slipclose],[data-sliprm],[data-slipclear],[data-sliptrack]");if(!t)return;const d=t.dataset;e.preventDefault();e.stopPropagation();
@@ -141,7 +142,74 @@ function extras(box){if(!box)return;try{if(BETS.length)box.insertAdjacentHTML("b
   try{if(window.SLRecs)box.insertAdjacentHTML("beforeend",SLRecs.backtestHTML())}catch(e){console.warn(e)}}
 function addLegObj(R){if(!R)return;if(R.odds==null){toast("Enter your book's price first");return}if(SLIP.some(l=>l.key===R.key)){toast("Already in the slip");return}
   SLIP.push({...R,id:Date.now()+Math.random(),res:null});saveSlip();paintSlip();toast(`Added to parlay slip (${SLIP.length} leg${SLIP.length===1?"":"s"})`)}
-window.TR2={extras,addLegObj,sportOf,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
+/* ---------- add a bet by hand: any NBA game on today's slate or any NFL game this week, including games already underway or
+   final (for bets you forgot to enter). It keeps exactly what you type: line, odds, stake, book. A bet added after the game
+   started has no Sharpline chance or EV (nothing pregame is invented for it) and is marked "added late". Graded automatically
+   from the box score like any other bet. ---------- */
+const MAN={sport:"nba",gi:"",kind:"prop",player:"",stat:"",line:"",side:"o",team:"a",odds:"",stake:"",book:""};
+const NBA_STATS=["Points","Rebounds","Assists","3-Pointers","Pts+Reb+Ast","Pts+Reb","Pts+Ast","Reb+Ast","Steals","Blocks","Turnovers"];
+function manGames(){if(MAN.sport==="nfl"){const N=window.NFL&&NFL.N;return N&&N.events?N.events.map(e=>({id:e.id,lbl:`${e.away.ab} @ ${e.home.ab}`,st:e.state,e})):[]}
+  return(typeof SNAP!=="undefined"?SNAP:[]).map((G,gi)=>{const e=LIVE.ev[gi]||{};return{id:String(gi),lbl:mu(G),st:e.state||(started(gi)?"in":"pre"),G,gi,e}})}
+function manPlayers(g){if(!g)return[];if(MAN.sport==="nfl"){const N=NFL.N;if(!N.stats)return[];const ids=[g.e.home.id,g.e.away.id];
+    return Object.entries(N.stats.ath).filter(([,a])=>ids.includes(String(a[2]))||ids.includes(a[2])).map(([id,a])=>({id,name:a[0],pos:a[1],tm:a[2]}))}
+  const ids=[g.e.homeId,g.e.awayId].filter(Boolean),out=new Map();Object.entries(LIVE.ids||{}).forEach(([id,w])=>{if(ids.includes(w.tm))out.set(normN(w.name),{id,name:w.name})});
+  (typeof PROPS!=="undefined"?PROPS:[]).forEach(x=>{if(x.g===g.gi&&!out.has(normN(x.p)))out.set(normN(x.p),{id:null,name:x.p})});return[...out.values()].sort((a,b)=>a.name.localeCompare(b.name))}
+function manSheet(){let el=document.getElementById("manSheet");if(!el){el=document.createElement("div");el.id="manSheet";el.className="sheet";document.body.appendChild(el)}
+  if(MAN.sport==="nfl"&&window.NFL&&NFL.ensure&&(!(NFL.N.events||[]).length||!NFL.N.stats)&&!manSheet.loading){manSheet.loading=1;Promise.resolve(NFL.ensure()).then(()=>{manSheet.loading=0;manSheet()}).catch(()=>{manSheet.loading=0})}
+  const G=manGames(),g=G.find(x=>x.id===MAN.gi)||null,P=g&&MAN.kind==="prop"?manPlayers(g):[],stats=MAN.sport==="nfl"?Object.entries(NFL.SHORT||{}).filter(([k])=>k!=="pLng"):NBA_STATS.map(x=>[x,(typeof STAT_LBL!=="undefined"&&STAT_LBL[x])||x]);
+  const opt=(v,l,sel)=>`<option value="${h(v)}"${sel?" selected":""}>${h(l)}</option>`,chip=(k,v,l)=>`<button class="chip ${MAN[k]===v?"on":""}" data-man="${k}|${v}">${l}</button>`;
+  const stL=x=>x==="pre"?"":x==="post"?" · final":" · underway";
+  const tms=g?(MAN.sport==="nfl"?[g.e.away.ab,g.e.home.ab]:[team(g.G.away)[0],team(g.G.home)[0]]):["Away","Home"];
+  el.innerHTML=`<div class="sheet-bg" data-manclose="1"></div><div class="sheet-in"><div class="sheet-h"><div><div class="eyebrow">Tracker</div><h2>Add a bet by hand</h2></div><button class="x" data-manclose="1">×</button></div>
+    <p class="sheet-p">For any bet you placed, including ones you forgot to enter until the game started. It is saved exactly as you type it and graded from the box score.</p>
+    <div class="filt">${chip("sport","nba","NBA")}${chip("sport","nfl","NFL")}</div>
+    <label class="mlab">Game</label><select class="msel" data-manf="gi">${opt("","Pick a game",!MAN.gi)}${G.map(x=>opt(x.id,x.lbl+stL(x.st),x.id===MAN.gi)).join("")}</select>
+    ${!G.length?`<p class="hint">${MAN.sport==="nfl"?"Open the NFL tab once to load this week's games.":"No games on today's slate."}</p>`:""}
+    <div class="filt" style="margin-top:10px">${chip("kind","prop","Player prop")}${chip("kind","ml","Moneyline")}${chip("kind","sp","Spread")}${chip("kind","tot","Total")}</div>
+    ${MAN.kind==="prop"?`<label class="mlab">Player</label><input class="msel" list="manPl" data-manf="player" value="${h(MAN.player)}" placeholder="Type a name"><datalist id="manPl">${P.map(x=>opt(x.name,x.pos?x.name+" · "+x.pos:x.name)).join("")}</datalist>
+      <label class="mlab">Stat</label><select class="msel" data-manf="stat">${opt("","Pick a stat",!MAN.stat)}${stats.map(([k,l])=>opt(k,l,k===MAN.stat)).join("")}</select>`:""}
+    ${MAN.kind==="ml"||MAN.kind==="sp"?`<div class="filt" style="margin-top:10px">${chip("team","a",h(tms[0]))}${chip("team","h",h(tms[1]))}</div>`:""}
+    ${MAN.kind==="prop"||MAN.kind==="tot"?`<div class="filt" style="margin-top:10px">${chip("side","o","Over")}${chip("side","u","Under")}</div>`:""}
+    <div class="mrow3">${MAN.kind!=="ml"&&!(MAN.sport==="nfl"&&MAN.stat==="td")?`<div><label class="mlab">Line</label><input class="msel" type="number" inputmode="decimal" step="0.5" data-manf="line" value="${h(MAN.line)}" placeholder="${MAN.kind==="sp"?"-3.5":"24.5"}"></div>`:""}
+      <div><label class="mlab">Odds</label><input class="msel" type="number" inputmode="decimal" data-manf="odds" value="${h(MAN.odds)}" placeholder="-110"></div>
+      <div><label class="mlab">Stake $</label><input class="msel" type="number" inputmode="decimal" data-manf="stake" value="${h(MAN.stake)}" placeholder="${typeof UNIT!=="undefined"?UNIT:10}"></div></div>
+    <label class="mlab">Book</label><input class="msel" data-manf="book" value="${h(MAN.book)}" placeholder="${typeof BOOK!=="undefined"?h(BOOK):"Fliff"}">
+    ${g&&g.st!=="pre"?`<p class="hint">This game has ${g.st==="post"?"finished":"started"}, so the bet is saved as added late, with no Sharpline chance or EV. ${g.st==="post"?"It is graded right away.":""}</p>`:""}
+    <div class="slip-b"><button class="ghost" data-manadd="leg">+ Parlay leg</button><button class="go2" data-manadd="straight">Track straight bet</button></div>
+    <p class="hint">For a parlay, add each leg here (leg odds optional), then open the parlay slip and enter the parlay odds you got.</p></div>`;
+  el.classList.add("on")}
+function manRecord(){const G=manGames(),g=G.find(x=>x.id===MAN.gi);if(!g)return toast("Pick a game"),null;
+  const odds=+MAN.odds,line=MAN.line===""?null:+MAN.line,stake=+MAN.stake||((typeof UNIT!=="undefined"&&UNIT)||10),book=MAN.book||((typeof BOOK!=="undefined"&&BOOK)||"Book");
+  const oddsOk=MAN.odds!==""&&Math.abs(odds)>=100;const late=g.st!=="pre";
+  if(MAN.kind!=="ml"&&!(MAN.sport==="nfl"&&MAN.stat==="td")&&(line==null||!isFinite(line)))return toast("Enter the line"),null;
+  const base={id:Date.now()+Math.floor(Math.random()*1000),type:"straight",stake,book,res:null,odds:oddsOk?Math.round(odds):null,p:null,push:0,grade:null,conf:null,src:"manual",late:late||undefined};
+  if(MAN.sport==="nfl"){const e=g.e,SH=NFL.SHORT||{},date=(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`)(new Date(e.date));
+    const B={...base,sport:"nfl",date,game:`${e.away.ab} @ ${e.home.ab}`,tip:e.date,home:e.home.name,away:e.away.name,evid:e.id,ev:null};
+    if(MAN.kind==="prop"){const pl=manPlayers(g).find(x=>normN(x.name)===normN(MAN.player));if(!pl)return toast("Pick a player from the list"),null;if(!MAN.stat)return toast("Pick a stat"),null;
+      const td=MAN.stat==="td",side=td?"o":MAN.side;const pick=td?"Anytime TD":`${side==="o"?"Over":"Under"} ${line} ${SH[MAN.stat]||MAN.stat}`;
+      return{...B,key:`n:man:${e.id}|${pl.id}|${MAN.stat}|${line}|${Date.now()}`,name:pl.name,mkt:SH[MAN.stat]||MAN.stat,pick,ath:pl.id,tm:pl.tm,
+        spec:{sport:"nfl",kind:"prop",ev:e.id,ath:pl.id,stat:MAN.stat,line:td?.5:line,side,player:pl.name,pos:pl.pos}}}
+    const t=MAN.team==="h"?e.home:e.away,mk=MAN.kind;const pick=mk==="ml"?`${t.short||t.ab} ML`:mk==="sp"?`${t.short||t.ab} ${line>0?"+":""}${line}`:`${MAN.side==="o"?"Over":"Under"} ${line}`;
+    return{...B,key:`nl:man:${e.id}|${mk}|${Date.now()}`,name:`${e.away.ab} @ ${e.home.ab}`,mkt:{ml:"Moneyline",sp:"Spread",tot:"Total"}[mk],pick,
+      spec:{sport:"nfl",kind:mk,ev:e.id,team:mk==="tot"?null:t.id,teamName:mk==="tot"?null:t.name,line:mk==="ml"?null:line,side:mk==="tot"?MAN.side:null}}}
+  const Gm=g.G,evId=g.e.id||null,B={...base,date:DATA_DATE,game:mu(Gm),tip:Gm.tip,home:Gm.home,away:Gm.away,ev:evId,evid:evId};
+  if(MAN.kind==="prop"){const pl=manPlayers(g).find(x=>normN(x.name)===normN(MAN.player));const name=pl?pl.name:MAN.player.trim();if(!name)return toast("Enter the player"),null;if(!MAN.stat)return toast("Pick a stat"),null;
+    return{...B,key:"m"+Date.now(),name,mkt:MAN.stat,pick:`${MAN.side==="o"?"Over":"Under"} ${line} ${(typeof STAT_LBL!=="undefined"&&STAT_LBL[MAN.stat])||MAN.stat}`,ath:pl&&pl.id||null,tm:null,
+      spec:{kind:"prop",player:name,stat:MAN.stat,line,side:MAN.side}}}
+  const full=MAN.team==="h"?Gm.home:Gm.away,ab=team(full)[0],mk=MAN.kind;
+  return{...B,key:"m"+Date.now(),name:mu(Gm),mkt:{ml:"Moneyline",sp:"Spread",tot:"Total"}[mk],pick:mk==="ml"?`${ab} ML`:mk==="sp"?`${ab} ${line>0?"+":""}${line}`:`${MAN.side==="o"?"Over":"Under"} ${line}`,
+    spec:mk==="ml"?{kind:"ml",team:full}:mk==="sp"?{kind:"sp",team:full,line}:{kind:"tot",line,side:MAN.side}}}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-manopen],[data-manclose],[data-man],[data-manadd]");if(!t)return;const d=t.dataset;e.preventDefault();
+  if(d.manopen){if(window.NFL&&NFL.N&&NFL.N.view)MAN.sport=MAN.sport||"nba";manSheet();return}
+  if(d.manclose){document.getElementById("manSheet").classList.remove("on");return}
+  if(d.man){const[k,v]=d.man.split("|");MAN[k]=v;if(k==="sport"){MAN.gi="";MAN.player="";MAN.stat=""}manSheet();return}
+  if(d.manadd){const R=manRecord();if(!R)return;
+    if(d.manadd==="straight"){if(R.odds==null){toast("Enter the odds you got");return}BETS.unshift(R);saveBets();if(typeof renderAll==="function")renderAll();document.getElementById("manSheet").classList.remove("on");
+      toast(`Tracked ${R.pick}${R.late?" (added late)":""}`);if(R.sport==="nfl"&&NFL.gradeAll)NFL.gradeAll();else if(typeof gradePending==="function")gradePending().then(n=>{if(n&&typeof renderAll==="function")renderAll()});MAN.player="";MAN.line="";MAN.odds="";return}
+    SLIP.push({...R,id:Date.now()+Math.random()});saveSlip();paintSlip();toast(`Added leg (${SLIP.length} in the slip)`);MAN.player="";MAN.line="";MAN.odds="";manSheet()}},true);
+document.addEventListener("change",e=>{const t=e.target.closest("[data-manf]");if(!t)return;MAN[t.dataset.manf]=t.value;if(["gi","stat"].includes(t.dataset.manf))manSheet()});
+document.addEventListener("input",e=>{const t=e.target.closest("[data-manf]");if(!t||t.tagName==="SELECT")return;MAN[t.dataset.manf]=t.value});
+window.TR2={manSheet,extras,addLegObj,sportOf,_settle:settleParlay,_bucket:bucket,filter,filterBar,legsHTML,perfHTML,accHTML,inSlip,paintSlip,logPreds,gradePreds,gradeParlays};
 setTimeout(()=>{paintSlip();
 },0);
 /* typing the book's parlay odds shows EV against Sharpline's chance (correlation included for same-game parlays) */
