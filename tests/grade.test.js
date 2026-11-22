@@ -71,6 +71,9 @@ t("grades are symmetric in side: an Under is graded like an Over",G({p:.57,o:+10
  t("Top List only takes B, A and S",/const TOP_GRADES=\["B","A","S"\]/.test(html));}
 /* NFL grades: every modeled prop gets one; reasons when it can't */
 {const src=require("fs").readFileSync(require("path").join(__dirname,"..","nfl.js"),"utf8");
- t("NFL cards and rows use the shared grade",/function gradeNfl\(/.test(src)&&/const GN=gradeNfl\(x\)/.test(src)&&/gradeNfl\(x\);return GN.g/.test(src));
+ t("NFL cards and rows use the shared grade",/function gradeNfl\(/.test(src)&&/const GN=gradeNfl\(x\)/.test(src)&&/const GN=gradeNfl\(x\),R=NREL\[x.key\]/.test(src));
  t("NFL no longer drops grades above 62%",!/x\.p<=\.62/.test(src));}
+{const h=require("fs").readFileSync(require("path").join(__dirname,"..","index.html"),"utf8");
+ t("slate grades rank by expected return with fixed shares",/q<\.03\?"S":q<\.12\?"A":q<\.30\?"B":q<\.60\?"C":q<\.85\?"D":"F"/.test(h));
+ t("value grade still shown next to the slate grade",/value grade \$\{gradeNow\(x.base\)\}/.test(h));}
 console.log(`${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;
