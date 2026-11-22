@@ -158,6 +158,34 @@ async function gradeAll(){if(!N.stats)await loadStatic();if(!N.stats)return 0;le
   for(const b of BETS.filter(b=>!b.res&&!b.noAuto)){if(b.type==="parlay"){for(const l of b.legs.filter(l=>!l.res&&l.spec&&l.spec.sport==="nfl")){await one(l);touched.add(b)}}else await one(b)}
   touched.forEach(b=>{const s=window.TR2&&TR2._settle(b);if(s){Object.assign(b,s,{auto:1,gat:Date.now()});n++}});if(n){saveBets();if(window.renderTrack)renderTrack()}return n}
 
+
+/* Live chance for an NFL prop starts from the SAME pregame chance the Top List shows (model shrunk toward DraftKings' line
+   by the backtested trust factor), then updates with the box score and clock:
+   - totals (yards, catches, attempts, points): the full-game mean that matches the pregame chance, scaled to the time left
+     and nudged toward his pace in this game;
+   - longest rush / reception / completion: a per-attempt chance of one big play, taken from the pregame chance and his
+     expected attempts, applied to the attempts he has left (a max doesn't add up over a game, so it can't be pro-rated);
+   - touchdowns: a scoring rate from the pregame chance, applied to the time left. */
+const live={
+  ATT:{rLng:"car",recLng:"rec",pLng:"cmp"},
+  base(g,c){return{use:N.model&&N.model.use,opp:c.opp,spread:c.spread,total:c.total,wx:N.stats.next&&N.stats.next[g.id]&&N.stats.next[g.id].wx}},
+  preChance(sp,g,c){const st=sp.stat==="td2"?"td":sp.stat,PL=N.props[g.id],dk=PL&&PL.lines[sp.ath+"|"+st];
+    const b=live.base(g,c),P=M.project(N.I,sp.ath,st,{...b,line:dk?dk.l:sp.line,evalLine:sp.line,k:kOf(st)},N.DEF);if(!P||P.m==null)return null;
+    let pO=M.STATS[st].yn?P.pOver:P.p;if(pO==null)return null;if(sp.stat==="td2"){const l=-Math.log(1-Math.min(.99,pO));pO=1-Math.exp(-l)*(1+l)}
+    return{pO,P,st,b}},
+  update(sp,L,cur,row,fl){const{pO,P,st,b}=L,Ms=M.STATS[st],line=sp.line,played=Math.max(0,1-fl),side=v=>sp.side==="u"?1-v:v;
+    if(fl<=0)return{p:side(cur>line?1:0),proj:cur};
+    if(live.ATT[st]){/* longest play */const at=live.ATT[st],PA=M.project(N.I,sp.ath,at,{...b,line:null,k:1},N.DEF);
+      const Nn=Math.max(1,PA&&PA.m?PA.m:8),q=1-Math.pow(1-Math.min(.995,Math.max(.005,pO)),1/Nn),done=row?statVal(row,at)||0:0;
+      const nPre=Nn*fl,nPace=played>.05?done/played*fl:nPre,w=played/(played+1),nR=Math.max(0,(1-w)*nPre+w*nPace);
+      return{p:side(cur>line?1:1-Math.pow(1-q,nR)),proj:null}}
+    if(Ms.yn||st==="td"){const lam=-Math.log(1-Math.min(.99,pO)),rem=lam*fl,need=Math.ceil(line-cur);if(need<=0)return{p:side(1),proj:cur};return{p:side(1-M.poisCdf(need-1,rem)),proj:null}}
+    /* additive stats: full-game mean consistent with the pregame chance, then time left and in-game pace */
+    const cv=P.cv||.5,pois=Ms.d==="pois",pOver=(mu,nd,sdv)=>nd<0?1:mu<=0?0:pois?1-M.poisCdf(Math.floor(nd),mu):1-M.Phi((nd-mu)/sdv);
+    let lo=.01,hi=Math.max(4*(P.m||1),line*3+5);for(let i=0;i<50;i++){const md=(lo+hi)/2;pOver(md,line,Math.max(.5,cv*md))<pO?lo=md:hi=md}const mu=(lo+hi)/2;
+    /* in-game pace counts for little early (a quiet first quarter is common) and not at all for low counts like TDs */
+    const rem0=mu*fl,pace=played>.05?cur/played*fl:rem0,w=pois&&mu<6?0:played/(played+1),rem=(1-w)*rem0+w*pace;
+    return{p:side(pOver(rem,line-cur,Math.max(.5,cv*mu*Math.sqrt(fl)))),proj:cur+rem}}};
 /* ---------- live chance for tracked NFL bets (used by the tracker's live panel) ---------- */
 function fracLeft(B){if(!B||!B.period)return 1;if(B.period>4)return Math.max(0,(B.clockSec||0)/600)*.15;return Math.max(0,((4-B.period)*900+(B.clockSec||0))/3600)}
 betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=gameOf(sp.ev)||N.liveEv&&N.liveEv[sp.ev];const B=N.box[sp.ev];
@@ -170,9 +198,9 @@ betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if
   const fl=fracLeft(B),clock=B.detail&&!/^final/i.test(B.detail)?B.detail:B.period>4?"OT":`Q${B.period} ${Math.floor((B.clockSec||0)/60)}:${String(Math.round((B.clockSec||0)%60)).padStart(2,"0")}`,score=e?`${e.away.ab} ${A.score}, ${e.home.ab} ${H.score}`:`${A.score}-${H.score}`;
   if(sp.kind==="prop"){const row=B.players[sp.ath],cur=row?statVal(row,sp.stat):0;if(cur==null)return{st:"na",why:"No live box stat for this market",clock,score};
     if(cur>sp.line&&sp.side==="o")return{st:"done",p:1,clock,score,now:`${cur} already over ${sp.line}`};if(cur>sp.line&&sp.side==="u")return{st:"done",p:0,clock,score,now:`${cur}, past ${sp.line}`};
-    const Ms=M.STATS[sp.stat==="td2"?"td":sp.stat];if(!Ms)return{st:"na",why:"Not modeled live",clock,score};const g=e||{};const c=ctxFor(g,sp.ath)||{};
-    const P=M.project(N.I,sp.ath,sp.stat==="td2"?"td":sp.stat,{use:N.model&&N.model.use,opp:c.opp,line:sp.line,spread:c.spread,total:c.total,k:1},N.DEF);if(!P||P.m==null)return{st:"na",why:"Not enough history for a live estimate",clock,score};
-    const p=M.liveChance(P,cur,sp.line,sp.side,fl,sp.stat==="td2"?"td":sp.stat);return{st:"live",p,src:"model",clock,score,now:`${cur} now, about ${r1(cur+P.m*fl)} projected`}}
+    const st0=sp.stat==="td2"?"td":sp.stat,Ms=M.STATS[st0];if(!Ms)return{st:"na",why:"Not modeled live",clock,score};const g=e||{};const c=ctxFor(g,sp.ath)||{};
+    const L=live.preChance(sp,g,c);if(L==null)return{st:"na",why:"Not enough history for a live estimate",clock,score};
+    const p=live.update(sp,L,cur,row,fl);return{st:"live",p:p.p,src:"model",clock,score,now:`${cur} now${p.proj!=null?`, about ${r1(p.proj)} projected`:""}`}}
   const diff=(sp.team===H.id?H.score-A.score:A.score-H.score);const pre=e&&e.odds;const exp=pre&&pre.spread!=null?(sp.team===e.home.id?-pre.spread:pre.spread):0;const sd=13.5*Math.sqrt(Math.max(.01,fl));
   if(sp.kind==="ml"){const mu=diff+exp*fl;return{st:"live",p:RK.Phi(mu/sd),src:"model",clock,score,now:`${diff>=0?"up":"down"} ${Math.abs(diff)}`}}
   if(sp.kind==="sp"){const mu=diff+exp*fl+sp.line;return{st:"live",p:RK.Phi(mu/sd),src:"model",clock,score,now:`${diff>=0?"up":"down"} ${Math.abs(diff)} with ${sp.line>0?"+":""}${sp.line}`}}
@@ -455,5 +483,5 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
+window.NFL={N,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
 })();

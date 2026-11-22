@@ -64,13 +64,18 @@ function model(id,mk){const e=LV.sb.find(x=>x.id===id),G=gameOf(id);if(!e||mk.yn
   const who=LIVE.ids[mk.ath],name=who?who.name:null,pl=G.box&&name?G.box.players[SharpLive.norm(name)]:null,P=name?projOf(name):null;if(!P)return null;
   const ml=minutesLeft(pl,P,e,G.box);if(!ml)return null;const smin=P.min||P.l10min,pmin=(pl&&pl.min)||0,w=pmin/(pmin+36);
   let mean=0,vr=0;c.forEach(k=>{const rs=P.l10&&P.l10[k]!=null&&P.l10min?(.5*P[k]/smin+.5*P.l10[k]/P.l10min):P[k]/smin,rg=pmin?((pl[k]||0)/pmin):rs,rate=(1-w)*rs+w*rg;mean+=rate*ml.m;vr+=(ALPHA[k]||1.4)*rate*ml.m});
-  const cur=curOf(pl,mk.st),need=mk.l-cur;
-  const pOverRaw=need<0?1:mean<=0?0:(COUNT_ST[mk.st]||mean<5)?poisOver(mean,need):1-Phi((need-mean)/Math.sqrt(Math.max(vr,.5)));
-  const pm=mk.o!=null&&mk.u!=null?devig(mk.o,mk.u)[0]:mk.o!=null?Math.max(.01,imp(mk.o)-.025):null;
+  const cur=curOf(pl,mk.st),need=mk.l-cur,pois=COUNT_ST[mk.st]||mean<5,sdR=Math.sqrt(Math.max(vr,.5));
+  const over=(mu,nd)=>nd<0?1:mu<=0?0:pois?poisOver(mu,nd):1-Phi((nd-mu)/sdR);
+  const pOverRaw=over(mean,need);
+  let pm=mk.o!=null&&mk.u!=null?devig(mk.o,mk.u)[0]:mk.o!=null?Math.max(.01,imp(mk.o)-.025):null;
+  /* DraftKings' live line at another number still says where the market thinks he'll finish: find the remaining-stat
+     mean that matches its price at its line, then read the chance at the bet's line from that */
+  let anch=null;const A=mk.anchor;if(pm==null&&A&&A.l!=null&&A.o!=null&&A.u!=null&&mean>0){const pA=devig(A.o,A.u)[0],nA=A.l-cur;
+    if(nA>=0&&pA>.02&&pA<.98){let lo=0,hi=Math.max(4*mean,mean+40);for(let i=0;i<50;i++){const md=(lo+hi)/2;over(md,nA)<pA?lo=md:hi=md}pm=over((lo+hi)/2,need);anch=A.l}}
   /* live markets react to things this model can't see (rotations, matchups, pace in real time), so lean on them:
      35% model, 65% DraftKings' no-vig chance, and never more than 4 points from the market */
   const pO=pm!=null?Math.min(pm+.04,Math.max(pm-.04,pm+.35*(pOverRaw-pm))):pOverRaw;
-  return withSides({name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,thin:!!(P.gp!=null&&P.gp<5),capped:pm!=null},mk.o,mk.u,cur+mean>=mk.l?"o":"u")}
+  return withSides({name,pl,P,cur,need,remMean:mean,final:cur+mean,minLeft:ml.m,gameLeft:ml.left,mwhy:ml.why,pOverRaw,pm,pO,anch,thin:!!(P.gp!=null&&P.gp<5),capped:pm!=null},mk.o,mk.u,cur+mean>=mk.l?"o":"u")}
 /* Both sides judged at their own posted prices. A bet is only "good value" when Sharpline's chance beats the price,
    never just because the projection is past the line. */
 function withSides(m,o,u,lean){const sd=(p,price)=>price==null?null:{p,price,imp:imp(price),ev:evOf(p,price),gap:p-imp(price)};
@@ -165,7 +170,12 @@ function boxTable(G,teamId){const ps=Object.values(G.box.players).filter(p=>p.te
 function gameModel(e,G){const o=G.odds,pre=G.preOdds;if(!o||!pre||pre.total.line==null||pre.spread.home==null)return null;
   const L=SharpLive.gameMinLeft(e.period,e.clockSec),played=Math.max(0,(e.period<=4?Math.min(e.period,4)*12:48+(e.period-4)*5)-L);if(L<=0)return null;
   const cur=e.homeScore+e.awayScore,margin=e.homeScore-e.awayScore,w=played/(played+24),rate=(1-w)*pre.total.line/48+w*(played?cur/played:pre.total.line/48);
-  const f=Math.sqrt(L/48),sdT=Math.max(19*f,2.5),sdM=Math.max(12*f,2),totMean=cur+rate*L,marMean=margin+(-pre.spread.home)*(L/48);
+  const f=Math.sqrt(L/48),sdT=Math.max(19*f,2.5),sdM=Math.max(12*f,2);let totMean=cur+rate*L,marMean=margin+(-pre.spread.home)*(L/48);
+  /* lean on DraftKings' live lines: they see rotations, injuries and foul trouble this model can't (65% market, 35% model) */
+  const fr=Date.now()-G.oddsTs<FRESH;
+  if(fr&&o.total.line!=null&&o.total.over!=null&&o.total.under!=null){const pm=devig(o.total.over,o.total.under)[0],mu=o.total.line-sdT*invPhi(1-pm);totMean=.65*mu+.35*totMean}
+  if(fr&&o.spread.home!=null&&o.spread.homeOdds!=null&&o.spread.awayOdds!=null){const pm=devig(o.spread.homeOdds,o.spread.awayOdds)[0],mu=sdM*invPhi(pm)-o.spread.home;marMean=.65*mu+.35*marMean}
+  else if(fr&&o.ml.home!=null&&o.ml.away!=null){const pm=devig(o.ml.home,o.ml.away)[0],mu=sdM*invPhi(pm);marMean=.65*mu+.35*marMean}
   const blend=(raw,a,b)=>{if(a==null||b==null)return{p:raw,raw,pm:null};const pm=devig(a,b)[0];return{p:Math.min(pm+.04,Math.max(pm-.04,pm+.35*(raw-pm))),raw,pm}};
   const out={totMean,marMean,L,rate,sdT,sdM,mk:[]},add=(key,lbl,line,a,b,rawA,la,lb)=>{if(a==null&&b==null)return;const B=blend(rawA,a,b);
     out.mk.push({key,lbl,line,raw:B.raw,pm:B.pm,...withSides({pO:B.p},a,b,rawA>=.5?"o":"u"),la,lb})};
@@ -267,9 +277,10 @@ function betChance(spec,home,away){if(spec&&spec.sport==="nfl")return window.NFL
     if(cur!=null&&cur>spec.line)return{st:"done",p:spec.side==="o"?1:0,clock,score,now:`${cur} now, already ${need==="over"?"over":"past"} ${spec.line}`};
     if(!ath)return{st:"na",why:"Player not matched to ESPN",clock,score};
     const live=G.props[ath+"|"+spec.stat],same=live&&!live.gone&&live.l===spec.line&&fresh(e.id,live);
-    const m=model(e.id,same?live:{ath,st:spec.stat,l:spec.line,o:null,u:null});if(!m)return{st:"na",why:"Not enough data for a live estimate",clock,score};
+    const anchor=live&&!live.gone&&fresh(e.id,live)&&live.l!==spec.line?live:null;
+    const m=model(e.id,same?live:{ath,st:spec.stat,l:spec.line,o:null,u:null,anchor});if(!m)return{st:"na",why:"Not enough data for a live estimate",clock,score};
     const p=spec.side==="o"?m.pO:1-m.pO;
-    return{st:"live",p,src:same?"blend":"model",clock,score,now:`${cur??0} now, projected ${r1(m.final)}`,mkt:live&&!live.gone?live:null,thin:m.thin}}
+    return{st:"live",p,src:same?"blend":m.anch!=null?"anchor":"model",anch:m.anch,clock,score,now:`${cur??0} now, projected ${r1(m.final)}`,mkt:live&&!live.gone?live:null,thin:m.thin}}
   const M=gameModel(e,G);if(!M)return{st:"na",why:!G.preOdds?"Waiting for the pregame line the live model starts from":"Game lines not posted right now",clock,score};
   const home_=nick(spec.team||"")===nick(e.home);let p,raw,mk=M.mk.find(x=>x.key===(spec.kind==="tot"?"total":spec.kind==="sp"?"spread":"ml"));
   if(spec.kind==="tot"){raw=1-Phi((spec.line-M.totMean)/M.sdT);if(spec.side==="u")raw=1-raw;
@@ -316,7 +327,7 @@ function spark(a){if(!a||a.length<2)return"";const W=260,Hh=54,t0=a[0][0],t1=a[a
 function legState(l){if(l.res==="W"||l.res==="P"||l.res==="V")return{k:"won",p:1,txt:l.res==="W"?"Won":l.res==="P"?"Push":"Void"};if(l.res==="L")return{k:"lost",p:0,txt:"Lost"};
   const c=betChance(l.spec,l.home,l.away),e=l.home?evOfBet(l.home,l.away):null;
   if(c&&c.st==="done")return{k:c.p?"won":"lost",p:c.p,txt:c.now};
-  if(c&&c.st==="live")return{k:"live",p:c.p,txt:`${c.now} · ${c.clock}`,model:c.src==="model"};
+  if(c&&c.st==="live")return{k:"live",p:c.p,txt:`${c.now} · ${c.clock}`,model:c.src==="model",anch:c.anch};
   if(c&&c.st==="post")return{k:"wait",p:l.p,txt:"Final · grading"};
   const pre=e&&e.state==="pre"?`Tips ${new Date(e.date).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}`:c&&c.st==="na"?c.why:"Pregame";
   return{k:"pre",p:l.p??null,txt:pre}}
@@ -333,7 +344,7 @@ function panelHTML(b){const legs=b.type==="parlay"?b.legs:[{...b,res:null,name:b
     <div class="tp-sub">${b.sgp&&legs.length>1&&!anyLive?sgpNote(J,legs):delta!=null&&Math.abs(delta)>=.005?`<b class="${delta>0?"pos":"neg"}">${delta>0?"▲":"▼"} ${Math.abs(Math.round(delta*100))} pts</b> since tracked (${pc(start)})`:!anyLive?`Updates every 20 seconds once games tip`:"Even with when you tracked it"}</div>
     ${spark(H)}
     <div class="tp-legs">${L.map(({l,s})=>`<div class="tp-leg ${s.k}"><div class="tp-lt"><span>${esc(l.key&&l.key[0]==="l"?"":(l.name||"").split(" ").pop()+" ")}${esc(l.pick)}</span><b>${s.k==="won"?"✓":s.k==="lost"?"✕":pc(s.p)}</b></div>
-      <div class="tp-bar"><i style="width:${s.p==null?0:Math.round(Math.max(.02,s.p)*100)}%"></i></div><small>${esc(s.txt)}${s.model?" · model only, no live price at this line":""}${s.k==="pre"&&s.p!=null?" · pregame estimate":""}</small></div>`).join("")}</div>
+      <div class="tp-bar"><i style="width:${s.p==null?0:Math.round(Math.max(.02,s.p)*100)}%"></i></div><small>${esc(s.txt)}${s.model?" · model only, no live DraftKings price for this market":s.anch!=null?` · from DraftKings' live line ${s.anch}`:""}${s.k==="pre"&&s.p!=null?" · pregame estimate":""}</small></div>`).join("")}</div>
     <div class="tp-f">${legs.length>1?(b.sgp?"Same-game legs adjusted with within-game correlations from this season's box scores (NFL). ":"Legs treated as independent. "):""}Live chances use the box score, game clock and DraftKings' live price when it has one at your line. Not yet graded for calibration.</div>`}
 function paintTracker(){document.querySelectorAll("[data-tlive]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tlive);const h=b&&!b.res?chanceHTML(b):"";
   if(el._h!==h){el._h=h;el.innerHTML=h;el.style.display=h?"":"none"}});
