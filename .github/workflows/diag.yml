@@ -1,5 +1,7 @@
 name: Live site diagnostic
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   diag:
     runs-on: ubuntu-latest
@@ -11,5 +13,13 @@ jobs:
       - run: npm i --no-save puppeteer-core@22
       - run: node scripts/diag/live.mjs
         env: { CHROME: /usr/bin/google-chrome }
-      - uses: actions/upload-artifact@v4
-        with: { name: live-diag, path: diag/live.json }
+      - name: Publish result to the diag branch
+        run: |
+          cp diag/live.json /tmp/live.json
+          git config user.name "sharpline-bot"; git config user.email "bot@users.noreply.github.com"
+          git checkout --orphan diag-out
+          git rm -rq --cached . 
+          mkdir -p out && cp /tmp/live.json out/live.json
+          git add out/live.json
+          git commit -qm "Live diagnostic $(date -u +%FT%TZ)"
+          git push -f origin diag-out:diag
