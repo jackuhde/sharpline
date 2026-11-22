@@ -953,7 +953,7 @@ html,body{overscroll-behavior-y:none}
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1795900001"></script>
-<script src="rank.js?v=1795800001"></script>
+<script src="rank.js?v=1795900004"></script>
 <script src="nfl-model.js?v=1795900005"></script>
 <script src="live.js?v=1795600001"></script>
 <script src="profile.js?v=1795500001"></script>
@@ -1232,7 +1232,7 @@ const topP=x=>x.k==="p"&&SUG[x.i].pt?SUG[x.i].p:x.p;
    at most 3 per game first; if slots remain, other games fill in, and a second prop from the same player is only
    added when its edge is exceptional (2x your minimum and 5%+, High confidence), labeled as correlated.
    Nothing is added to fill space: if few bets qualify, the list is short and says so. */
-const CAT_K_DEF=.8;
+const CAT_K_DEF=0; /* a stat with no tested record is priced at DraftKings' no-vig chance */
 const catK=st=>{const k=PM_META&&PM_META.catK&&PM_META.catK[st];return k==null?CAT_K_DEF:k};
 const catRec=st=>PM_META&&PM_META.catRec&&PM_META.catRec[st]||null;
 function oppOf(x){const G=SNAP[x.g];if(!G)return"";return nick(x.tm)===nick(G.home)?G.away:G.home}
@@ -1256,7 +1256,7 @@ function propCand(i){const x=PROPS[i],g=SUG[i],k="p"+i;if(!x||!g||!g.model||YN[x
 const REASONS={unmatched:"Player not matched to a roster",started:"Game started or final",yesno:"Yes/No market (not modeled pregame)",unsupported:"Stat not modeled",
   oneSided:"Only one side priced",noLog:"Fewer than 3 games or game log not loaded",out:"Player ruled out",inj:"Injury question (questionable or doubtful)",
   stale:"Price out of date",neg:"No edge at the posted price",thin:"Edge below your minimum after the accuracy adjustment",conf:"Hidden by your confidence filter",
-  dup:"Duplicate of a market already counted",line2:"Second line posted for the same player and stat (only the main line is priced)",capP:"Qualified, held back: one per player",capG:"Qualified, held back: per-game limit",capN:"Qualified, beyond the top 10",shown:"On the Top List"};
+  dup:"Duplicate of a market already counted",line2:"Second line posted for the same player and stat (only the main line is priced)",capP:"Qualified, held back: one per player",overlap:"Qualified, held back: same player and same stat as a stronger pick (they win or lose together)",capG:"Qualified, held back: per-game limit",capN:"Qualified, beyond the top 10",shown:"On the Top List"};
 function slateReport(shown){const R={games:[],raw:0,alts:0,markets:[],byReason:{},by:{game:{},stat:{},side:{},book:{}},ev:{raw0:0,adj0:0,adj2:0,adj4:0}};
   const shownSet=new Set((shown||[]).map(c=>c.base)),qual=new Set((topItems.qual||[]).map(c=>c.base));
   SNAP.forEach((G,gi)=>{const e=LIVE.ev[gi],rows=LIVE.props[gi];R.games.push({gi,label:mu(G),state:e?e.state:"?",loaded:!!rows,markets:rows?rows.length:0,alts:rows&&rows.alts?rows.alts.length:0,total:rows&&rows.count||0});
@@ -1275,12 +1275,12 @@ function slateReport(shown){const R={games:[],raw:0,alts:0,markets:[],byReason:{
     if(!why&&OUT.has(normN(m.name)))why="out";
     const c=!why?propCand(i):null;
     if(!why&&!c)why="noLog";
-    if(c){m.side=c.side;m.ev=c.ev;m.evRaw=c.evRaw;m.p=c.p;m.price=c.price;m.base=c.base;m.conf=c.conf&&c.conf.lv;
+    if(c){m.side=c.side;m.ev=c.ev;if(g&&g.model&&g.model.pAdj!=null){const d=g.model.pAdj-g.model.pm;m.lean=d>.005?"o":d<-.005?"u":null}m.evRaw=c.evRaw;m.p=c.p;m.price=c.price;m.base=c.base;m.conf=c.conf&&c.conf.lv;
       if(c.evRaw!=null&&c.evRaw>0)R.ev.raw0++;if(c.ev>0)R.ev.adj0++;if(c.ev>=.02)R.ev.adj2++;if(c.ev>=.04)R.ev.adj4++;
       if(c.inj)why="inj";else if(c.fresh.lv==="stale")why="stale";else if(c.ev<=0)why="neg";else if(c.ev<SET.minEdge)why="thin";else if(!passConf(c.conf))why="conf";
       else if(shownSet.has(c.base))why="shown";else{const why2=(topItems.held||{})[c.base];why=why2||"capN"}}
     m.why=why;R.markets.push(m);R.byReason[why]=(R.byReason[why]||0)+1;
-    const bump=(k,v)=>{const b=R.by[k][v]=R.by[k][v]||{total:0,priced:0,pos:0,qual:0,shown:0};b.total++;if(c)b.priced++;if(c&&c.ev>0)b.pos++;if(c&&["shown","capP","capG","capN"].includes(why))b.qual++;if(why==="shown")b.shown++};
+    const bump=(k,v)=>{const b=R.by[k][v]=R.by[k][v]||{total:0,priced:0,pos:0,qual:0,shown:0};b.total++;if(c)b.priced++;if(c&&c.ev>0)b.pos++;if(c&&["shown","capP","overlap","capG","capN"].includes(why))b.qual++;if(why==="shown")b.shown++};
     bump("game",mu(G));bump("stat",st);if(m.side)bump("side",m.side==="o"?"Over":"Under");bump("book","DraftKings")})});
   return R}
 function topItems(){
@@ -1540,7 +1540,7 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
    their last 10 games are overpriced, and season and recent averages, minutes trend, bench role, back-to-backs and
    teammates ruled out each shift it a little. The old average-based projection lost about 6% at closing prices in the
    same backtest, so it is no longer used to pick sides when this model can run. */
-const PM_DEFAULT={b0:-0.1305,mkt:0.9254,gapS:0.071,gap10:0.0661,hot:-0.1103,bench:-0.0503,miss:0.1034,minTr:0.1122,b2b:0.0238,combo:-0.0265,count:0.0086};
+const PM_DEFAULT={b0:0,mkt:0.9985,gapS:0.0587,gap10:0.0104,hot:-0.0725,bench:-0.1041,miss:0.0656,minTr:0.0938,b2b:-0.0226,combo:-0.1125,count:-0.0752};
 let PMW=PM_DEFAULT,PM_META=null;
 fetch("model.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.weights&&j.weights.mkt!=null){PMW=j.weights;PM_META=j;if(PROPS.length){applyProjections();renderAll()}}}).catch(()=>{});
 const etDay=t=>new Date(t).toLocaleDateString("en-CA",{timeZone:"America/New_York"});
@@ -1583,7 +1583,7 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   if(pt.yn){g.proj=null;g.why=`${so?"Yes":"No"} is about ${pct(g.p)}: ${x.p.split(" ").pop()} has ${pt.why[0]}; ${pt.mkt}.`+(pt.disagree?" His history and the market disagree, so treat it with caution.":"");return}
   if(MD){const sg2=v=>(v>0?"+":"−")+Math.abs(v*100).toFixed(1);
     g.why=`DraftKings' no-vig price makes Over ${g.l} ${pct1(MD.pm)}. Sharpline's model moves that to ${pct1(MD.p)}`+(MD.parts.length?`: ${MD.parts.slice(0,4).map(([v,t])=>`${t} (${sg2(v)})`).join("; ")}.`:".")+
-      (Math.abs(MD.pAdj-MD.p)>=.001?` Only ${Math.round(catK(x.st)*100)}% of that move is counted for ${STAT_LBL[x.st]||x.st}, the share that held up in the season backtest, so Over is ${pct1(MD.pAdj)}.`:"")+
+      (Math.abs(MD.pAdj-MD.p)>=.001?(catK(x.st)<=0?` None of that move is counted for ${STAT_LBL[x.st]||x.st}: tested week by week on games it hadn't seen, the model's moves on this stat did not beat DraftKings' price, so Over stays ${pct1(MD.pAdj)}.`:` Only ${Math.round(catK(x.st)*100)}% of that move is counted for ${STAT_LBL[x.st]||x.st}, the share that held up when tested week by week on games the model hadn't seen, so Over is ${pct1(MD.pAdj)}.`):"")+
       ` That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}. Averages-based projection: ${pt.m}.`+(g.why0?` Morning research said: ${g.why0}`:"");return}
   g.why=`Projects ${pt.m} tonight${pt.mPlayer!=null?` (player estimate ${pt.mPlayer} from ${pt.why.join(", ")}; ${pt.mkt})`:` (${pt.mkt}; no player averages on file)`}. That makes ${so?"Over":"Under"} ${g.l} about ${pct(g.p)}.`+
     (g.capped?` The raw projection was further from DraftKings than that, so the chance is held within 7 points of the market.`:"")+(g.p<.5?` DraftKings leans the other way, so this side only pays off at a long enough price (${fmtAm(toAm(g.p))} or better).`:"")+(pt.disagree?` Player averages and the market disagree here, so treat it with caution.`:"")+(g.why0?` Morning research said: ${g.why0}`:"")});pickSKeys()}
@@ -1781,12 +1781,26 @@ function slateVerdict(R,c){const days=PM_META&&PM_META.updated?(Date.now()-new D
   const age=(Date.now()-(LIVE.propsTs||LIVE.oddsTs||Date.now()))/6e4;if(age>45)return{k:"warn",t:"Stale prices.",d:`Props were last refreshed ${Math.round(age)} minutes ago. Refresh before betting.`};
   if(c.shown<5)return{k:"ok",t:"Thin slate.",d:`Data and model are working; DraftKings simply has few mispriced props tonight${c.qual>c.shown?`, and the ${c.qual} that clear the bar belong to ${c.shown} player${c.shown===1?"":"s"}`:""}. That is normal on small slates.`};
   return{k:"ok",t:"Normal slate.",d:"Data loaded for every game and the model is current."}}
+/* Side-balance monitor. It only reports and flags; it never changes a price, a side or the list. A one-sided slate can be real
+   (Overs won 47.7% this season against 49.5% priced), so each flag sits next to what the backtest measured. */
+function biasHTML(R){const P=R.markets.filter(m=>m.side),lo=P.filter(m=>m.lean==="o").length,lu=P.filter(m=>m.lean==="u").length,
+    Q=R.markets.filter(m=>["shown","capP","overlap","capG","capN"].includes(m.why)),qo=Q.filter(m=>m.side==="o").length,qu=Q.length-qo,
+    per={};Q.forEach(m=>(per[m.name]=per[m.name]||[]).push(m));const many=Object.entries(per).filter(([,a])=>a.length>=3);
+  const B=PM_META&&PM_META.bias,wk=B&&B.byWeek&&B.byWeek[B.byWeek.length-1],flags=[];
+  if(lo+lu>=20&&Math.max(lo,lu)/(lo+lu)>=.8)flags.push(`${Math.max(lo,lu)} of ${lo+lu} markets the model moves off DraftKings' price lean ${lu>lo?"Under":"Over"}.`);
+  if(Q.length>=5&&Math.max(qo,qu)/Q.length>=.8)flags.push(`${Math.max(qo,qu)} of ${Q.length} qualified bets are ${qu>qo?"Unders":"Overs"}.`);
+  many.forEach(([nm,a])=>flags.push(`${esc2(nm)} has ${a.length} qualified props (${a.map(m=>(m.side==="o"?"Over ":"Under ")+(STAT_LBL[m.st]||m.st)).join(", ")}). They move together; only the strongest non-overlapping one can be listed.`));
+  return`<div class="cv-t"><div class="cv-h">Side balance check</div>
+    <div class="cv-why"><div><span>Priced markets the model moves toward Over / Under / leaves at DraftKings' price</span><b>${lo} / ${lu} / ${P.length-lo-lu}</b></div>
+    <div><span>Qualified bets, Over / Under</span><b>${qo} / ${qu}</b></div>
+    ${wk?`<div><span>Last week of results: Overs won / DraftKings priced Overs at</span><b>${(wk.overWon*100).toFixed(1)}% / ${(wk.overPriced*100).toFixed(1)}%</b></div>`:""}</div>
+    ${flags.length?`<p class="warn">Flag (for review, nothing was changed): ${flags.join(" ")}</p>`:`<p class="hint">No one-sided lean or stacked player tonight.</p>`}</div>`}
 function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]||0,M=R.markets.length;
   const matched=M-n("unmatched")-n("dup"),pre=matched-n("started"),modelable=pre-n("yesno")-n("unsupported")-n("oneSided")-n("line2"),priced=modelable-n("noLog"),
-    avail=priced-n("out")-n("inj")-n("stale"),qual=n("shown")+n("capP")+n("capG")+n("capN");
+    avail=priced-n("out")-n("inj")-n("stale"),qual=n("shown")+n("capP")+n("overlap")+n("capG")+n("capN");
   const loaded=R.games.filter(g=>g.loaded).length,step=(lbl,v,note)=>`<div class="fn"><span>${lbl}</span><b>${v}</b>${note?`<small>${note}</small>`:""}</div>`;
   const tbl=(title,obj)=>`<div class="cv-t"><div class="cv-h">${title}</div><div class="cv-r cv-hd"><span></span><span>Markets</span><span>Priced</span><span>+EV</span><span>Qualified</span><span>Shown</span></div>${Object.entries(obj).sort((a,b)=>b[1].total-a[1].total).map(([k,b])=>`<div class="cv-r"><span>${esc2(STAT_LBL[k]||k)}</span><span>${b.total}</span><span>${b.priced}</span><span>${b.pos}</span><span>${b.qual}</span><span>${b.shown}</span></div>`).join("")}</div>`;
-  const order=["shown","capP","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
+  const order=["shown","capP","overlap","capG","capN","conf","thin","neg","stale","inj","out","noLog","oneSided","yesno","unsupported","started","unmatched","line2","dup"];
   const V=slateVerdict(R,{loaded,modelable,priced,qual,shown:shownN});
   return`<details class="gcard cov"><summary><span class="eyebrow">How tonight's slate was evaluated</span><b>${M} markets · ${priced} priced · ${R.ev.adj0} positive EV · ${qual} qualified · ${shownN} shown</b><div class="verdict v-${V.k}"><b>${V.t}</b> ${V.d}</div></summary>
     <div class="funnel">
@@ -1799,13 +1813,13 @@ function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]|
       ${step("Current price, no injury question",avail)}
       ${step("Positive EV before the accuracy adjustment",R.ev.raw0)}
       ${step("Positive EV after it",R.ev.adj0)}
-      ${step(`At least ${(SET.minEdge*100).toFixed(0)}% EV (your minimum)`,R.ev.adj2>=0?n("shown")+n("capP")+n("capG")+n("capN")+n("conf"):"–")}
+      ${step(`At least ${(SET.minEdge*100).toFixed(0)}% EV (your minimum)`,R.ev.adj2>=0?n("shown")+n("capP")+n("overlap")+n("capG")+n("capN")+n("conf"):"–")}
       ${step("Qualified",qual)}
-      ${step("Shown",shownN,n("capP")?`${n("capP")} more qualified from players already listed`:"")}
+      ${step("Shown",shownN,n("capP")+n("overlap")?`${n("capP")+n("overlap")} more qualified from players already listed`:"")}
     </div>
     <div class="cv-h">Where each market stopped</div>
     <div class="cv-why">${order.filter(k=>n(k)).map(k=>`<div><span>${REASONS[k]}</span><b>${n(k)}</b></div>`).join("")}</div>
-    ${tbl("By game",R.by.game)}${tbl("By stat",R.by.stat)}${tbl("By side (the side the model prefers)",R.by.side)}${tbl("By sportsbook",R.by.book)}
+    ${biasHTML(R)}${tbl("By game",R.by.game)}${tbl("By stat",R.by.stat)}${tbl("By side (the side the model prefers)",R.by.side)}${tbl("By sportsbook",R.by.book)}
     <p class="hint" style="margin-top:10px">Only DraftKings' prices are in ESPN's free feed, so there's no cross-book comparison here. Enter or scan ${poss(BOOK)} odds and that price is used for the bet instead.</p>
     ${R.games.some(g=>g.loaded&&g.markets===0)||loaded<R.games.filter(g=>g.state==="pre").length?`<p class="warn">Some games have no DraftKings props loaded yet, so this slate is incomplete. That's a data gap, not a lack of value.</p>`:""}
   </details>`}

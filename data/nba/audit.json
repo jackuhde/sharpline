@@ -1,0 +1,772 @@
+{
+ "updated": "2026-11-22T15:54:58.325Z",
+ "lines": 19293,
+ "walkForwardFrom": "2026-11-09",
+ "facts": {
+  "all": {
+   "n": 19293,
+   "overWon": 47.7,
+   "overPriced": 49.5,
+   "lineMinusActual": -0.04,
+   "seasonAvgMinusActual": -0.26,
+   "last10MinusActual": -0.21,
+   "appProjMinusActual": -0.17,
+   "appProjMinusLine": -0.12
+  },
+  "byStat": {
+   "Points": {
+    "n": 2689,
+    "overWon": 47.7,
+    "overPriced": 50,
+    "lineMinusActual": -0.14,
+    "seasonAvgMinusActual": -0.4,
+    "last10MinusActual": -0.34,
+    "appProjMinusActual": -0.29,
+    "appProjMinusLine": -0.15
+   },
+   "Assists": {
+    "n": 1969,
+    "overWon": 48.8,
+    "overPriced": 49.3,
+    "lineMinusActual": -0.12,
+    "seasonAvgMinusActual": -0.1,
+    "last10MinusActual": -0.08,
+    "appProjMinusActual": -0.15,
+    "appProjMinusLine": -0.02
+   },
+   "Rebounds": {
+    "n": 2504,
+    "overWon": 47.8,
+    "overPriced": 49.1,
+    "lineMinusActual": -0.09,
+    "seasonAvgMinusActual": -0.04,
+    "last10MinusActual": -0.03,
+    "appProjMinusActual": -0.12,
+    "appProjMinusLine": -0.03
+   },
+   "3-Pointers": {
+    "n": 2170,
+    "overWon": 49,
+    "overPriced": 47.9,
+    "lineMinusActual": -0.16,
+    "seasonAvgMinusActual": -0.09,
+    "last10MinusActual": -0.08,
+    "appProjMinusActual": -0.07,
+    "appProjMinusLine": 0.09
+   },
+   "Steals": {
+    "n": 840,
+    "overWon": 43.8,
+    "overPriced": 48.8,
+    "lineMinusActual": -0.01,
+    "seasonAvgMinusActual": 0.15,
+    "last10MinusActual": 0.15,
+    "appProjMinusActual": 0.12,
+    "appProjMinusLine": 0.14
+   },
+   "Blocks": {
+    "n": 406,
+    "overWon": 44.1,
+    "overPriced": 47.4,
+    "lineMinusActual": -0.04,
+    "seasonAvgMinusActual": 0.14,
+    "last10MinusActual": 0.14,
+    "appProjMinusActual": 0.11,
+    "appProjMinusLine": 0.15
+   },
+   "Pts+Ast": {
+    "n": 2048,
+    "overWon": 48,
+    "overPriced": 49.9,
+    "lineMinusActual": 0,
+    "seasonAvgMinusActual": -0.55,
+    "last10MinusActual": -0.47,
+    "appProjMinusActual": -0.3,
+    "appProjMinusLine": -0.3
+   },
+   "Pts+Reb": {
+    "n": 2534,
+    "overWon": 46.9,
+    "overPriced": 50,
+    "lineMinusActual": 0.04,
+    "seasonAvgMinusActual": -0.4,
+    "last10MinusActual": -0.34,
+    "appProjMinusActual": -0.21,
+    "appProjMinusLine": -0.25
+   },
+   "Reb+Ast": {
+    "n": 2017,
+    "overWon": 48.7,
+    "overPriced": 49.8,
+    "lineMinusActual": -0.06,
+    "seasonAvgMinusActual": -0.13,
+    "last10MinusActual": -0.09,
+    "appProjMinusActual": -0.13,
+    "appProjMinusLine": -0.06
+   },
+   "Pts+Reb+Ast": {
+    "n": 2116,
+    "overWon": 46.7,
+    "overPriced": 50,
+    "lineMinusActual": 0.18,
+    "seasonAvgMinusActual": -0.56,
+    "last10MinusActual": -0.46,
+    "appProjMinusActual": -0.21,
+    "appProjMinusLine": -0.39
+   }
+  },
+  "byWeek": [
+   {
+    "from": "2026-10-25",
+    "n": 29,
+    "overWon": 41.4,
+    "overPriced": 50.5,
+    "lineMinusActual": 1.57,
+    "seasonAvgMinusActual": 0.54,
+    "last10MinusActual": 0.54,
+    "appProjMinusActual": 1.14,
+    "appProjMinusLine": -0.43
+   },
+   {
+    "from": "2026-10-26",
+    "n": 4554,
+    "overWon": 46.1,
+    "overPriced": 49.4,
+    "lineMinusActual": 0.12,
+    "seasonAvgMinusActual": -0.2,
+    "last10MinusActual": -0.2,
+    "appProjMinusActual": -0.06,
+    "appProjMinusLine": -0.18
+   },
+   {
+    "from": "2026-11-02",
+    "n": 5454,
+    "overWon": 46.9,
+    "overPriced": 49.5,
+    "lineMinusActual": 0.05,
+    "seasonAvgMinusActual": -0.05,
+    "last10MinusActual": -0.05,
+    "appProjMinusActual": -0.04,
+    "appProjMinusLine": -0.1
+   },
+   {
+    "from": "2026-11-09",
+    "n": 5308,
+    "overWon": 48.9,
+    "overPriced": 49.4,
+    "lineMinusActual": -0.15,
+    "seasonAvgMinusActual": -0.37,
+    "last10MinusActual": -0.32,
+    "appProjMinusActual": -0.29,
+    "appProjMinusLine": -0.14
+   },
+   {
+    "from": "2026-11-16",
+    "n": 3948,
+    "overWon": 48.9,
+    "overPriced": 49.6,
+    "lineMinusActual": -0.24,
+    "seasonAvgMinusActual": -0.47,
+    "last10MinusActual": -0.32,
+    "appProjMinusActual": -0.31,
+    "appProjMinusLine": -0.07
+   }
+  ]
+ },
+ "deployed": {
+  "lines": 19293,
+  "marketsLeaningUnder": 84.8,
+  "picks": 131,
+  "overPicks": 5,
+  "underShare": 96.2
+ },
+ "before": {
+  "lines": 9256,
+  "from": "2026-11-09",
+  "marketsLeaningOver": 11.6,
+  "marketsLeaningUnder": 88.4,
+  "picks2": {
+   "all": {
+    "n": 121,
+    "hit": 54.5,
+    "roi": 2.9
+   },
+   "over": {
+    "n": 0,
+    "hit": null,
+    "roi": null
+   },
+   "under": {
+    "n": 121,
+    "hit": 54.5,
+    "roi": 2.9
+   },
+   "underShare": 100
+  },
+  "picks4": {
+   "all": {
+    "n": 25,
+    "hit": 76,
+    "roi": 43.9
+   },
+   "underShare": 100
+  },
+  "byStat": {
+   "Pts+Reb": {
+    "over": {
+     "n": 0,
+     "hit": null,
+     "roi": null
+    },
+    "under": {
+     "n": 57,
+     "hit": 50.9,
+     "roi": -4
+    }
+   },
+   "Points": {
+    "over": {
+     "n": 0,
+     "hit": null,
+     "roi": null
+    },
+    "under": {
+     "n": 39,
+     "hit": 56.4,
+     "roi": 6.5
+    }
+   },
+   "Pts+Reb+Ast": {
+    "over": {
+     "n": 0,
+     "hit": null,
+     "roi": null
+    },
+    "under": {
+     "n": 24,
+     "hit": 62.5,
+     "roi": 17.6
+    }
+   },
+   "Reb+Ast": {
+    "over": {
+     "n": 0,
+     "hit": null,
+     "roi": null
+    },
+    "under": {
+     "n": 1,
+     "hit": 0,
+     "roi": -100
+    }
+   }
+  },
+  "byEvBand": [
+   {
+    "band": "2-4%",
+    "n": 96,
+    "hit": 49,
+    "roi": -7.8
+   },
+   {
+    "band": "4-6%",
+    "n": 25,
+    "hit": 76,
+    "roi": 43.9
+   },
+   {
+    "band": "6-up%",
+    "n": 0,
+    "hit": null,
+    "roi": null
+   }
+  ],
+  "byPlayer": [
+   {
+    "player": "Cooper Flagg",
+    "n": 4,
+    "hit": 0,
+    "roi": -100,
+    "under": 4
+   },
+   {
+    "player": "Jalen Green",
+    "n": 4,
+    "hit": 100,
+    "roi": 88.9,
+    "under": 4
+   },
+   {
+    "player": "Mikal Bridges",
+    "n": 4,
+    "hit": 75,
+    "roi": 40.1,
+    "under": 4
+   },
+   {
+    "player": "Cade Cunningham",
+    "n": 3,
+    "hit": 100,
+    "roi": 87.3,
+    "under": 3
+   },
+   {
+    "player": "Ausar Thompson",
+    "n": 3,
+    "hit": 100,
+    "roi": 91.9,
+    "under": 3
+   },
+   {
+    "player": "Daniss Jenkins",
+    "n": 3,
+    "hit": 0,
+    "roi": -100,
+    "under": 3
+   },
+   {
+    "player": "P.J. Washington",
+    "n": 3,
+    "hit": 66.7,
+    "roi": 26.7,
+    "under": 3
+   },
+   {
+    "player": "Bennedict Mathurin",
+    "n": 3,
+    "hit": 100,
+    "roi": 89.5,
+    "under": 3
+   }
+  ],
+  "leanCalibration": {
+   "leanUnder": {
+    "n": 7112,
+    "predictedUnder": 51.9,
+    "actualUnder": 50.4,
+    "dkUnder": 49.9
+   },
+   "leanOver": {
+    "n": 447,
+    "predictedOver": 46.4,
+    "actualOver": 43.4,
+    "dkOver": 45.4
+   }
+  },
+  "shiftByWeek": [
+   {
+    "from": "2026-11-09",
+    "modelShiftPts": -1.84,
+    "rawShiftPts": -2.64,
+    "realizedOverMinusDkPts": -0.54
+   },
+   {
+    "from": "2026-11-16",
+    "modelShiftPts": -1.03,
+    "rawShiftPts": -1.57,
+    "realizedOverMinusDkPts": -0.61
+   }
+  ],
+  "brier": 0.2468,
+  "brierMarket": 0.2465,
+  "logLoss": 0.6866,
+  "logLossMarket": 0.686,
+  "calibration": [
+   {
+    "range": "0.4-0.5",
+    "n": 2086,
+    "predicted": 47.3,
+    "actual": 46.5
+   },
+   {
+    "range": "0.5-0.52",
+    "n": 1955,
+    "predicted": 51,
+    "actual": 49.1
+   },
+   {
+    "range": "0.52-0.54",
+    "n": 2006,
+    "predicted": 53,
+    "actual": 52.9
+   },
+   {
+    "range": "0.54-0.56",
+    "n": 1296,
+    "predicted": 54.9,
+    "actual": 56.2
+   },
+   {
+    "range": "0.56-0.6",
+    "n": 1006,
+    "predicted": 57.7,
+    "actual": 56.6
+   },
+   {
+    "range": "0.6-1",
+    "n": 837,
+    "predicted": 63.7,
+    "actual": 61.5
+   }
+  ]
+ },
+ "after": {
+  "lines": 9256,
+  "from": "2026-11-09",
+  "marketsLeaningOver": 11.4,
+  "marketsLeaningUnder": 61,
+  "picks2": {
+   "all": {
+    "n": 7,
+    "hit": 57.1,
+    "roi": 5.8
+   },
+   "over": {
+    "n": 0,
+    "hit": null,
+    "roi": null
+   },
+   "under": {
+    "n": 7,
+    "hit": 57.1,
+    "roi": 5.8
+   },
+   "underShare": 100
+  },
+  "picks4": {
+   "all": {
+    "n": 0,
+    "hit": null,
+    "roi": null
+   },
+   "underShare": null
+  },
+  "byStat": {
+   "Pts+Reb": {
+    "over": {
+     "n": 0,
+     "hit": null,
+     "roi": null
+    },
+    "under": {
+     "n": 7,
+     "hit": 57.1,
+     "roi": 5.8
+    }
+   }
+  },
+  "byEvBand": [
+   {
+    "band": "2-4%",
+    "n": 7,
+    "hit": 57.1,
+    "roi": 5.8
+   },
+   {
+    "band": "4-6%",
+    "n": 0,
+    "hit": null,
+    "roi": null
+   },
+   {
+    "band": "6-up%",
+    "n": 0,
+    "hit": null,
+    "roi": null
+   }
+  ],
+  "byPlayer": [
+   {
+    "player": "Collin Sexton",
+    "n": 1,
+    "hit": 0,
+    "roi": -100,
+    "under": 1
+   },
+   {
+    "player": "Daniel Gafford",
+    "n": 1,
+    "hit": 100,
+    "roi": 82.6,
+    "under": 1
+   },
+   {
+    "player": "Bennedict Mathurin",
+    "n": 1,
+    "hit": 100,
+    "roi": 87.7,
+    "under": 1
+   },
+   {
+    "player": "Kel'el Ware",
+    "n": 1,
+    "hit": 100,
+    "roi": 90.9,
+    "under": 1
+   },
+   {
+    "player": "Mario Hezonja",
+    "n": 1,
+    "hit": 0,
+    "roi": -100,
+    "under": 1
+   },
+   {
+    "player": "Isaiah Stewart",
+    "n": 1,
+    "hit": 100,
+    "roi": 79.4,
+    "under": 1
+   },
+   {
+    "player": "Zach Collins",
+    "n": 1,
+    "hit": 0,
+    "roi": -100,
+    "under": 1
+   }
+  ],
+  "leanCalibration": {
+   "leanUnder": {
+    "n": 4176,
+    "predictedUnder": 51.4,
+    "actualUnder": 50,
+    "dkUnder": 49.9
+   },
+   "leanOver": {
+    "n": 125,
+    "predictedOver": 45.4,
+    "actualOver": 40.8,
+    "dkOver": 44.8
+   }
+  },
+  "shiftByWeek": [
+   {
+    "from": "2026-11-09",
+    "modelShiftPts": -0.84,
+    "rawShiftPts": -2.18,
+    "realizedOverMinusDkPts": -0.54
+   },
+   {
+    "from": "2026-11-16",
+    "modelShiftPts": -0.4,
+    "rawShiftPts": -1.04,
+    "realizedOverMinusDkPts": -0.61
+   }
+  ],
+  "brier": 0.2465,
+  "brierMarket": 0.2465,
+  "logLoss": 0.6861,
+  "logLossMarket": 0.686,
+  "calibration": [
+   {
+    "range": "0.4-0.5",
+    "n": 1561,
+    "predicted": 48.3,
+    "actual": 48.1
+   },
+   {
+    "range": "0.5-0.52",
+    "n": 2470,
+    "predicted": 51,
+    "actual": 48.9
+   },
+   {
+    "range": "0.52-0.54",
+    "n": 2145,
+    "predicted": 52.9,
+    "actual": 54.7
+   },
+   {
+    "range": "0.54-0.56",
+    "n": 1103,
+    "predicted": 54.9,
+    "actual": 56.9
+   },
+   {
+    "range": "0.56-0.6",
+    "n": 1067,
+    "predicted": 57.7,
+    "actual": 58.4
+   },
+   {
+    "range": "0.6-1",
+    "n": 903,
+    "predicted": 63.6,
+    "actual": 62.2
+   }
+  ]
+ },
+ "concentration": {
+  "deployedOldList": {
+   "slates": 24,
+   "slatesWithAPlayerTwice": 0,
+   "overlappingSamePlayerPairs": 0,
+   "mostPicksOnOnePlayer": 1,
+   "examples": []
+  },
+  "deployedNewList": {
+   "slates": 24,
+   "slatesWithAPlayerTwice": 0,
+   "overlappingSamePlayerPairs": 0,
+   "mostPicksOnOnePlayer": 1,
+   "examples": []
+  },
+  "before": {
+   "slates": 7,
+   "slatesWithAPlayerTwice": 1,
+   "overlappingSamePlayerPairs": 1,
+   "mostPicksOnOnePlayer": 2,
+   "examples": []
+  },
+  "afterSameModelNewList": {
+   "slates": 7,
+   "slatesWithAPlayerTwice": 0,
+   "overlappingSamePlayerPairs": 0,
+   "mostPicksOnOnePlayer": 1,
+   "examples": []
+  },
+  "after": {
+   "slates": 3,
+   "slatesWithAPlayerTwice": 0,
+   "overlappingSamePlayerPairs": 0,
+   "mostPicksOnOnePlayer": 1,
+   "examples": []
+  }
+ },
+ "mostFaded": {
+  "player": "Cooper Flagg",
+  "picks": 4,
+  "unders": 4,
+  "won": 0,
+  "hisLinesOverWon": 45.5,
+  "hisLinesOverPriced": 48.1,
+  "linesThoseWeeks": 44
+ },
+ "trace": [
+  {
+   "date": "2026-11-09",
+   "player": "Cooper Flagg",
+   "stat": "Pts+Reb",
+   "line": 32.5,
+   "over": -119,
+   "under": -110,
+   "dkNoVigOver": 51,
+   "seasonAvg": 30.56,
+   "last10": 30.56,
+   "overInLast10": 0.3333333333333333,
+   "rawModelOver": 44.8,
+   "countedOver": 45.7,
+   "side": "Under",
+   "ev": 3.7,
+   "actual": 53,
+   "result": "lost",
+   "logOddsPushFromMarket": {
+    "gapS": -0.01,
+    "gap10": -0.01,
+    "hot": 0.02,
+    "bench": 0,
+    "miss": 0,
+    "minTr": 0,
+    "b2b": -0.08,
+    "combo": -0.05,
+    "count": 0,
+    "intercept": -0.11,
+    "mktBaseline": 0
+   }
+  },
+  {
+   "date": "2026-11-09",
+   "player": "Cooper Flagg",
+   "stat": "Points",
+   "line": 25.5,
+   "over": -110,
+   "under": -116,
+   "dkNoVigOver": 49.3,
+   "seasonAvg": 24,
+   "last10": 24,
+   "overInLast10": 0.4444444444444444,
+   "rawModelOver": 44.3,
+   "countedOver": 44.3,
+   "side": "Under",
+   "ev": 3.6,
+   "actual": 43,
+   "result": "lost",
+   "logOddsPushFromMarket": {
+    "gapS": -0.01,
+    "gap10": -0.01,
+    "hot": 0.01,
+    "bench": 0,
+    "miss": 0,
+    "minTr": 0,
+    "b2b": -0.08,
+    "combo": 0,
+    "count": 0,
+    "intercept": -0.11,
+    "mktBaseline": 0
+   }
+  },
+  {
+   "date": "2026-11-09",
+   "player": "Cooper Flagg",
+   "stat": "Pts+Reb+Ast",
+   "line": 40.5,
+   "over": -108,
+   "under": -122,
+   "dkNoVigOver": 48.4,
+   "seasonAvg": 37.56,
+   "last10": 37.56,
+   "overInLast10": 0.3333333333333333,
+   "rawModelOver": 42.4,
+   "countedOver": 43.6,
+   "side": "Under",
+   "ev": 2.6,
+   "actual": 59,
+   "result": "lost",
+   "logOddsPushFromMarket": {
+    "gapS": -0.01,
+    "gap10": -0.01,
+    "hot": 0.02,
+    "bench": 0,
+    "miss": 0,
+    "minTr": 0,
+    "b2b": -0.08,
+    "combo": -0.05,
+    "count": 0,
+    "intercept": -0.11,
+    "mktBaseline": 0.01
+   }
+  },
+  {
+   "date": "2026-11-09",
+   "player": "Cooper Flagg",
+   "stat": "Reb+Ast",
+   "line": 14.5,
+   "over": -109,
+   "under": -121,
+   "dkNoVigOver": 48.7,
+   "seasonAvg": 13.56,
+   "last10": 13.56,
+   "overInLast10": 0.5555555555555556,
+   "rawModelOver": 42.1,
+   "countedOver": 44.1,
+   "side": "Under",
+   "ev": 2.1,
+   "actual": 16,
+   "result": "lost",
+   "logOddsPushFromMarket": {
+    "gapS": -0.01,
+    "gap10": -0.01,
+    "hot": -0.01,
+    "bench": 0,
+    "miss": 0,
+    "minTr": 0,
+    "b2b": -0.08,
+    "combo": -0.05,
+    "count": 0,
+    "intercept": -0.11,
+    "mktBaseline": 0
+   }
+  }
+ ]
+}

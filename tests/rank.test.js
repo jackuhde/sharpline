@@ -12,7 +12,7 @@ t("overAt monotone",R.overAt("Points",20.5,.5,15.5)>.5&&R.overAt("Points",20.5,.
 t("overAt count stat",R.overAt("3-Pointers",2.5,.45,1.5)>.45&&R.overAt("3-Pointers",2.5,.45,3.5)<.45);
 t("overAt 50% at main = mean at line",near(R.overAt("Rebounds",8.5,.5,8.5),.5));
 /* selection */
-const C=(base,ath,gi,ev,conf="High")=>({base,ath,gi,ev,conf});
+const C=(base,ath,gi,ev,conf="High",st)=>({base,ath,gi,ev,conf,st:st||{a2:"Rebounds"}[base]||"Points"});
 {const Q=[C("a1","A",0,.08),C("a2","A",0,.07),C("b1","B",0,.05),C("c1","C",1,.03)];const r=R.selectTop(Q,{perPlayer:"1x",perGame:3,max:10,minEdge:.02});
   t("one per player strict",r.out.map(c=>c.base).join()==="a1,b1,c1");t("held reason",r.held.a2==="capP");}
 {const Q=[C("a1","A",0,.08),C("a2","A",0,.07),C("b1","B",0,.03)];const r=R.selectTop(Q,{perPlayer:"1",perGame:3,max:10,minEdge:.02});
@@ -23,6 +23,13 @@ const C=(base,ath,gi,ev,conf="High")=>({base,ath,gi,ev,conf});
   t("per-game cap then refill",r.out.map(c=>c.base).join()==="a,b,c,e,d");}
 {const Q=[];for(let i=0;i<15;i++)Q.push(C("p"+i,"P"+i,i%5,.1-i*.001));const r=R.selectTop(Q,{perPlayer:"1x",perGame:3,max:10});
   t("max 10",r.out.length===10);t("rest held as capN",Object.values(r.held).filter(v=>v==="capN").length===5);}
+/* correlated stats on one player: never two picks built from the same stat */
+{const Q=[C("u1","A",0,.09,"High","Pts+Reb+Ast"),C("u2","A",0,.085,"High","Pts+Reb"),C("u3","A",0,.08,"High","Pts+Ast"),C("u4","A",0,.075,"High","Points"),C("u5","A",0,.07,"High","Reb+Ast"),C("b1","B",0,.03)];
+  for(const pp of["1","2","3"]){const r=R.selectTop(Q,{perPlayer:pp,perGame:9,max:10,minEdge:.02});
+    t("one PRA-family pick per player at cap "+pp,r.out.filter(c=>c.ath==="A").length===1&&r.out[0].base==="u1"&&r.held.u2==="overlap"&&r.held.u4==="overlap");}}
+{const Q=[C("x1","A",0,.08,"High","Points"),C("x2","A",0,.07,"High","Rebounds"),C("x3","A",0,.06,"High","Pts+Reb")];const r=R.selectTop(Q,{perPlayer:"2",perGame:9,max:10});
+  t("distinct stats allowed under a cap of 2, overlapping held",r.out.map(c=>c.base).join()==="x1,x2"&&r.held.x3==="overlap");}
+t("overlap: 3-Pointers inside Points",R.overlaps("3-Pointers","Points")&&!R.overlaps("Rebounds","Assists")&&R.overlaps("Unknown","Rebounds"));
 t("empty input gives empty list",R.selectTop([],{}).out.length===0);
 {const E=R.expertWeight,base={graded:true,n:1000,roi:.05,clv:.01,days:0,quarters:[.02,.03,-.01,.04]};
   t("ungraded record gets 0",E({...base,graded:false}).w===0);

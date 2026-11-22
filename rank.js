@@ -33,12 +33,21 @@ function overAt(st,L0,p0,L){if(L===L0)return p0;
    opts: {max, perPlayer: "1" | "1x" | number, perGame, minEdge}. Pass 1 spreads across players and games; pass 2 lets other
    games fill remaining slots past the per-game limit; with perPlayer "1", a second prop from a player only when its edge is
    exceptional (2x the minimum and 5%+, High confidence). Returns {out, held} where held[base] says why it was left off. */
+/* Same-player props built from the same box-score stat (Points, Pts+Reb, Pts+Reb+Ast...) win or lose together, so the list
+   never holds two of them: the stronger one is kept and the rest are held as "overlap". A second prop on the same player is
+   allowed only when it shares no stat with the first (say Rebounds after Points) and, on the default one-per-player setting,
+   only when it is exceptional (EV at least 5% and twice the minimum, High confidence). Unknown stats count as overlapping. */
+const COMPS={"Points":["pts"],"Rebounds":["reb"],"Assists":["ast"],"3-Pointers":["tpm","pts"],"Steals":["stl"],"Blocks":["blk"],"Turnovers":["to"],
+  "Pts+Reb+Ast":["pts","reb","ast"],"Pts+Reb":["pts","reb"],"Pts+Ast":["pts","ast"],"Reb+Ast":["reb","ast"],"Stl+Blk":["stl","blk"]};
+function overlaps(a,b){const x=COMPS[a],y=COMPS[b];if(!x||!y)return true;return x.some(k=>y.includes(k))}
 function selectTop(Q,opts){const max=opts.max||10,cap=opts.perPlayer==="1x"?1:+opts.perPlayer||1,gcap=+opts.perGame||99,minE=opts.minEdge||.02;
-  const out=[],nP={},nG={},taken=new Set(),held={};
-  const add=c=>{out.push(c);taken.add(c.base);nP[c.ath]=(nP[c.ath]||0)+1;nG[c.gi]=(nG[c.gi]||0)+1;delete held[c.base]};
-  for(const c of Q){if(out.length>=max){held[c.base]=held[c.base]||"capN";continue}if((nP[c.ath]||0)>=cap){held[c.base]="capP";continue}if((nG[c.gi]||0)>=gcap){held[c.base]="capG";continue}add(c)}
-  for(const c of Q){if(out.length>=max)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap)continue;add(c)}
-  if(opts.perPlayer==="1")for(const c of Q){if(out.length>=max)break;if(taken.has(c.base))continue;
+  const out=[],nP={},nG={},taken=new Set(),held={},stP={};
+  const add=c=>{out.push(c);taken.add(c.base);nP[c.ath]=(nP[c.ath]||0)+1;nG[c.gi]=(nG[c.gi]||0)+1;(stP[c.ath]=stP[c.ath]||[]).push(c.st);delete held[c.base]};
+  const clash=c=>(stP[c.ath]||[]).some(s=>overlaps(s,c.st));
+  for(const c of Q){if(out.length>=max){held[c.base]=held[c.base]||"capN";continue}if(clash(c)){held[c.base]="overlap";continue}
+    if((nP[c.ath]||0)>=cap){held[c.base]="capP";continue}if((nG[c.gi]||0)>=gcap){held[c.base]="capG";continue}add(c)}
+  for(const c of Q){if(out.length>=max)break;if(taken.has(c.base)||(nP[c.ath]||0)>=cap||clash(c))continue;add(c)}
+  if(opts.perPlayer==="1")for(const c of Q){if(out.length>=max)break;if(taken.has(c.base)||clash(c))continue;
     if(c.ev>=Math.max(.05,2*minE)&&c.conf==="High"){c.corr=true;add(c)}}
   Q.forEach(c=>{if(!taken.has(c.base)&&!held[c.base])held[c.base]="capN"});
   return{out,held}}
@@ -59,6 +68,6 @@ function expertWeight(r){if(!r||!r.graded||!(r.n>=200))return{w:0,why:!r||!r.gra
   return{w,why:"graded record"}}
 /* blend: market chance moved toward the expert's side by the weight; each source counted once */
 function blendExperts(pMkt,picks){const seen=new Set();let p=pMkt;for(const k of picks||[]){if(!k||seen.has(k.src))continue;seen.add(k.src);const w=expertWeight(k.rec).w;if(w>0)p=p+w*((k.side==="o"?1:0)-p)*.1}return p}
-const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,expertWeight,blendExperts};
+const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,overlaps,expertWeight,blendExperts};
 root.SLRank=api;if(typeof module!=="undefined")module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

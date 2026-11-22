@@ -1,3 +1,101 @@
+# NBA prop model bias audit, Nov 22 2026
+
+Reproduce: `node scripts/props-model/audit.mjs` (writes data/nba/audit.json). Every number below comes from that script on 19,293 graded DraftKings lines this season, using pre-game information only.
+
+## What the app was doing
+
+With the model.json deployed before this audit, 84.8% of priced markets were pushed toward the Under and 96.2% of 2%+ EV picks were Unders (126 of 131).
+
+## Root cause
+
+1. **A season-wide intercept.** The model had a constant term (b0 = -0.111) that lowered every Over by about 2.7 points for every player and stat. It was learned mostly from the first two weeks, when Overs won 46% against 49.5% priced. That gap has been closing:
+
+| Week of | Lines | Overs won | DraftKings priced Overs |
+|---|---|---|---|
+| 2026-10-26 | 4554 | 46.1% | 49.4% |
+| 2026-11-02 | 5454 | 46.9% | 49.5% |
+| 2026-11-09 | 5308 | 48.9% | 49.4% |
+| 2026-11-16 | 3948 | 48.9% | 49.6% |
+
+   Fit on earlier weeks only, the old model moved the average prop toward the Under by 1.84 pts (week of 2026-11-09) and 1.03 pts (week of 2026-11-16), while Overs actually ran 0.54 and 0.61 points below DraftKings' price. The push was 2 to 3 times too big.
+
+2. **A floor on the per-stat accuracy share (k).** k is the share of the model's move away from DraftKings that showed up in later results. The old rule pulled k toward 0.8 and never let it go below 0.3, so stats where the model's moves lost out of sample (3-Pointers raw k -0.463, Blocks -0.812) still counted 30% of the move.
+
+3. **The same push on every market of one player.** The intercept, the combo and back-to-back terms and the player's recent hit rate are identical across Points, Pts+Reb, Pts+Ast, Pts+Reb+Ast and Reb+Ast. When DraftKings prices a player near 50/50 on all of them, they all clear the bar as Unders at once. Example, Nov 9, model fit on earlier weeks:
+
+| Cooper Flagg prop | DraftKings no-vig Over | Model Over | Pick | Result |
+|---|---|---|---|---|
+| Pts+Reb 32.5 | 51% | 45.7% | Under, 3.7% EV | 53 (lost) |
+| Points 25.5 | 49.3% | 44.3% | Under, 3.6% EV | 43 (lost) |
+| Pts+Reb+Ast 40.5 | 48.4% | 43.6% | Under, 2.6% EV | 59 (lost) |
+| Reb+Ast 14.5 | 48.7% | 44.1% | Under, 2.1% EV | 16 (lost) |
+
+   Each one got the same push in log-odds: intercept -0.11, back-to-back -0.08, combo -0.05, his own numbers about 0. Four correlated Unders in one game, all lost. Across the two test weeks the old rules picked against Flagg 4 times, all Unders, 0 won.
+
+4. **The projections do not underestimate players.** DraftKings' lines are close to unbiased on the mean (line minus actual -0.04). Season averages run 0.26 below what players scored and the app's projection 0.17 below, so if anything the inputs lean low, not the outputs. Overs still lose slightly more than priced because these stats are skewed: a few big games lift the average above the typical game.
+
+| Stat | Lines | Overs won | Priced | Line minus actual | Season avg minus actual | App projection minus actual |
+|---|---|---|---|---|---|---|
+| Points | 2689 | 47.7% | 50% | -0.14 | -0.4 | -0.29 |
+| Assists | 1969 | 48.8% | 49.3% | -0.12 | -0.1 | -0.15 |
+| Rebounds | 2504 | 47.8% | 49.1% | -0.09 | -0.04 | -0.12 |
+| 3-Pointers | 2170 | 49% | 47.9% | -0.16 | -0.09 | -0.07 |
+| Steals | 840 | 43.8% | 48.8% | -0.01 | 0.15 | 0.12 |
+| Blocks | 406 | 44.1% | 47.4% | -0.04 | 0.14 | 0.11 |
+| Pts+Ast | 2048 | 48% | 49.9% | 0 | -0.55 | -0.3 |
+| Pts+Reb | 2534 | 46.9% | 50% | 0.04 | -0.4 | -0.21 |
+| Reb+Ast | 2017 | 48.7% | 49.8% | -0.06 | -0.13 | -0.13 |
+| Pts+Reb+Ast | 2116 | 46.7% | 50% | 0.18 | -0.56 | -0.21 |
+
+## Correction
+
+- **Intercept removed** (b0 fixed at 0). Out-of-sample log loss was the same without it, so it carried no tested information, only the early-season lean.
+- **k shrunk toward the market with no floor**: k = sum(result gap × model move) / (sum(model move²) + 0.5), kept between 0 and 1, estimated walk-forward. A stat with k = 0 is priced at DraftKings' no-vig chance.
+
+| Stat | Raw k (walk-forward) | Old k | New k |
+|---|---|---|---|
+| Points | -0.106 | 0.735 | 0 |
+| Assists | 0.457 | 0.482 | 0.192 |
+| Rebounds | -0.856 | 0.621 | 0 |
+| 3-Pointers | -0.463 | 0.3 | 0 |
+| Steals | 1.501 | 1 | 0.703 |
+| Blocks | -0.812 | 0.3 | 0 |
+| Pts+Ast | 0.184 | 0.744 | 0.152 |
+| Pts+Reb | 0.658 | 0.755 | 0.564 |
+| Reb+Ast | 0.243 | 0.502 | 0.197 |
+| Pts+Reb+Ast | 0.633 | 0.865 | 0.525 |
+
+- **Top List groups overlapping stats.** Two props on one player that share a box-score stat (Points with Pts+Reb, 3-Pointers with Points, any two combos) are never both listed. The stronger is kept and the other is held as "same player and same stat". A second prop on a player is allowed only if it shares no stat with the first and, on the default setting, is exceptional (5%+ EV, High confidence).
+- **Side balance check** in "How tonight's slate was evaluated": markets leaning Over / Under, qualified Overs / Unders, any player with 3+ qualified props, and last week's actual Over rate. It flags; it changes nothing.
+- Nothing forces Overs or a split, and the 2% minimum EV is unchanged.
+
+## Validation
+
+Walk-forward: weeks of 2026-11-09 and 2026-11-16, each priced by a model and k fit only on earlier weeks.
+
+| | Before | After | DraftKings alone |
+|---|---|---|---|
+| Brier score | 0.2468 | 0.2465 | 0.2465 |
+| Log loss | 0.6866 | 0.6861 | 0.686 |
+| Average move vs DraftKings, by week | -1.84, -1.03 pts | -0.84, -0.4 pts | actual: -0.54, -0.61 pts |
+| Markets leaning Under / Over | 88.4% / 11.6% | 61% / 11.4% | |
+| Leaning-Under markets, predicted vs actual Under | 51.9% vs 50.4% | 51.4% vs 50% | 49.9% |
+| 2%+ EV picks | 121 (121 Under), 54.5% won, ROI 2.9% | 7 (7 Under), 57.1% won, ROI 5.8% | |
+| 2 to 4% EV band | 96 picks, ROI -7.8% | 7 picks, ROI 5.8% | |
+| Top Lists with a player twice | 1 of 7, 1 overlapping pair | 0 of 3, 0 overlapping | |
+
+Before any k, the model's own 2%+ EV picks, each week priced by a fit on earlier weeks: week of 2026-11-02, 960 picks, ROI -3.5%; week of 2026-11-09, 677 picks, ROI -11.4%; week of 2026-11-16, 176 picks, ROI -4.9%. Unadjusted, it lost money every week.
+
+The old rules' 25 picks at 4 to 6% EV in the test weeks won 19 (76%). That is 25 correlated bets in two weeks, mostly Unders on the same few players, and it is not repeatable evidence: the much larger 2 to 4% band lost 7.8%.
+
+## What this means
+
+- The Under tilt came mostly from a constant learned in two weeks, plus a k rule that could not go below 0.3. Both are fixed, and the model's remaining average move toward the Under now matches what actually happened.
+- Out of sample the model is about as accurate as DraftKings' own price, not better (log loss 0.6861 vs 0.686). With DraftKings as the only free price feed, expect very few NBA prop picks: 7 across the two test weeks. An empty list on a small slate is the correct output. Real edges need a better price at another book (enter or scan the Fliff price).
+- The 7 picks that remain are too few to judge and are not evidence of an edge.
+
+---
+
 # Sharpline audit, Nov 19 2026
 
 ## Why the Top List showed about two players (4-game slate, 10:04 AM ET)

@@ -1,7 +1,7 @@
 // Fits Sharpline's pregame prop model on every graded DraftKings line this season and writes model.json for the app.
 // Model: logistic regression starting from DraftKings' no-vig Over chance, adjusted by the player's own numbers.
-// Each prop is used twice, at its opening and at its closing line and prices. Honesty check: the model is also fit on one
-// half of the season and scored on the other (both ways), and those out-of-sample results are written next to the weights.
+// Each prop is used twice, at its opening and at its closing line and prices. Honesty check: the model is also scored each
+// week by a model fit only on earlier weeks (walk-forward), and those out-of-sample results are written next to the weights.
 import fs from "node:fs";import {buildRows} from "./rows.mjs";import {dec,evOf,sdFor,devig} from "./lib.mjs";
 const IN=process.argv[2]||"data/props-history.json",OUT=process.argv[3]||"model.json";
 const {rows,games}=buildRows(IN);
@@ -13,23 +13,36 @@ const names=Object.keys(F),base=rows.filter(r=>r.gp>=3&&r.s!=null);
 const open=r=>{if(r.lOpen==null||r.oOpen==null||r.uOpen==null||r.actual===r.lOpen)return null;
   return{...r,l:r.lOpen,o:r.oOpen,u:r.uOpen,pm:devig(r.oOpen,r.uOpen)[0],over:r.actual>r.lOpen?1:0,hitRate10:r.lOpen===r.l?r.hitRate10:null,snap:"open"}};
 const S=[...base,...base.map(open).filter(Boolean)];
+/* No intercept (b0 is held at 0). A season-wide intercept learned that Overs lost in the first two weeks (46% won against 49.5%
+   priced) and kept pushing every prop about 2.7 points toward the Under. Out of sample it did not hold: fit on earlier weeks it
+   moved the average prop 2.6 and 1.6 points toward the Under in the weeks of Nov 9 and Nov 16, when Overs actually ran only 0.5
+   and 0.6 points below DraftKings' price. Removing it left out-of-sample log loss unchanged (audit.mjs). */
 function fit(train,iters=500){const X=train.map(r=>[1,...names.map(n=>F[n](r))]),y=train.map(r=>r.over);let w=new Array(names.length+1).fill(0);w[1]=1;
-  for(let it=0;it<iters;it++){const g=new Array(w.length).fill(0);X.forEach((x,i)=>{const p=sg(x.reduce((a,v,j)=>a+v*w[j],0));x.forEach((v,j)=>g[j]+=(p-y[i])*v)});w=w.map((v,j)=>v-.5*(g[j]/X.length+(j>1?2*v/X.length:0)))}return w}
+  for(let it=0;it<iters;it++){const g=new Array(w.length).fill(0);X.forEach((x,i)=>{const p=sg(x.reduce((a,v,j)=>a+v*w[j],0));x.forEach((v,j)=>g[j]+=(p-y[i])*v)});w=w.map((v,j)=>v-.5*(g[j]/X.length+(j>1?2*v/X.length:0)));w[0]=0}return w}
 const pred=(w,r)=>sg(w[0]+names.reduce((a,k,j)=>a+w[j+1]*F[k](r),0));
 function bets(list,f,thr){let n=0,pl=0,win=0;list.forEach(r=>{const p=f(r),eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)<thr)return;const W=side==="o"?r.over:1-r.over;n++;win+=W;pl+=W?dec(side==="o"?r.o:r.u)-1:-1});
   return{n,hit:n?+(win/n).toFixed(3):null,roi:n?+(pl/n).toFixed(3):null}}
 const dates=[...new Set(S.map(r=>r.d))].sort(),mid=dates[Math.floor(dates.length/2)];
-/* per prop category, out of sample: how much of the model's move away from DraftKings' price actually showed up in results (k),
-   and how the model's 2%+ EV picks did. Both halves are scored by a model fit on the other half. */
+/* Honesty test, walk-forward by week: every week is scored by a model fit only on the weeks before it (no future games, no
+   later prices). Weeks need at least 4,000 earlier lines to train on. This replaced a half-season split in Nov 2026: scoring
+   the first half with a model fit on the second half let late-season information leak backward and made the model look
+   better than it was. */
+const wk=d=>Math.floor((Date.parse(d+"T12:00:00Z")-Date.parse("2026-10-19T12:00:00Z"))/(7*864e5));
+const weeks=[...new Set(base.map(r=>wk(r.d)))].sort((x,y)=>x-y).filter(W=>S.filter(r=>wk(r.d)<W).length>=4000);
 const acc={},oos=[];
-const test=[[r=>r.d<mid,r=>r.d>=mid,"first half → second half"],[r=>r.d>=mid,r=>r.d<mid,"second half → first half"]].map(([a,b,lbl])=>{const w=fit(S.filter(a)),te=S.filter(b);
-  te.filter(r=>!r.snap).forEach(r=>{oos.push({st:r.st,y:r.over,p:pred(w,r),pm:r.pm,o:r.o,u:r.u})});
-  te.filter(r=>!r.snap).forEach(r=>{const p=pred(w,r),A=acc[r.st]=acc[r.st]||{num:0,den:0,n:0,win:0,pl:0};const d=p-r.pm;A.num+=d*(r.over-r.pm);A.den+=d*d;
-    const eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)>=.02){const W=side==="o"?r.over:1-r.over;A.n++;A.win+=W;A.pl+=W?dec(side==="o"?r.o:r.u)-1:-1}});
-  return{split:lbl,ev2:bets(te,r=>pred(w,r),.02),ev4:bets(te,r=>pred(w,r),.04)}});
-/* k is pulled halfway toward 0.8 because one month per category is a small sample, and never above 1 (results never inflate an edge) */
-const catK={},catRec={};Object.entries(acc).forEach(([st,A])=>{const raw=A.den?A.num/A.den:.8;catK[st]=+Math.max(.3,Math.min(1,.5*raw+.4)).toFixed(3);
+const test=weeks.map(W=>{const w=fit(S.filter(r=>wk(r.d)<W)),te=base.filter(r=>wk(r.d)===W);
+  te.forEach(r=>{const p=pred(w,r),A=acc[r.st]=acc[r.st]||{num:0,den:0,n:0,win:0,pl:0};const d=p-r.pm;A.num+=d*(r.over-r.pm);A.den+=d*d;
+    oos.push({st:r.st,d:r.d,ath:r.ath,y:r.over,p,pm:r.pm,o:r.o,u:r.u,wk:W});
+    const eo=evOf(p,r.o),eu=evOf(1-p,r.u),side=eo>=eu?"o":"u";if(Math.max(eo,eu)>=.02){const Wn=side==="o"?r.over:1-r.over;A.n++;A.win+=Wn;A.pl+=Wn?dec(side==="o"?r.o:r.u)-1:-1}});
+  return{split:"week of "+te.map(r=>r.d).sort()[0]+", fit on earlier weeks only",lines:te.length,ev2:bets(te,r=>pred(w,r),.02),ev4:bets(te,r=>pred(w,r),.04)}});
+/* k per stat: the share of the model's move away from DraftKings' price that showed up in later results (least squares of
+   result minus market on model minus market). It is shrunk toward 0, the market, with a prior worth 0.5 units of that sum
+   of squares, and kept between 0 and 1. There is no floor: a stat whose moves did not hold up out of sample is priced at
+   DraftKings' no-vig chance. Before Nov 22 2026 k had a 0.3 floor and was pulled toward 0.8, which forced the model's
+   Under lean through even on stats where it lost (3-Pointers raw k -1.8, Assists -0.4, Blocks -1.2). */
+const catK={},catRec={};Object.entries(acc).forEach(([st,A])=>{const raw=A.den?A.num/A.den:0;catK[st]=+Math.max(0,Math.min(1,A.num/(A.den+.5))).toFixed(3);
   catRec[st]={n:A.n,hit:A.n?+(A.win/A.n).toFixed(3):null,roi:A.n?+(A.pl/A.n).toFixed(3):null,raw:+raw.toFixed(3)}});
+oos.forEach(r=>{r.pr=r.p;r.p=r.pm+(catK[r.st]||0)*(r.p-r.pm)});
 /* the old app model for comparison: every pick it rated 3%+ EV at the closing price */
 /* calibration and accuracy, out of sample at closing prices: Brier score and log loss for the model and for DraftKings'
    no-vig price, by stat; the model's chance for the side it prefers against how often that side won; realized ROI by EV band */
@@ -41,8 +54,16 @@ const calib={all:score(oos),byStat:{},bins:[],evBands:[]};
 const sided=oos.map(r=>{const eo=evOf(r.p,r.o),eu=evOf(1-r.p,r.u),o=eo>=eu;return{p:o?r.p:1-r.p,y:o?r.y:1-r.y,ev:Math.max(eo,eu),price:o?r.o:r.u}});
 [[.45,.5],[.5,.52],[.52,.54],[.54,.56],[.56,.58],[.58,.6],[.6,.65],[.65,1]].forEach(([lo,hi])=>{const x=sided.filter(r=>r.p>=lo&&r.p<hi);if(x.length)calib.bins.push({lo,hi,n:x.length,pred:+(x.reduce((a,r)=>a+r.p,0)/x.length).toFixed(4),act:+(x.reduce((a,r)=>a+r.y,0)/x.length).toFixed(4)})});
 [[-1,0],[0,.02],[.02,.04],[.04,.06],[.06,1]].forEach(([lo,hi])=>{const x=sided.filter(r=>r.ev>=lo&&r.ev<hi);if(x.length)calib.evBands.push({lo,hi,n:x.length,expRoi:+(x.reduce((a,r)=>a+r.ev,0)/x.length).toFixed(4),roi:+(x.reduce((a,r)=>a+(r.y?dec(r.price)-1:-1),0)/x.length).toFixed(4)})});
+/* bias monitor (flags only, changes nothing): how often Overs won against how often DraftKings priced them, by week; and the
+   side split of out-of-sample picks before (raw model) and after the per-stat k, with their results */
+function biasOf(L){const side=(f)=>{const o={n:0,w:0,pl:0},u={n:0,w:0,pl:0};L.forEach(r=>{const p=f(r),eo=evOf(p,r.o),eu=evOf(1-p,r.u),s=eo>=eu?o:u;if(Math.max(eo,eu)<.02)return;
+    const Wn=s===o?r.y:1-r.y;s.n++;s.w+=Wn;s.pl+=Wn?dec(s===o?r.o:r.u)-1:-1});const f2=x=>({n:x.n,hit:x.n?+(x.w/x.n).toFixed(3):null,roi:x.n?+(x.pl/x.n).toFixed(3):null});
+    return{over:f2(o),under:f2(u),underShare:o.n+u.n?+(u.n/(o.n+u.n)).toFixed(3):null}};
+  const byWeek=[...new Set(base.map(r=>wk(r.d)))].sort((a,b)=>a-b).map(W=>{const x=base.filter(r=>wk(r.d)===W);return{from:x.map(r=>r.d).sort()[0],n:x.length,overWon:+(x.filter(r=>r.over).length/x.length).toFixed(3),overPriced:+(x.reduce((a,r)=>a+r.pm,0)/x.length).toFixed(3)}});
+  return{rawModel:side(r=>r.pr),afterK:side(r=>r.p),favorsOverRaw:+(L.filter(r=>r.pr>r.pm).length/L.length).toFixed(3),byWeek}}
 const W=fit(S);
 const out={updated:new Date().toISOString(),games:games.length,lines:base.length,through:dates.at(-1),split:mid,
   catK,catRec,calib,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
+  bias:biasOf(oos),
   overs:{n:base.length,hit:+(base.filter(r=>r.over).length/base.length).toFixed(3),fair:+(base.reduce((a,r)=>a+r.pm,0)/base.length).toFixed(3)}};
 fs.writeFileSync(OUT,JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1));
