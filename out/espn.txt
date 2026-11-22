@@ -1,0 +1,16 @@
+== https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard
+HTTP/2 200 
+content-type: application/json;charset=UTF-8
+access-control-allow-origin: *
+access-control-allow-methods: GET,PUT,POST,DELETE,OPTIONS,HEAD
+access-control-expose-headers: content-length,location
+== https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard
+HTTP/2 200 
+content-type: application/json;charset=UTF-8
+access-control-allow-origin: *
+access-control-allow-methods: GET,PUT,POST,DELETE,OPTIONS,HEAD
+access-control-expose-headers: content-length,location
+== https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/events?limit=1
+HTTP/2 200 
+content-type: application/json;charset=utf-8
+access-control-allow-origin: *
