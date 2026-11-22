@@ -196,10 +196,12 @@ betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if
   /* the scoreboard carries the true game clock; prefer it over the box score's when the game is live there */
   if(e&&e.state==="in"&&e.period){const ec=String(e.clock||"").match(/^(\d+):(\d{2})/);B.period=e.period;if(ec)B.clockSec=(+ec[1])*60+(+ec[2]);else if(e.clockSec!=null)B.clockSec=e.clockSec;if(e.detail)B.detail=e.detail}
   const fl=fracLeft(B),clock=B.detail&&!/^final/i.test(B.detail)?B.detail:B.period>4?"OT":`Q${B.period} ${Math.floor((B.clockSec||0)/60)}:${String(Math.round((B.clockSec||0)%60)).padStart(2,"0")}`,score=e?`${e.away.ab} ${A.score}, ${e.home.ab} ${H.score}`:`${A.score}-${H.score}`;
-  if(sp.kind==="prop"){const row=B.players[sp.ath],cur=row?statVal(row,sp.stat):0;if(cur==null)return{st:"na",why:"No live box stat for this market",clock,score};
+  if(sp.kind==="prop"){const row=B.players[sp.ath],cur=row?statVal(row,sp.stat):0;const g=e||{};const c=ctxFor(g,sp.ath)||{};
+    if(cur==null){/* no live box stat for this market (longest completion): keep the pregame chance, labeled */const L0=M.STATS[sp.stat]?live.preChance(sp,g,c):null;
+      return L0?{st:"live",p:sp.side==="u"?1-L0.pO:L0.pO,src:"rough",clock,score,now:"no live stat for this market, pregame chance"}:{st:"na",why:"No live box stat for this market",clock,score}}
     if(cur>sp.line&&sp.side==="o")return{st:"done",p:1,clock,score,now:`${cur} already over ${sp.line}`};if(cur>sp.line&&sp.side==="u")return{st:"done",p:0,clock,score,now:`${cur}, past ${sp.line}`};
-    const st0=sp.stat==="td2"?"td":sp.stat,Ms=M.STATS[st0];if(!Ms)return{st:"na",why:"Not modeled live",clock,score};const g=e||{};const c=ctxFor(g,sp.ath)||{};
-    const L=live.preChance(sp,g,c);if(L==null)return{st:"na",why:"Not enough history for a live estimate",clock,score};
+    const st0=sp.stat==="td2"?"td":sp.stat,Ms=M.STATS[st0];
+    const L=Ms?live.preChance(sp,g,c):null;if(L==null)return roughNfl(sp,cur,fl,clock,score);
     const p=live.update(sp,L,cur,row,fl);return{st:"live",p:p.p,src:"model",clock,score,now:`${cur} now${p.proj!=null?`, about ${r1(p.proj)} projected`:""}`}}
   const diff=(sp.team===H.id?H.score-A.score:A.score-H.score);const pre=e&&e.odds;const exp=pre&&pre.spread!=null?(sp.team===e.home.id?-pre.spread:pre.spread):0;const sd=13.5*Math.sqrt(Math.max(.01,fl));
   if(sp.kind==="ml"){const mu=diff+exp*fl;return{st:"live",p:RK.Phi(mu/sd),src:"model",clock,score,now:`${diff>=0?"up":"down"} ${Math.abs(diff)}`}}
@@ -207,6 +209,18 @@ betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if
   if(sp.kind==="tot"){const t=H.score+A.score,rem=(pre&&pre.total||44)*fl,s2=10*Math.sqrt(Math.max(.01,fl)),po=1-RK.Phi((sp.line-t-rem)/s2);return{st:"live",p:sp.side==="o"?po:1-po,src:"model",clock,score,now:`${t} points so far`}}
   return null}
 
+/* when the model has no history for this player or stat: start from the line itself (a book's line sits near the middle of
+   the outcomes), scale it to the time left and blend in his pace. Labeled as a rough estimate. */
+function roughNfl(sp,cur,fl,clock,score){const mu0=Math.max(.5,sp.line),played=1-fl,rem0=mu0*fl,pace=played>.05?cur/played*fl:rem0,w=mu0<6?played/(played+3):played/(played+1),rem=Math.max(0,(1-w)*rem0+w*pace);
+  const need=sp.line-cur;let pO;if(need<0)pO=1;else if(mu0<6){pO=1-M.poisCdf(Math.floor(need),rem)}else pO=1-M.Phi((need-rem)/Math.max(.5,.5*mu0*Math.sqrt(Math.max(.01,fl))));
+  return{st:"live",p:sp.side==="u"?1-pO:pO,src:"rough",clock,score,now:`${cur} now, about ${r1(cur+rem)} projected (from the line and his pace)`}}
+/* pregame chance for a bet with none (added by hand): the prop model at your line, or DraftKings' game line */
+function preBet(sp){if(!sp||sp.sport!=="nfl"||!N.stats)return null;const e=gameOf(sp.ev);if(!e)return null;
+  if(sp.kind==="prop"){const st0=sp.stat==="td2"?"td":sp.stat;const c=ctxFor(e,sp.ath)||{};const L=M.STATS[st0]?live.preChance(sp,e,c):null;
+    if(!L){/* no history: start from the line itself, near the middle of the outcomes */const r=roughNfl(sp,0,1,"","");return{p:r.p,src:"the line itself (no player data)"}}
+    return{p:sp.side==="u"?1-L.pO:L.pO,src:"Sharpline's pregame model"}}
+  const o=e.odds||{};if(sp.kind==="tot"){if(o.total==null)return null;const pO=1-RK.Phi((sp.line-o.total)/10);return{p:sp.side==="u"?1-pO:pO,src:"DraftKings' game total"}}
+  if(o.spread==null)return null;const exp=sp.team===e.home.id?-o.spread:o.spread;return{p:sp.kind==="ml"?RK.Phi(exp/13.5):RK.Phi((exp+sp.line)/13.5),src:"DraftKings' spread"}}
 /* ---------- prices you enter ---------- */
 let SHEET=null;
 function sheetPreview(){const x=SHEET,el=document.getElementById("nfLive");if(!x||!el||x.yn){if(el)el.textContent="";return}
@@ -487,5 +501,5 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,SHORT,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
+window.NFL={N,SHORT,preBet,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:id=>openProfile(id),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal}};
 })();
