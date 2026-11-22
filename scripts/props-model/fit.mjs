@@ -6,8 +6,12 @@ import fs from "node:fs";import {buildRows} from "./rows.mjs";import {dec,evOf,s
 const IN=process.argv[2]||"data/props-history.json",OUT=process.argv[3]||"model.json";
 const {rows,games}=buildRows(IN);
 const lg=p=>Math.log(p/(1-p)),sg=z=>1/(1+Math.exp(-z)),cl=(v,a)=>Math.max(-a,Math.min(a,v));
+/* "Teammates out" was removed Nov 22 2026: in training it counted regulars who did not play (from the box score), but the app
+   can only count regulars on the injury report with a known minutes average, which came out lower (0.65 a game in training).
+   Centered on the training average, that gap pushed every live prop toward the Under. A feature the app can't compute the same
+   way it was trained is not used. */
 const F={mkt:r=>lg(Math.min(.97,Math.max(.03,r.pm))),gapS:r=>cl((r.s-r.l)/sdFor(r.st,r.l),2),gap10:r=>cl((r.s10-r.l)/sdFor(r.st,r.l),2),
-  hot:r=>(r.hitRate10??.5)-.5,bench:r=>r.min<24?1:0,miss:r=>Math.min(3,r.miss),minTr:r=>cl(r.min3/r.min-1,.5),b2b:r=>r.b2b?1:0};
+  hot:r=>(r.hitRate10??.5)-.5,bench:r=>r.min<24?1:0,minTr:r=>cl(r.min3/r.min-1,.5),b2b:r=>r.b2b?1:0};
 const names=Object.keys(F),base=rows.filter(r=>r.gp>=3&&r.s!=null);
 const open=r=>{if(r.lOpen==null||r.oOpen==null||r.uOpen==null||r.actual===r.lOpen)return null;
   return{...r,l:r.lOpen,o:r.oOpen,u:r.uOpen,pm:devig(r.oOpen,r.uOpen)[0],over:r.actual>r.lOpen?1:0,hitRate10:r.lOpen===r.l?r.hitRate10:null,snap:"open"}};

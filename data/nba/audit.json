@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T17:56:09.458Z",
+ "updated": "2026-11-22T21:04:51.048Z",
  "lines": 19887,
  "walkForwardFrom": "2026-11-09",
  "facts": {
@@ -416,13 +416,13 @@
  },
  "after": {
   "rowSide": {
-   "over": 49,
-   "under": 51
+   "over": 48.1,
+   "under": 51.9
   },
   "lines": 9850,
   "from": "2026-11-09",
-  "marketsLeaningOver": 14.8,
-  "marketsLeaningUnder": 10.2,
+  "marketsLeaningOver": 12.5,
+  "marketsLeaningUnder": 11.2,
   "picks2": {
    "all": {
     "n": 0,
@@ -473,29 +473,29 @@
   "byPlayer": [],
   "leanCalibration": {
    "leanUnder": {
-    "n": 0,
-    "predictedUnder": null,
-    "actualUnder": null,
-    "dkUnder": null
+    "n": 1,
+    "predictedUnder": 44.1,
+    "actualUnder": 0,
+    "dkUnder": 43.5
    },
    "leanOver": {
-    "n": 23,
-    "predictedOver": 47.3,
-    "actualOver": 39.1,
-    "dkOver": 46.7
+    "n": 0,
+    "predictedOver": null,
+    "actualOver": null,
+    "dkOver": null
    }
   },
   "shiftByWeek": [
    {
     "from": "2026-11-09",
-    "modelShiftPts": 0.01,
-    "rawShiftPts": 0.28,
+    "modelShiftPts": 0,
+    "rawShiftPts": -0.02,
     "realizedOverMinusDkPts": -0.54
    },
    {
     "from": "2026-11-16",
-    "modelShiftPts": 0.02,
-    "rawShiftPts": 0.57,
+    "modelShiftPts": 0,
+    "rawShiftPts": 0.05,
     "realizedOverMinusDkPts": -0.99
    }
   ],
@@ -506,25 +506,25 @@
   "calibration": [
    {
     "range": "0.4-0.5",
-    "n": 225,
-    "predicted": 49.2,
-    "actual": 49.3
+    "n": 111,
+    "predicted": 49.5,
+    "actual": 51.4
    },
    {
     "range": "0.5-0.52",
-    "n": 3926,
+    "n": 4024,
     "predicted": 51,
     "actual": 50.4
    },
    {
     "range": "0.52-0.54",
-    "n": 2504,
+    "n": 2521,
     "predicted": 52.7,
-    "actual": 55
+    "actual": 55.2
    },
    {
     "range": "0.54-0.56",
-    "n": 1073,
+    "n": 1075,
     "predicted": 54.9,
     "actual": 55.6
    },
@@ -532,11 +532,11 @@
     "range": "0.56-0.6",
     "n": 1155,
     "predicted": 57.7,
-    "actual": 58.9
+    "actual": 58.8
    },
    {
     "range": "0.6-1",
-    "n": 967,
+    "n": 964,
     "predicted": 63.6,
     "actual": 62.2
    }

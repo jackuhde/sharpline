@@ -965,7 +965,7 @@ html,body{overscroll-behavior-y:none}
 <script src="gamemodel.js?v=1795900004"></script>
 <script src="corr.js?v=1795900002"></script>
 <script src="livegame.js?v=1795900005"></script>
-<script src="nfl.js?v=1795900019"></script>
+<script src="nfl.js?v=1795900020"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
 <script>
@@ -1550,7 +1550,7 @@ function projYN(x,P){const q=x.q.find(q=>q.o!=null),rate=P?(x.st==="Double Doubl
    prop of the same stat (season and recent averages against the line, recent hit rate, minutes, bench role, back-to-back,
    teammates out). Each stat then counts only the share of those moves that held up when tested week by week on games the
    model hadn't seen (catK). There is no term that moves every prop one way: the old ones produced about 95% Unders. */
-const PM_DEFAULT={b0:0,mkt:1,gapS:0.0818,gap10:0.0493,hot:-0.1078,bench:-0.072,miss:0.0907,minTr:0.1086,b2b:0.0179};
+const PM_DEFAULT={b0:0,mkt:1,gapS:0.038,gap10:0.0398,hot:-0.1025,bench:-0.0526,minTr:0.1455,b2b:0.0447};
 let PMW=PM_DEFAULT,PM_META=null;
 fetch("model.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.weights&&j.weights.mkt!=null){PMW=j.weights;PM_META=j;if(PROPS.length){applyProjections();renderAll()}}}).catch(()=>{});
 const etDay=t=>new Date(t).toLocaleDateString("en-CA",{timeZone:"America/New_York"});
@@ -1588,6 +1588,10 @@ function applyProjections(){PROPS.forEach((x,i)=>{const g=SUG[i];if(g.why0==null
   else if(!pt.yn&&pt.pm!=null&&pt.Lm===g.l){pO=pt.pm;g.noModel=true;const bo=bestAt("o"),bu=bestAt("u");so=bo==null?false:bu==null?true:evOf(pO,bo)>=evOf(1-pO,bu)}
   else so=pt.yn?pO>=.5:raw>=.5;
   g.s=so?"o":"u";g.p=Math.round((so?pO:1-pO)*1000)/1000;g.proj=pt.m;
+  /* No lean: the chance is DraftKings' own no-vig price (the model's move rounds to nothing, or there is no model) and both
+     sides lose to the vig. Then the "side" would only be the less-bad price, which leaned Under (about 60% of props, from how
+     DraftKings shades Overs), so the board shows "No edge" instead of a side. */
+  g.noLean=!pt.yn&&(g.noModel||(MD&&Math.abs(pO-MD.pm)<.005))&&(()=>{const bo=bestAt("o"),bu=bestAt("u");return!(bo!=null&&evOf(pO,bo)>0)&&!(bu!=null&&evOf(1-pO,bu)>0)})();
   /* best posted price for the chosen side at this line */
   /* when DraftKings has a live price at this line, research prices from earlier in the day are out of date */
   const liveAt=x.q.some(q=>q.live&&q.l===g.l&&(so?q.o:q.u)!=null);
@@ -1829,6 +1833,7 @@ function biasHTML(R){const P=R.markets.filter(m=>m.side),lo=P.filter(m=>m.lean==
   return`<div class="cv-t"><div class="cv-h">Side balance check</div>
     <div class="cv-why"><div><span>Priced markets the model moves toward Over / Under / leaves at DraftKings' price</span><b>${lo} / ${lu} / ${P.length-lo-lu}</b></div>
     <div><span>Qualified bets, Over / Under</span><b>${qo} / ${qu}</b></div>
+    <div><span>Prop model in use</span><b>${PM_META&&PM_META.updated?"fit "+new Date(PM_META.updated).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"built-in fallback (model.json not loaded)"}</b></div>
     ${wk?`<div><span>Last week of results: Overs won / DraftKings priced Overs at</span><b>${(wk.overWon*100).toFixed(1)}% / ${(wk.overPriced*100).toFixed(1)}%</b></div>`:""}</div>
     ${flags.length?`<p class="warn">Flag (for review, nothing was changed): ${flags.join(" ")}</p>`:`<p class="hint">No one-sided lean or stacked player tonight.</p>`}</div>`}
 function coverageHTML(R,shownN){if(!R||!R.raw)return"";const n=k=>R.byReason[k]||0,M=R.markets.length;
@@ -1892,7 +1897,7 @@ const statRank=st=>{const i=STAT_ORDER.indexOf(st);return i<0?99:i};
 function propRowHTML(i){const x=PROPS[i],g=SUG[i],key="p"+i;
   return`<div class="row" data-row="${i}"><span class="pfa" ${pfKeyAttr(key)}>${avatar(x.p,x.tm,"av")}</span>
     <div><div class="nm"><span class="pfn" ${pfKeyAttr(key)}>${x.p}</span>${x.live?` <span class="inj inj-${x.live.lv}">${x.live.lv==="out"?"OUT":x.live.lv==="doubt"?"DOUBTFUL":"QUESTIONABLE"}</span>`:""}</div><div class="sub">${team(x.tm)[0]} ${SNAP[x.g]&&nick(x.tm)===nick(SNAP[x.g].home)?"vs":"@"} ${SNAP[x.g]?team(nick(x.tm)===nick(SNAP[x.g].home)?SNAP[x.g].away:SNAP[x.g].home)[0]:""} · ${STAT_LBL[x.st]||x.st}${YN[x.st]?(g.pt&&g.pt.mPlayer!=null?` · <b class="pj">${Math.round(g.pt.mPlayer*100)}% of games</b>`:""):` · ${x.q.filter(q=>typeof q.l==="number").map(q=>q.l).filter((v,j,a)=>a.indexOf(v)===j).join(" / ")}${g.proj!=null?` · <b class="pj">proj ${g.proj}</b>`:""}`}</div></div>
-    ${(v=>`<div class="r"><span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>
+    ${(v=>`<div class="r">${g.noLean&&!v.mine?`<span class="pick pass" title="Sharpline's chance equals DraftKings' no-vig price and both sides lose to the vig">No edge · ${g.l}</span>`:`<span class="pick ${sideCls(v.side||g.s)} ${g.t==="pass"?"pass":""}">${YN[x.st]?(g.s==="o"?"▲ Yes":"▼ No"):`${(v.side||g.s)==="o"?"▲ Over":"▼ Under"} ${v.mine&&recBest[key]?recBest[key].L:g.l}`}</span>`}
       <span class="est"><b>${pct(v.p!=null?v.p:g.p)}</b> ${gradeTag(gradeNow(key))}</span>
       ${v.price!=null?`<span class="evl ${evCls(v.ev)}">${v.mine?BOOK:"DK"} ${fmtAm(v.price)} · ${fmtEv(v.ev)} EV</span>`:`<span class="evl ev-na">no two-sided price</span>`}</div>`)(rowVals(key))}
     ${edHTML(key)}<div class="det">${x.live?`<div class="warn sm">${x.live.txt}</div>`:""}${x.mates?`<div class="warn sm">${x.mates.join(" and ")} ${x.mates.length>1?"are":"is"} out. ${x.p.split(" ").pop()}'s minutes and shots may change, and books may not have adjusted yet.</div>`:""}<div class="why">${g.why}</div>${(v=>{if(g.bp==null||YN[x.st])return"";const dkEv=evOf(g.p,g.bp),im=imp(g.bp);const b=v.mine?recBest[key]:null;

@@ -14,7 +14,7 @@ const F={mkt:r=>lg(Math.min(.97,Math.max(.03,r.pm))),gapS:r=>cl((r.s-r.l)/sdFor(
 const names=Object.keys(F);const memo={};
 /* before: the pre-audit model (intercept, combo/count flags, raw features). after: no level terms, features centered per stat
    on the training weeks, DraftKings' no-vig chance as a fixed starting point (same as fit.mjs) */
-const NEW=["gapS","gap10","hot","bench","miss","minTr","b2b"];
+const NEW=["gapS","gap10","hot","bench","minTr","b2b"];
 function fit(W,old=true){const key=W+":"+old;if(memo[key])return memo[key];const tr=base.filter(r=>wk(r.d)<W);let xr,nm=old?names:["mkt",...NEW];
   if(old)xr=r=>[1,...names.map(n=>F[n](r))];else{const A={},mu={};tr.forEach(r=>{const a=A[r.st]=A[r.st]||{n:0};a.n++;NEW.forEach(n=>a[n]=(a[n]||0)+F[n](r))});
     for(const st in A){mu[st]={};NEW.forEach(n=>mu[st][n]=A[st][n]/A[st].n)}xr=r=>[1,F.mkt(r),...NEW.map(n=>F[n](r)-((mu[r.st]||{})[n]||0))]}

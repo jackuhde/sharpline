@@ -1,6 +1,6 @@
 // Turns data/props-history.json into one row per prop line with only pre-game information plus the result.
 import fs from "node:fs";import {dec,imp,devig,COMP,K,sdFor,Phi,poisOver,poisMean,invPhi,COUNT} from "./lib.mjs";
-export function buildRows(file){
+export function buildRows(file,pregame){
   const db=JSON.parse(fs.readFileSync(file,"utf8"));
   const games=Object.entries(db.games).map(([id,g])=>({id,...g})).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
   const hist={},teamDates={},rows=[];
@@ -29,7 +29,14 @@ export function buildRows(file){
       rows.push(r)}
     Object.values(pl).forEach(p=>{if(!p.play)return;(hist[p.id]=hist[p.id]||[]).push({...p,d:g.d})});
     [g.hid,g.aid].forEach(t=>(teamDates[t]=teamDates[t]||[]).push(g.d))}
-  return{rows,games}}
+  /* optional: an upcoming slate (data/pregame/DATE.json) priced with the same pre-game features, no results */
+  const slate=[];if(pregame){const P=JSON.parse(fs.readFileSync(pregame,"utf8")),d=P.date,yday=new Date(Date.parse(d+"T12:00:00Z")-864e5).toISOString().slice(0,10);
+    Object.entries(P.games).forEach(([gid,g])=>{(g.main||[]).forEach(([ath,st,l,o,u])=>{const c=COMP[st],H=hist[ath]||[];if(!c||o==null||u==null||!H.length)return;
+      const gp=H.length,sum=x=>c.reduce((a,k)=>a+(x[k]||0),0),last=H[H.length-1],l10=H.slice(-10),l5=H.slice(-5);
+      slate.push({gid,d,ath,name:last.name,st,l,o,u,pm:devig(o,u)[0],gp,s:H.reduce((a,x)=>a+sum(x),0)/gp,s10:l10.reduce((a,x)=>a+sum(x),0)/l10.length,s5:l5.reduce((a,x)=>a+sum(x),0)/l5.length,
+        min:avg(H,"min"),min10:avg(l10,"min"),min3:avg(H.slice(-3),"min"),b2b:(teamDates[last.tm]||[]).includes(yday),miss:0,tm:last.tm,
+        hitRate10:l10.filter(x=>sum(x)>l).length/l10.length})})})}
+  return{rows,games,slate}}
 /* Sharpline's pregame prop model as the app runs it with DraftKings only (index.html projTonight, without injury-news boosts) */
 export function appModel(r){const pm=r.pm,st=r.st,Lm=r.l,sdM=sdFor(st,Lm);
   const mMarket=COUNT[st]?poisMean(pm,Lm):Lm-sdM*invPhi(1-pm);let mPlayer=null,w=0;

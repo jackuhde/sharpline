@@ -69,4 +69,8 @@ t("grades are symmetric in side: an Under is graded like an Over",G({p:.57,o:+10
  const sw=fs.readFileSync(path.join(root,"sw.js"),"utf8");t("service worker caches rank.js",/"rank\.js"/.test(sw));
  t("unknown stats default to the market (k=0)",/const CAT_K_DEF=0;/.test(html));
  t("Top List only takes B, A and S",/const TOP_GRADES=\["B","A","S"\]/.test(html));}
+/* NFL grades: every modeled prop gets one; reasons when it can't */
+{const src=require("fs").readFileSync(require("path").join(__dirname,"..","nfl.js"),"utf8");
+ t("NFL cards and rows use the shared grade",/function gradeNfl\(/.test(src)&&/const GN=gradeNfl\(x\)/.test(src)&&/gradeNfl\(x\);return GN.g/.test(src));
+ t("NFL no longer drops grades above 62%",!/x\.p<=\.62/.test(src));}
 console.log(`${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

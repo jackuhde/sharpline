@@ -11,7 +11,7 @@ const lg=p=>Math.log(p/(1-p)),sg=z=>1/(1+Math.exp(-z)),cl=(v,a)=>Math.max(-a,Mat
 const F={mkt:r=>lg(Math.min(.97,Math.max(.03,r.pm))),gapS:r=>cl((r.s-r.l)/sdFor(r.st,r.l),2),gap10:r=>cl((r.s10-r.l)/sdFor(r.st,r.l),2),
   hot:r=>(r.hitRate10??.5)-.5,bench:r=>r.min<24?1:0,miss:r=>Math.min(3,r.miss),minTr:r=>cl(r.min3/r.min-1,.5),b2b:r=>r.b2b?1:0,
   combo:r=>/\+/.test(r.st)?1:0,count:r=>/3-Pointers|Steals|Blocks/.test(r.st)?1:0};
-const OLDN=Object.keys(F),NEW=["gapS","gap10","hot","bench","miss","minTr","b2b"];
+const OLDN=Object.keys(F),NEW=["gapS","gap10","hot","bench","minTr","b2b"];
 const base=rows.filter(r=>r.gp>=3&&r.s!=null);
 const wk=d=>Math.floor((Date.parse(d+"T12:00:00Z")-Date.parse("2026-10-19T12:00:00Z"))/(7*864e5));
 const weeks=[...new Set(base.map(r=>wk(r.d)))].sort((a,b)=>a-b),trainable=weeks.filter(W=>base.filter(r=>wk(r.d)<W).length>=4000);
