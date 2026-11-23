@@ -1,7 +1,7 @@
 {
- "version": "2026-11-23T14:58:00-05:00",
+ "version": "2026-11-23T15:46:00-05:00",
  "date": "2026-11-23",
- "asof": "Mon Nov 23, 2:58 PM ET",
+ "asof": "Mon Nov 23, 3:46 PM ET",
  "games": [
   {
    "tip": "2026-11-23T19:00:00-05:00",
@@ -249,7 +249,8 @@
    "move": "Spread unchanged at DraftKings (MIN -11.5); total dipped from 225.5 to 224.5. FanDuel showed MIN -12.5 and 223.5 last night.",
    "notes": [
     "Anthony Edwards out (knee)",
-    "Nets without Nolan Traore"
+    "Nets without Nolan Traore",
+    "Nicolas Claxton questionable (illness), missed last night (RotoBaller)"
    ],
    "out": [
     "Anthony Edwards",
@@ -464,13 +465,16 @@
    "move": "Spread moved from OKC -4.5 to -5.5 at Action Network's quote; BetMGM's blog still shows -4.5. Total dropped about a point after news on Shai Gilgeous-Alexander.",
    "notes": [
     "Shai Gilgeous-Alexander (neck/back) is off the injury report and expected to play (RotoWire, today)",
-    "Alex Caruso likely out",
-    "Pacers without Tyrese Haliburton and T.J. McConnell"
+    "Pacers without Tyrese Haliburton and T.J. McConnell",
+    "Alex Caruso ruled out (hip), third straight missed game (RotoWire, 10:52 AM)",
+    "Aaron Nesmith ruled out (HoopsHype headline today)"
    ],
    "out": [
     "Aday Mara",
     "Tyrese Haliburton",
-    "T.J. McConnell"
+    "T.J. McConnell",
+    "Alex Caruso",
+    "Aaron Nesmith"
    ],
    "mk": [
     {
@@ -577,6 +581,14 @@
     [
      "RotoWire",
      "https://www.rotowire.com/basketball/headlines/shai-gilgeous-alexander-news-off-injury-report-540669"
+    ],
+    [
+     "RotoWire Caruso",
+     "https://www.rotowire.com/basketball/headlines/alex-caruso-injury-ruled-out-monday-540667"
+    ],
+    [
+     "HoopsHype Nesmith",
+     "https://www.hoopshype.com/story/sports/nba/rumors/2026/11/23/aaron-nesmith-ruled-out-of-tonights-game-with-right/92928935007/"
     ]
    ]
   },
@@ -914,9 +926,9 @@
    "tip": "2026-11-23T22:00:00-05:00",
    "away": "San Antonio Spurs",
    "home": "Sacramento Kings",
-   "move": "SAS -10.5 and 224.5 at both quotes; no movement reported.",
+   "move": "SAS -10.5 everywhere at -115. Total split: 224.5 at BetMGM and Action, 223.5 at DraftKings.",
    "notes": [
-    "Victor Wembanyama questionable (low back tightness) as of the 10:39 AM report; still unconfirmed",
+    "Victor Wembanyama still questionable (low back tightness) per SI at 8:05 AM and ClutchPoints at 10:17 AM; no final word yet",
     "De'Aaron Fox questionable (shin)",
     "Spurs without Dylan Harper"
    ],
@@ -929,6 +941,16 @@
      "a": "SAS",
      "b": "SAC",
      "q": [
+      {
+       "bk": "DraftKings (via SI, 11:15 AM)",
+       "a": -484,
+       "b": 371
+      },
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -500,
+       "b": 375
+      },
       {
        "bk": "Action Network (book not named)",
        "a": -480,
@@ -954,6 +976,16 @@
      "b": "SAC +10.5",
      "q": [
       {
+       "bk": "DraftKings (via SI, 11:15 AM)",
+       "a": -115,
+       "b": -105
+      },
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -115,
+       "b": -105
+      },
+      {
        "bk": "FanDuel (via Action)",
        "a": -115,
        "b": -105
@@ -967,12 +999,25 @@
      "b": "Under",
      "q": [
       {
+       "bk": "DraftKings (via SI, 11:15 AM)",
+       "a": -110,
+       "b": -110,
+       "pa": "223.5",
+       "pb": "223.5"
+      },
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -115,
+       "b": -105
+      },
+      {
        "bk": "Action Network (book not named)",
        "a": -108,
        "b": -112
       }
      ],
-     "fair": null
+     "fair": null,
+     "note": "DraftKings is at 223.5 while BetMGM and Action show 224.5. BetMGM has the Under at -105, the best Under price at 224.5."
     }
    ],
    "verdict": "Polymarket has San Antonio 87% vs 82.8% needed at -480, but Wembanyama and Fox are both questionable. Lean only if Wembanyama plays.",
@@ -996,6 +1041,14 @@
     [
      "FanSided injury report",
      "https://fansided.com/nba/is-victor-wembanyama-playing-tonight-full-nba-injury-report-for-spurs-vs-kings"
+    ],
+    [
+     "BetMGM props",
+     "https://sports.betmgm.com/en/blog/nba/spurs-kings-player-prop-bets-picks-nba-nov-23-jaa/"
+    ],
+    [
+     "SI preview (DraftKings odds)",
+     "https://www.si.com/betting/spurs-vs-kings-prediction-odds-and-best-nba-prop-bets-for-monday-nov-23-2026"
     ]
    ]
   },
@@ -1003,7 +1056,7 @@
    "tip": "2026-11-23T22:00:00-05:00",
    "away": "Utah Jazz",
    "home": "Los Angeles Lakers",
-   "move": "DraftKings opened LAL -12.5, now -13.5; Caesars -14, FanDuel -14.5. Total fell from 230.5; DraftKings and BetRivers 224.5, FanDuel showing 228.5.",
+   "move": "DraftKings opened LAL -12.5, now -13.5; BetMGM -13.5, Caesars -14, FanDuel -14.5. Total fell from 230.5 to 224.5 at DraftKings and BetRivers, 225.5 at BetMGM.",
    "notes": [
     "Lakers without Austin Reaves; Quentin Grimes available",
     "Jazz without Lauri Markkanen, Jaren Jackson Jr., Jusuf Nurkic",
@@ -1021,6 +1074,11 @@
      "a": "UTA",
      "b": "LAL",
      "q": [
+      {
+       "bk": "BetMGM (blog, 9:00 AM today)",
+       "a": 550,
+       "b": -800
+      },
       {
        "bk": "DraftKings (via SI)",
        "a": 558,
@@ -1050,6 +1108,11 @@
      "a": "UTA +13.5",
      "b": "LAL -13.5",
      "q": [
+      {
+       "bk": "BetMGM (blog, 9:00 AM today)",
+       "a": -105,
+       "b": -115
+      },
       {
        "bk": "BetMGM (via TheLines)",
        "a": -113,
@@ -1086,6 +1149,18 @@
      "b": "Under",
      "q": [
       {
+       "bk": "BetMGM (blog, 9:00 AM today)",
+       "a": -105,
+       "b": -115,
+       "pa": "225.5",
+       "pb": "225.5"
+      },
+      {
+       "bk": "DraftKings (via Bettors Insider table)",
+       "a": -106,
+       "b": -115
+      },
+      {
        "bk": "DraftKings (via SI)",
        "a": -110,
        "b": -110
@@ -1096,7 +1171,7 @@
        "b": -113
       },
       {
-       "bk": "FanDuel",
+       "bk": "Unconfirmed (Bettors Insider prose: 'roughly 228.5', no book named)",
        "a": null,
        "b": null,
        "pa": "228.5",
@@ -1104,10 +1179,10 @@
       }
      ],
      "fair": null,
-     "note": "Four point gap: FanDuel 228.5 vs 224.5 at DraftKings and BetRivers. FanDuel's number may be stale; if it is still up, the Under there is worth a lot more."
+     "note": "The 228.5 figure is from Bettors Insider's text ('slid from 230.5 to roughly 228.5') and no book is named; its own DraftKings table shows 224.5. BetMGM is at 225.5. Treat 228.5 as unconfirmed."
     }
    ],
-   "verdict": "Biggest book gap on the slate is this total. Under 228.5 is a lean only if FanDuel still shows it; sides are a pass (Polymarket LAL 86% vs 88.9% needed).",
+   "verdict": "Spread ranges from 13.5 to 14.5 across books, so Utah takers should shop for +14.5. The 228.5 total gap looks unreliable; sides and total are a pass.",
    "src": [
     [
      "SI (DraftKings odds)",
@@ -1132,6 +1207,10 @@
     [
      "TheLines",
      "https://www.thelines.com/nba/player-props/expert-nba-picks-and-player-props-best-nba-bets-today-nov-23/"
+    ],
+    [
+     "BetMGM preview",
+     "https://sports.betmgm.com/en/blog/nba/jazz-lakers-prediction-odds-lines-picks-nba-nov-23-jaa/"
     ]
    ]
   }
@@ -1333,6 +1412,18 @@
    "q": [
     {
      "l": 23.5,
+     "o": -107,
+     "src": "DraftKings (via Steezanomics, prices frozen 10:30 AM)",
+     "url": "https://steezanomics.com/picks/best-nba-points-props-monday-november-23-2026/"
+    },
+    {
+     "l": 23.5,
+     "o": -110,
+     "src": "Bovada (via Steezanomics, 10:30 AM)",
+     "url": "https://steezanomics.com/picks/best-nba-points-props-monday-november-23-2026/"
+    },
+    {
+     "l": 23.5,
      "o": -111,
      "src": "WagerTalk (book not named)",
      "url": "https://www.wagertalk.com/news/nba/best-nba-player-props-today-picks-predictions-for-november-23/"
@@ -1491,6 +1582,63 @@
     }
    ],
    "flag": "Anthony Edwards out."
+  },
+  {
+   "g": 9,
+   "p": "Ace Bailey",
+   "tm": "Utah Jazz",
+   "st": "Points",
+   "q": [
+    {
+     "l": 14.5,
+     "u": -109,
+     "src": "BetRivers (via Steezanomics, 10:30 AM)",
+     "url": "https://steezanomics.com/picks/best-nba-points-props-monday-november-23-2026/"
+    },
+    {
+     "l": 14.5,
+     "u": -110,
+     "src": "Hard Rock (via Steezanomics, 10:30 AM)",
+     "url": "https://steezanomics.com/picks/best-nba-points-props-monday-november-23-2026/"
+    }
+   ],
+   "flag": "Jazz missing Markkanen, Jackson Jr. and Nurkic, which can push his shot volume up."
+  },
+  {
+   "g": 4,
+   "p": "Jared McCain",
+   "tm": "Oklahoma City Thunder",
+   "st": "Points",
+   "q": [
+    {
+     "l": 15.5,
+     "o": -102,
+     "src": "DraftKings (via TheLines)",
+     "url": "https://www.thelines.com/nba/player-props/expert-nba-picks-and-player-props-best-nba-bets-today-nov-23/"
+    }
+   ],
+   "flag": "Alex Caruso ruled out, which opens minutes for McCain (RotoWire)."
+  },
+  {
+   "g": 6,
+   "p": "Jalen Smith",
+   "tm": "Chicago Bulls",
+   "st": "Rebounds",
+   "q": [
+    {
+     "l": 7.5,
+     "o": 116,
+     "src": "FanDuel (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    },
+    {
+     "l": 7.5,
+     "o": 111,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "FanDuel +116 vs Novig +111 on the same over."
   }
  ],
  "sug": [
@@ -1610,7 +1758,9 @@
    "l": 23.5,
    "p": 0.51,
    "t": "pass",
-   "why": "-111 implies 52.6%. Usage is up with two starters out."
+   "why": "Best over price is -107 at DraftKings (51.7% implied). Usage is up with two starters out, but no edge at the price.",
+   "bp": -107,
+   "bk": "DraftKings"
   },
   {
    "s": "o",
@@ -1682,6 +1832,33 @@
    "p": 0.48,
    "t": "pass",
    "why": "One price only (BetRivers even money). BetMGM notes he has gone over his assists line in 11 of his last 15."
+  },
+  {
+   "s": "u",
+   "l": 14.5,
+   "p": 0.5,
+   "t": "pass",
+   "bp": -109,
+   "bk": "BetRivers",
+   "why": "One-sided price only: -109 implies 52.2%, minus about 2 points. With three Utah starters out, the Under carries usage risk."
+  },
+  {
+   "s": "o",
+   "l": 15.5,
+   "p": 0.485,
+   "t": "pass",
+   "bp": -102,
+   "bk": "DraftKings",
+   "why": "One-sided price: -102 implies 50.5%, about 48.5% after vig. Caruso's absence helps his minutes."
+  },
+  {
+   "s": "o",
+   "l": 7.5,
+   "p": 0.45,
+   "t": "pass",
+   "bp": 116,
+   "bk": "FanDuel",
+   "why": "Novig +111 implies about 47%; FanDuel +116 needs 46.3%. Small price gap, no clear edge."
   }
  ],
  "lines": [
@@ -1999,11 +2176,13 @@
   {
    "g": 9,
    "m": "Total",
-   "pick": "Under 228.5",
+   "pick": "Under 225.5",
    "s": "u",
-   "p": 0.57,
-   "t": "lean",
-   "why": "DraftKings and BetRivers are at 224.5. If FanDuel still shows 228.5, four free points make the Under about 57%."
+   "p": 0.51,
+   "t": "pass",
+   "why": "BetMGM at 225.5 is a point above DraftKings and BetRivers (224.5), but -115 eats most of that. The earlier 228.5 number could not be tied to a book.",
+   "bp": -115,
+   "bk": "BetMGM"
   }
  ],
  "top": [
@@ -2019,22 +2198,12 @@
   },
   {
    "k": "l",
-   "i": 29,
-   "pick": "Under 228.5",
-   "p": 0.57,
-   "bp": null,
-   "head": "Jazz / Lakers Under 228.5",
-   "cond": "Only if FanDuel still shows 228.5 (other books are at 224.5)",
-   "why": "Total dropped from 230.5 to 224.5 at DraftKings and BetRivers. FanDuel showed 228.5; four points over the market is a big cushion."
-  },
-  {
-   "k": "l",
    "i": 24,
    "pick": "SAS ML",
    "p": 0.85,
    "bp": -480,
    "head": "Spurs moneyline at Sacramento",
-   "cond": "At -480 or better, only if Wembanyama is active",
+   "cond": "At -480 or better, only if Wembanyama is active (still questionable)",
    "why": "Polymarket 87% vs 82.8% needed."
   },
   {
