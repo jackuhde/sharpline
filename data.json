@@ -1,7 +1,7 @@
 {
- "version": "2026-11-23T16:55:00-05:00",
+ "version": "2026-11-23T17:55:00-05:00",
  "date": "2026-11-23",
- "asof": "Mon Nov 23, 4:55 PM ET",
+ "asof": "Mon Nov 23, 5:55 PM ET",
  "games": [
   {
    "tip": "2026-11-23T19:00:00-05:00",
@@ -121,14 +121,14 @@
     "Joel Embiid questionable (illness)",
     "Jaylen Brown listed day-to-day; sources disagree on whether he plays",
     "Blazers without Ja Morant and Shaedon Sharpe",
-    "Jaylen Brown (left hamstring) listed probable, likely a game-time call; Dean Wade probable (ClutchPoints 11:41 AM ET). ClutchPoints also listed Adem Bona probable, but he stays on the out list from an earlier report; confirm before betting."
+    "Jaylen Brown (left hamstring) listed probable, likely a game-time call; Dean Wade probable (ClutchPoints 11:41 AM ET). ClutchPoints also listed Adem Bona probable, but he stays on the out list from an earlier report; confirm before betting.",
+    "Athlon final injury report (3:00 PM ET): Embiid questionable (illness, late addition); Jaylen Brown, Adem Bona and Dean Wade probable. Blazers out: Morant, Sharpe, Krejci, Youngblood. Bona removed from the out list."
    ],
    "out": [
     "Chris Youngblood",
     "Vit Krejci",
     "Ja Morant",
     "Shaedon Sharpe",
-    "Adem Bona",
     "Ariel Hukporti"
    ],
    "mk": [
@@ -244,6 +244,10 @@
     [
      "ClutchPoints 76ers injury report",
      "https://clutchpoints.com/nba/nba-stories/is-jaylen-brown-playing-tonight-76ers-vs-blazers-injury-report"
+    ],
+    [
+     "Athlon final injury report",
+     "https://athlonsports.com/nba/philadelphia-76ers/final-injury-report-for-trail-blazers-76ers-will-jaylen-brown-ja-morant-play"
     ]
    ]
   },
@@ -420,6 +424,11 @@
      "b": "TOR -10.5",
      "q": [
       {
+       "bk": "FanDuel (Research, 4:19 PM)",
+       "a": -110,
+       "b": null
+      },
+      {
        "bk": "BetMGM (blog, posted 9:30 AM today)",
        "a": -110,
        "b": -110
@@ -480,6 +489,10 @@
     [
      "BetMGM blog (Bucks vs Raptors)",
      "https://sports.betmgm.com/en/blog/nba/bucks-raptors-player-prop-bets-picks-nba-nov-23-jaa/"
+    ],
+    [
+     "FanDuel Research 8 best bets (4:19 PM ET)",
+     "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
     ]
    ]
   },
@@ -487,7 +500,7 @@
    "tip": "2026-11-23T19:30:00-05:00",
    "away": "Oklahoma City Thunder",
    "home": "Indiana Pacers",
-   "move": "Spread moved from OKC -4.5 to -5.5 at Action Network's quote; BetMGM's blog still shows -4.5. Total dropped about a point after news on Shai Gilgeous-Alexander.",
+   "move": "Spread moved from OKC -4.5 to -5.5 at Action Network's quote; BetMGM's blog still shows -4.5. Total dropped about a point after news on Shai Gilgeous-Alexander. FanDuel shows OKC -5.5 (-115) at 4:19 PM ET.",
    "notes": [
     "Shai Gilgeous-Alexander (neck/back) is off the injury report and expected to play (RotoWire, today)",
     "Pacers without Tyrese Haliburton and T.J. McConnell",
@@ -542,6 +555,11 @@
      "a": "OKC -5.5",
      "b": "IND +5.5",
      "q": [
+      {
+       "bk": "FanDuel (Research, 4:19 PM)",
+       "a": -115,
+       "b": null
+      },
       {
        "bk": "Action Network (book not named)",
        "a": -103,
@@ -614,6 +632,10 @@
     [
      "HoopsHype Nesmith",
      "https://www.hoopshype.com/story/sports/nba/rumors/2026/11/23/aaron-nesmith-ruled-out-of-tonights-game-with-right/92928935007/"
+    ],
+    [
+     "FanDuel Research 8 best bets (4:19 PM ET)",
+     "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
     ]
    ]
   },
@@ -621,7 +643,7 @@
    "tip": "2026-11-23T20:00:00-05:00",
    "away": "Phoenix Suns",
    "home": "New Orleans Pelicans",
-   "move": "Spread up from PHX -2.5 (FanDuel last night) to -3.5. Total 233.5 down to 232.5.",
+   "move": "Spread went from PHX -2.5 (FanDuel last night) to -3.5 at BetMGM and Action, but FanDuel Research still shows PHX -2.5 at 4:19 PM ET. Total 233.5 down to 232.5.",
    "notes": [
     "Zion Williamson and Trey Murphy III probable",
     "Pelicans without Dejounte Murray and Bennedict Mathurin",
@@ -669,6 +691,13 @@
      "b": "NOP +3.5",
      "q": [
       {
+       "bk": "FanDuel (Research, 4:19 PM)",
+       "a": -118,
+       "b": null,
+       "pa": "PHX -2.5",
+       "pb": "NOP +2.5"
+      },
+      {
        "bk": "BetMGM (blog, posted 9:30 AM today)",
        "a": -105,
        "b": -115
@@ -687,7 +716,7 @@
       }
      ],
      "fair": null,
-     "note": "Phoenix is a point cheaper at -2.5 if a book still has it."
+     "note": "Books split: FanDuel has Phoenix -2.5 (-118) while BetMGM and Action Network quotes show -3.5. Taking New Orleans +3.5 and Phoenix -2.5 at different books wins both if Phoenix wins by exactly 3."
     },
     {
      "k": "Total 232.5",
@@ -736,6 +765,10 @@
     [
      "BetMGM blog",
      "https://sports.betmgm.com/en/blog/nba/suns-pelicans-player-prop-bets-picks-nba-nov-23-jaa/"
+    ],
+    [
+     "FanDuel Research 8 best bets (4:19 PM ET)",
+     "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
     ]
    ]
   },
@@ -956,7 +989,8 @@
     "Victor Wembanyama still questionable (low back tightness) per SI at 8:05 AM and ClutchPoints at 10:17 AM; no final word yet",
     "De'Aaron Fox questionable (shin)",
     "Spurs without Dylan Harper",
-    "Wembanyama (low back tightness) and De'Aaron Fox (shin) still questionable on the latest report seen (ClutchPoints 10:17 AM ET, SI 8:05 AM ET). Dylan Harper out."
+    "Wembanyama (low back tightness) and De'Aaron Fox (shin) still questionable on the latest report seen (ClutchPoints 10:17 AM ET, SI 8:05 AM ET). Dylan Harper out.",
+    "Wembanyama took part in Monday shootaround and is still questionable, a game-time decision along with Fox (FantasyPros 4:11 PM ET, quoting Jeff McDonald)."
    ],
    "out": [
     "Dylan Harper"
@@ -1079,6 +1113,10 @@
     [
      "ClutchPoints Spurs injury report",
      "https://clutchpoints.com/nba/san-antonio-spurs/are-victor-wembanyama-deaaron-fox-playing-tonight-spurs-vs-kings-injury-report"
+    ],
+    [
+     "FantasyPros Wembanyama shootaround",
+     "https://www.fantasypros.com/nba/news/622208/victor-wembanyama-back-participates-shootaround-monday.php"
     ]
    ]
   },
@@ -1086,7 +1124,7 @@
    "tip": "2026-11-23T22:00:00-05:00",
    "away": "Utah Jazz",
    "home": "Los Angeles Lakers",
-   "move": "DraftKings opened LAL -12.5, now -13.5; BetMGM -13.5, Caesars -14, FanDuel -14.5. Total fell from 230.5 to 224.5 at DraftKings and BetRivers, 225.5 at BetMGM.",
+   "move": "DraftKings opened LAL -12.5, now -13.5; BetMGM -13.5, Caesars -14, FanDuel -14.5. Total fell from 230.5 to 224.5 at DraftKings and BetRivers, 225.5 at BetMGM. FanDuel Research at 4:19 PM ET now shows UTA +13.5 (-112), down from 14.5.",
    "notes": [
     "Lakers without Austin Reaves; Quentin Grimes available",
     "Jazz without Lauri Markkanen, Jaren Jackson Jr., Jusuf Nurkic",
@@ -1140,6 +1178,13 @@
      "a": "UTA +13.5",
      "b": "LAL -13.5",
      "q": [
+      {
+       "bk": "FanDuel (Research, 4:19 PM)",
+       "a": -112,
+       "b": null,
+       "pa": "UTA +13.5",
+       "pb": "LAL -13.5"
+      },
       {
        "bk": "BetMGM (blog, 9:00 AM today)",
        "a": -105,
@@ -1247,6 +1292,10 @@
     [
      "NBC Sports (Jaxson Hayes ruled out)",
      "https://www.nbcsports.com/fantasy/basketball/player-news/2026-11-23/jaxson-hayes-knee-ruled-out-vs-los-angeles"
+    ],
+    [
+     "FanDuel Research 8 best bets (4:19 PM ET)",
+     "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
     ]
    ]
   }
@@ -1447,6 +1496,12 @@
    "st": "Points",
    "q": [
     {
+     "l": 24.5,
+     "o": 104,
+     "src": "FanDuel (25+ points, Research 4:19 PM)",
+     "url": "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
+    },
+    {
      "l": 23.5,
      "o": -107,
      "src": "DraftKings (via Steezanomics, prices frozen 10:30 AM)",
@@ -1465,7 +1520,7 @@
      "url": "https://www.wagertalk.com/news/nba/best-nba-player-props-today-picks-predictions-for-november-23/"
     }
    ],
-   "flag": "Kawhi Leonard and RJ Barrett out."
+   "flag": "Kawhi Leonard and RJ Barrett out. FanDuel also posts 25+ points at +104."
   },
   {
    "g": 3,
@@ -1675,6 +1730,78 @@
     }
    ],
    "flag": "FanDuel +116 vs Novig +111 on the same over."
+  },
+  {
+   "g": 1,
+   "p": "Joel Embiid",
+   "tm": "Philadelphia 76ers",
+   "st": "Points",
+   "q": [
+    {
+     "l": 19.5,
+     "o": -194,
+     "src": "FanDuel (20+ points, Research 4:19 PM)",
+     "url": "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
+    }
+   ],
+   "flag": "Questionable tonight (illness). Do not bet until he is confirmed active."
+  },
+  {
+   "g": 0,
+   "p": "Cedric Coward",
+   "tm": "Memphis Grizzlies",
+   "st": "3-Pointers",
+   "q": [
+    {
+     "l": 1.5,
+     "o": -200,
+     "src": "FanDuel (2+ threes, Research 4:19 PM)",
+     "url": "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
+    }
+   ]
+  },
+  {
+   "g": 2,
+   "p": "Michael Porter Jr.",
+   "tm": "Brooklyn Nets",
+   "st": "Points",
+   "q": [
+    {
+     "l": 19.5,
+     "o": -128,
+     "src": "FanDuel (20+ points, Research 4:19 PM)",
+     "url": "https://www.fanduel.com/research/8-best-nba-bets-and-nba-player-props-tonight-for-monday-november-23"
+    }
+   ]
+  },
+  {
+   "g": 7,
+   "p": "Amen Thompson",
+   "tm": "Houston Rockets",
+   "st": "Pts+Reb",
+   "q": [
+    {
+     "l": 22.5,
+     "o": -105,
+     "src": "BetMGM (via RotoWire, noon ET)",
+     "url": "https://www.rotowire.com/basketball/article/best-nba-bets-player-props-picks-monday-nov-23-147829"
+    }
+   ]
+  },
+  {
+   "g": 6,
+   "p": "James Harden",
+   "tm": "Cleveland Cavaliers",
+   "st": "Pts+Ast",
+   "q": [
+    {
+     "l": 25.5,
+     "o": -114,
+     "src": "FanDuel (via RotoWire, 5:15 PM ET)",
+     "url": "https://www.rotowire.com/basketball/article/best-nba-bets-player-props-picks-monday-nov-23-147829"
+    }
+   ],
+   "flag": "Evan Mobley out for Cleveland."
   }
  ],
  "sug": [
@@ -1895,6 +2022,49 @@
    "bp": 116,
    "bk": "FanDuel",
    "why": "Novig +111 implies about 47%; FanDuel +116 needs 46.3%. Small price gap, no clear edge."
+  },
+  {
+   "s": "o",
+   "l": 19.5,
+   "p": 0.64,
+   "t": "pass",
+   "bp": -194,
+   "bk": "FanDuel",
+   "why": "One-sided price only (66% implied). Wait for his status."
+  },
+  {
+   "s": "o",
+   "l": 1.5,
+   "p": 0.645,
+   "t": "pass",
+   "bp": -200,
+   "bk": "FanDuel",
+   "why": "One-sided price only, 66.7% implied."
+  },
+  {
+   "s": "o",
+   "l": 19.5,
+   "p": 0.54,
+   "t": "pass",
+   "bp": -128,
+   "bk": "FanDuel",
+   "why": "One-sided price only, 56% implied."
+  },
+  {
+   "s": "o",
+   "l": 22.5,
+   "p": 0.49,
+   "t": "pass",
+   "why": "One-sided price from noon, 51% implied."
+  },
+  {
+   "s": "o",
+   "l": 25.5,
+   "p": 0.51,
+   "t": "pass",
+   "bp": -114,
+   "bk": "FanDuel",
+   "why": "One-sided price only, 53% implied."
   }
  ],
  "lines": [
@@ -2077,7 +2247,7 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "Line only.",
+   "why": "FanDuel still has PHX -2.5 (-118) while others show -3.5. If you like New Orleans, +3.5 at -115 is the better number; no fair price.",
    "bp": -115,
    "bk": "Action Network quote (book not named)"
   },
@@ -2207,7 +2377,7 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "FanDuel 14.5, Caesars and BetMGM 14, DraftKings 13.5. No fair price; take the most points if playing Utah."
+   "why": "FanDuel moved to 13.5 (-112) at 4:19 PM; Caesars and BetMGM 14 earlier, DraftKings 13.5. No fair price; take the most points if playing Utah."
   },
   {
    "g": 9,
@@ -2239,7 +2409,7 @@
    "p": 0.85,
    "bp": -480,
    "head": "Spurs moneyline at Sacramento",
-   "cond": "At -480 or better, only if Wembanyama is active (still questionable)",
+   "cond": "At -480 or better, only if Wembanyama is active (game-time decision after shootaround)",
    "why": "Polymarket 87% vs 82.8% needed."
   },
   {
