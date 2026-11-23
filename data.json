@@ -1,7 +1,7 @@
 {
- "version": "2026-11-23T15:46:00-05:00",
+ "version": "2026-11-23T16:55:00-05:00",
  "date": "2026-11-23",
- "asof": "Mon Nov 23, 3:46 PM ET",
+ "asof": "Mon Nov 23, 4:55 PM ET",
  "games": [
   {
    "tip": "2026-11-23T19:00:00-05:00",
@@ -120,7 +120,8 @@
    "notes": [
     "Joel Embiid questionable (illness)",
     "Jaylen Brown listed day-to-day; sources disagree on whether he plays",
-    "Blazers without Ja Morant and Shaedon Sharpe"
+    "Blazers without Ja Morant and Shaedon Sharpe",
+    "Jaylen Brown (left hamstring) listed probable, likely a game-time call; Dean Wade probable (ClutchPoints 11:41 AM ET). ClutchPoints also listed Adem Bona probable, but he stays on the out list from an earlier report; confirm before betting."
    ],
    "out": [
     "Chris Youngblood",
@@ -239,6 +240,10 @@
     [
      "BetMGM blog",
      "https://sports.betmgm.com/en/blog/nba/trail-blazers-76ers-player-prop-bets-picks-nba-nov-23-jaa/"
+    ],
+    [
+     "ClutchPoints 76ers injury report",
+     "https://clutchpoints.com/nba/nba-stories/is-jaylen-brown-playing-tonight-76ers-vs-blazers-injury-report"
     ]
    ]
   },
@@ -369,7 +374,7 @@
    "tip": "2026-11-23T19:30:00-05:00",
    "away": "Milwaukee Bucks",
    "home": "Toronto Raptors",
-   "move": "TOR -10.5 at most quotes; Covers shows 11.5. Total 223.5 with the Under shaded to -115.",
+   "move": "TOR -10.5 at BetMGM and Action Network; Covers shows 11.5. Total 223.5 everywhere, but BetMGM shades the Over (-115) while Action Network shades the Under (-115).",
    "notes": [
     "Raptors without Kawhi Leonard and RJ Barrett",
     "Ousmane Dieng (MIL) questionable, finger",
@@ -385,6 +390,11 @@
      "a": "MIL",
      "b": "TOR",
      "q": [
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": 360,
+       "b": -475
+      },
       {
        "bk": "Action Network (book not named)",
        "a": 378,
@@ -410,6 +420,11 @@
      "b": "TOR -10.5",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -110,
+       "b": -110
+      },
+      {
        "bk": "Action Network (book not named)",
        "a": -107,
        "b": -113
@@ -429,6 +444,11 @@
      "b": "Under",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -115,
+       "b": -105
+      },
+      {
        "bk": "Action Network (book not named)",
        "a": -105,
        "b": -115
@@ -439,7 +459,8 @@
        "b": null
       }
      ],
-     "fair": null
+     "fair": null,
+     "note": "Books split on the juice at 223.5: BetMGM shades the Over to -115, Action Network quote shades the Under to -115."
     }
    ],
    "verdict": "Polymarket gives Milwaukee 22%, a touch above the 20.9% implied by +378. Small lean on the Bucks moneyline at +378 or better.",
@@ -455,6 +476,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "BetMGM blog (Bucks vs Raptors)",
+     "https://sports.betmgm.com/en/blog/nba/bucks-raptors-player-prop-bets-picks-nba-nov-23-jaa/"
     ]
    ]
   },
@@ -930,7 +955,8 @@
    "notes": [
     "Victor Wembanyama still questionable (low back tightness) per SI at 8:05 AM and ClutchPoints at 10:17 AM; no final word yet",
     "De'Aaron Fox questionable (shin)",
-    "Spurs without Dylan Harper"
+    "Spurs without Dylan Harper",
+    "Wembanyama (low back tightness) and De'Aaron Fox (shin) still questionable on the latest report seen (ClutchPoints 10:17 AM ET, SI 8:05 AM ET). Dylan Harper out."
    ],
    "out": [
     "Dylan Harper"
@@ -1049,6 +1075,10 @@
     [
      "SI preview (DraftKings odds)",
      "https://www.si.com/betting/spurs-vs-kings-prediction-odds-and-best-nba-prop-bets-for-monday-nov-23-2026"
+    ],
+    [
+     "ClutchPoints Spurs injury report",
+     "https://clutchpoints.com/nba/san-antonio-spurs/are-victor-wembanyama-deaaron-fox-playing-tonight-spurs-vs-kings-injury-report"
     ]
    ]
   },
@@ -1060,13 +1090,15 @@
    "notes": [
     "Lakers without Austin Reaves; Quentin Grimes available",
     "Jazz without Lauri Markkanen, Jaren Jackson Jr., Jusuf Nurkic",
-    "Rematch five days after the last meeting"
+    "Rematch five days after the last meeting",
+    "Jaxson Hayes (knee) ruled out for the Lakers (NBC Sports, 4:07 PM ET)."
    ],
    "out": [
     "Austin Reaves",
     "Lauri Markkanen",
     "Jaren Jackson Jr.",
-    "Jusuf Nurkic"
+    "Jusuf Nurkic",
+    "Jaxson Hayes"
    ],
    "mk": [
     {
@@ -1211,6 +1243,10 @@
     [
      "BetMGM preview",
      "https://sports.betmgm.com/en/blog/nba/jazz-lakers-prediction-odds-lines-picks-nba-nov-23-jaa/"
+    ],
+    [
+     "NBC Sports (Jaxson Hayes ruled out)",
+     "https://www.nbcsports.com/fantasy/basketball/player-news/2026-11-23/jaxson-hayes-knee-ruled-out-vs-los-angeles"
     ]
    ]
   }
@@ -1285,7 +1321,7 @@
      "url": "https://www.fanduel.com/research/7-best-nba-player-prop-bets-today-for-monday-november-23-with-odds"
     }
    ],
-   "flag": "Questionable tonight (back). Do not bet until he is confirmed active."
+   "flag": "Questionable tonight (low back tightness). Do not bet until he is confirmed active."
   },
   {
    "g": 8,
@@ -1329,7 +1365,7 @@
      "url": "https://www.sportsbettingdime.com/news/nba/best-prop-picks-for-november-23/"
     }
    ],
-   "flag": "Questionable tonight (back). Do not bet until he is confirmed active."
+   "flag": "Questionable tonight (low back tightness). Do not bet until he is confirmed active."
   },
   {
    "g": 4,
@@ -1358,7 +1394,7 @@
      "url": "https://www.sportsbettingdime.com/news/nba/best-prop-picks-for-november-23/"
     }
    ],
-   "flag": "Listed day-to-day; sources disagree on whether he plays. Check before betting."
+   "flag": "Listed probable (left hamstring), likely a game-time call. Confirm he is active before betting."
   },
   {
    "g": 9,
@@ -1964,7 +2000,7 @@
    "s": "n",
    "p": 0.22,
    "t": "lean",
-   "why": "Polymarket 22% vs 20.9% implied at +378.",
+   "why": "Polymarket 22% vs 20.9% implied at +378. BetMGM has the Bucks at +360, so +378 is the best number seen.",
    "bp": 378,
    "bk": "Action Network quote (book not named)"
   },
