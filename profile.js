@@ -25,7 +25,7 @@ window.openProfile=function(o){let name=o.n,tm=o.t,st=o.s,key=o.k||null,gi=-1;
   if(!tm&&id&&LIVE.ids[id]){const T=LIVE.ids[id].tm;Object.keys(LIVE.ev).forEach(g=>{const e=LIVE.ev[g];if(e.homeId===T)tm=SNAP[g].home;if(e.awayId===T)tm=SNAP[g].away})}
   if(gi<0&&tm)gi=SNAP.findIndex(G=>G.home===tm||G.away===tm);
   if(!key&&gi>=0){const i=PROPS.findIndex(x=>x.g===gi&&normN(x.p)===normN(name)&&x.st===(st||"Points"));if(i>=0)key="p"+i}
-  Object.assign(PF,{open:true,name,tm:tm||"",gi,id,key,st:st||"Points",range:10,view:"l10",logN:10,anim:true,altL:null});if(window.SLF)SLF.seen(name,tm);
+  Object.assign(PF,{open:true,name,tm:tm||"",gi,id,key,st:st||"Points",range:10,view:"l10",logN:10,anim:true,altL:null,dvpRole:null});if(window.SLF)SLF.seen(name,tm);
   const el=document.getElementById("prof");el.classList.add("on");el.scrollTop=0;document.body.classList.add("pf-lock");
   if(!(history.state&&history.state.sl==="prof"))history.pushState({sl:"prof"},"");
   renderProfile();loadRows()};
@@ -84,23 +84,32 @@ function altsHTML(){if(PF.gi<0||!PF.id||YN[PF.st])return"";const P=LIVE.props&&L
     <div class="pf-alt">${alts.map(a=>`<button class="${PF.altL===a.l?"on":""}" data-pfalt="${a.l}"><span>Over <b>${a.l}</b> <small>(${a.l+.5}+)</small></span><span><b>${fmtAm(a.o)}</b> <small>implied ${Math.round(imp(a.o)*100)}%${hit(a.l)?" · hit "+hit(a.l):""}</small></span></button>`).join("")}</div>
     <div class="pf-sub2">One-sided prices, so Sharpline can't strip the vig or show EV on these. Hit rates are his actual results.</div></section>`}
 
-/* Opponent vs position: what tonight's opponent allows per game to players listed at his position (ESPN box scores,
-   built nightly into dvp.json). Context only: it is not added to the projection, which has no validated matchup term. */
+/* Opponent vs position: what tonight's opponent allows per 36 minutes to players at his position, split into starters and
+   bench (ESPN box scores, built nightly into dvp.json by scripts/build-dvp.mjs). A backup is compared with bench players.
+   Context only: it is not added to the projection, which has no validated matchup term. */
 let DVP=null,DVPload=null;
 function loadDVP(){if(DVP||DVPload)return;DVPload=fetch("dvp.json?t="+Math.floor(Date.now()/36e5),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{DVP=j||{};if(PF.open)renderProfile(true)}).catch(()=>{DVP={}})}
+const posOfAbbr=raw=>{raw=String(raw||"").toUpperCase();return raw==="C"?"C":/^(G|PG|SG)$/.test(raw)?"G":/^(F|SF|PF)$/.test(raw)?"F":raw.includes("C")?"C":raw.includes("G")?"G":raw.includes("F")?"F":null};
 function matchupHTML(){loadDVP();if(PF.gi<0)return"";const G=SNAP[PF.gi];if(!G)return"";const opp=G.home===PF.tm?G.away:G.home;
-  const who=PF.id&&LIVE.ids[PF.id]||{},raw=String(who.pos||"").toUpperCase(),pos=raw==="C"?"C":/^(G|PG|SG)$/.test(raw)?"G":/^(F|SF|PF)$/.test(raw)?"F":raw.includes("C")?"C":raw.includes("G")?"G":raw.includes("F")?"F":null;
-  const posName=(DVP&&DVP.starters?"starting ":"")+({G:"guards",F:"forwards",C:"centers"}[pos]||"");
+  const card=(h,body)=>`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>${h}</h3></div></div><div class="pf-empty">${body}</div></section>`;
   if(!DVP)return`<section class="pf-card pf-load"><i></i><i></i><i></i><span>Loading matchup data…</span></section>`;
+  if(!(DVP.v>=3))return card("Rebuilding","Matchup stats are being rebuilt with per-minute and bench numbers. Check back in a few minutes.");
+  const rr=DVP.roles&&PF.id?DVP.roles[PF.id]:null;
+  const who=PF.id&&LIVE.ids[PF.id]||{},pos=(rr&&rr[4])||posOfAbbr(who.pos);
+  const auto=rr&&rr[3]?(rr[2]/rr[3]>=.6?"S":"B"):"S",role=PF.dvpRole||auto;
   const T=DVP.teams&&(DVP.teams[opp]||Object.entries(DVP.teams).filter(([k])=>k.split(" ").pop()===opp.split(" ").pop()).map(([,v])=>v)[0]);
-  if(!pos||!T)return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>Not available yet</h3></div></div><div class="pf-empty">${!pos?"ESPN doesn't list a position for him.":"Matchup stats haven't been built for this opponent yet."}</div></section>`;
-  const D=T[pos],L=DVP.league[pos],rows=[["pts","Points"],["reb","Rebounds"],["ast","Assists"],["tpm","3-pointers"],["stl","Steals"],["blk","Blocks"]];
-  const hot=STAT_COMP[PF.st]||[],ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
-  const tone=r=>r<=8?"fav":r>=23?"unf":"";
-  return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>${esc(opp.split(" ").pop())} vs ${posName}<span class="pf-sub"> · ${T.gp} games this season</span></h3></div></div>
-    <div class="pf-tw"><table class="pf-log pf-dvp"><thead><tr><th>Allowed per game</th><th>Season</th><th>Rank</th><th>Last ${T.l10gp}</th><th>Rank</th><th>League avg</th></tr></thead><tbody>
-    ${rows.map(([k,l])=>`<tr class="${hot.includes(k)?"hot":""}"><td>${l}</td><td><b>${D.s[k]??"–"}</b></td><td class="${tone(D.sr[k])}">${ord(D.sr[k])}</td><td>${D.l10[k]??"–"}</td><td class="${tone(D.l10r[k])}">${ord(D.l10r[k])}</td><td>${L[k]}</td></tr>`).join("")}</tbody></table></div>
-    <div class="pf-sub2">${DVP.starters?`Totals allowed to the opposing ${posName} in a game (the five starters only; bench players are left out)`:`Totals allowed to all ${posName} in a game`}, from ESPN box scores through ${esc(DVP.through)}. Rank 1st means the defense allows the most (friendliest matchup), 30th the least. Starting positions use ESPN's box-score labels, which are only guard, forward or center, so a point guard and a wing guard share a group, and a team starting three guards adds three to that group. Minutes are not adjusted for role.${T.l10gp<10?"":" Ten games is a small sample; lean on the season column."} This is context only; it isn't added to Sharpline's projection.</div></section>`}
+  if(!pos||!T)return card("Not available yet",!pos?"ESPN doesn't list a position for him.":"Matchup stats haven't been built for this opponent yet.");
+  const posW={G:"guards",F:"forwards",C:"centers"}[pos],roleW=role==="S"?"starting":"bench";
+  const D=T[role][pos],L=DVP.league[role][pos],rows=[["pts","Points"],["reb","Rebounds"],["ast","Assists"],["tpm","3-pointers"],["stl","Steals"],["blk","Blocks"]];
+  const hot=STAT_COMP[PF.st]||[],ord=n=>n==null?"–":n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+  const tone=r=>r==null?"":r<=8?"fav":r>=23?"unf":"";
+  const why=rr&&rr[3]?`He started ${rr[2]} of his last ${rr[3]} game${rr[3]>1?"s":""} (${rr[1]} of ${rr[0]} this season), so ${auto==="S"?"he is compared with starters":"he is compared with bench players"} by default.`:"No starts on record for him yet, so starters are shown.";
+  const thin=D.s.min<300?` Only ${D.s.min} minutes from ${D.s.n} player-games behind this group, so treat it as a rough signal.`:"";
+  return`<section class="pf-card"><div class="pf-ch"><div><div class="eyebrow">Opponent vs position</div><h3>${esc(opp.split(" ").pop())} vs ${roleW} ${posW}<span class="pf-sub"> · ${T.gp} games this season</span></h3></div>
+    <div class="seg">${[["S","Starters"],["B","Bench"]].map(([v,l])=>`<button class="${role===v?"on":""}" data-pfdvp="${v}">${l}${auto===v&&rr?" •":""}</button>`).join("")}</div></div>
+    <div class="pf-tw"><table class="pf-log pf-dvp"><thead><tr><th>Allowed per 36 min</th><th>Season</th><th>Rank</th><th>Last ${T.l10gp}</th><th>Rank</th><th>League avg</th></tr></thead><tbody>
+    ${rows.map(([k,l])=>`<tr class="${hot.includes(k)?"hot":""}"><td>${l}</td><td><b>${D.s[k]??"–"}</b></td><td class="${tone(D.sr[k])}">${ord(D.sr[k])}</td><td>${D.l10[k]??"–"}</td><td class="${tone(D.l10r[k])}">${ord(D.l10r[k])}</td><td>${L[k]??"–"}</td></tr>`).join("")}</tbody></table></div>
+    <div class="pf-sub2">${why} Rates are per 36 minutes played by the opposing ${roleW} ${posW}, so a team starting three guards doesn't inflate the guard numbers.${role==="B"?` Bench counts players who came off the bench and played ${DVP.benchMin||10}+ minutes.`:""} ${roleW[0].toUpperCase()+roleW.slice(1)} ${posW} averaged ${D.s.mpg} minutes against them.${thin} Rank 1st means the defense allows the most (friendliest matchup), 30th the least. ESPN labels players only guard, forward or center. Box scores through ${esc(DVP.through)}. Context only; it isn't added to Sharpline's projection.</div></section>`}
 function chartHTML(rows){const st=PF.st,yn=YN[st];const opp=oppAb();
   let list=PF.range==="opp"?rows.all.filter(r=>r.opp===opp):rows.cur.slice(0,PF.range);
   list=list.filter(r=>valOf(r,st)!=null).slice(0,20).reverse();
@@ -178,6 +187,7 @@ document.addEventListener("click",e=>{const pf=e.target.closest("[data-prof]");
   if(!e.target.closest("#prof"))return;const t=e.target.closest("button");if(!t)return;const d=t.dataset;
   if(d.pfclose){closeProfile();return}
   if(d.pffollow){const on=SLF.toggle(PF.name,PF.tm);renderProfile(true);if(window.toast)toast(on?`Following ${PF.name}. Injury changes for him will show on this phone.`:`Stopped following ${PF.name}`);return}
+  if(d.pfdvp){PF.dvpRole=d.pfdvp;renderProfile(true);return}
   if(d.pfalt!=null){const v=+d.pfalt;PF.altL=PF.altL===v?null:v;PF.anim=true;renderProfile(true);return}
   if(d.pfk){PF.altL=null;PF.key=d.pfk;PF.st=PROPS[+d.pfk.slice(1)].st;PF.anim=true;renderProfile(true);return}
   if(d.pfs){PF.altL=null;PF.st=d.pfs;PF.anim=true;renderProfile(true);return}
