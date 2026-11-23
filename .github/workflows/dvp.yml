@@ -4,7 +4,7 @@ on:
     - cron: "17 9 * * *"   # daily, after the previous night's games are final
   workflow_dispatch:
   push:
-    paths: ["scripts/build-dvp.mjs", ".github/workflows/dvp.yml"]
+    paths: ["scripts/build-dvp.mjs", "scripts/dvp-agg.mjs", "tests/dvp.test.mjs", ".github/workflows/dvp.yml"]
 permissions:
   contents: write
 concurrency: dvp
@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: node tests/dvp.test.mjs
       - run: node scripts/build-dvp.mjs
       - name: Commit if changed
         run: |
@@ -25,5 +26,5 @@ jobs:
           git add dvp.json data/dvp-games.json
           git diff --cached --quiet && exit 0
           git commit -m "Update opponent vs position stats"
-          git pull --rebase -q origin main
-          git push -q origin HEAD:main
+          git pull --rebase -q origin "${{ github.ref_name }}"
+          git push -q origin "HEAD:${{ github.ref_name }}"
