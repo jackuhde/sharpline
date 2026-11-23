@@ -37,6 +37,7 @@ const pc=x=>x==null?"–":(x>=0?"+":"")+(x*100).toFixed(1)+"%",pp=x=>x==null?"�
 function row(l,s){return`<div class="tr rc6"><span>${h(l)}</span><span>${s.W}-${s.L}${s.P?"-"+s.P:""}${s.V?` (${s.V}v)`:""}</span><span>${pp(s.wr)}</span><span>${s.n?(s.u>=0?"+":"")+s.u.toFixed(2):"–"}</span><span>${pc(s.roi)}</span><span>${pc(s.avgClv)}</span></div>`}
 function html(){const L=LSg(KEY,[]);const head=`<div class="eyebrow tk-h">Sharpline's Top List record</div><div class="tsum"><div class="hint" style="margin:0 0 8px">Every Top List pick at a DraftKings price, logged the moment it was shown and never edited: the exact line, price, chance and EV, the time and the model version. Graded from ESPN box scores. Units are 1 unit flat per pick. Closing-line value (CLV) is the EV the logged price had against DraftKings' closing no-vig price; beating the close consistently is the strongest early sign of real skill. NBA only. These are the model's picks, not your bets.</div>`;
   if(!L.length)return head+`<div class="hint">Nothing logged yet. Picks are recorded when the Top List shows them.</div></div>`;
+  const exp=`<div class="addall" style="justify-content:center;margin-top:12px"><button class="addbtn" data-recexport="1">Export this record (JSON)</button></div>`;
   const g=L.filter(r=>r.res),A=agg(L),open=L.length-g.length;
   const by=(f,lbls)=>{const m={};g.forEach(r=>{const k=f(r);if(k!=null)(m[k]=m[k]||[]).push(r)});return(lbls||Object.keys(m)).filter(k=>m[k]).map(k=>row(k,agg(m[k]))).join("")};
   const pb=r=>r.p<.52?"Under 52%":r.p<.55?"52 to 55%":r.p<.58?"55 to 58%":"58% and up",eb=r=>r.evAt<.03?"2 to 3%":r.evAt<.05?"3 to 5%":r.evAt<.08?"5 to 8%":"8% and up";
@@ -52,7 +53,7 @@ function html(){const L=LSg(KEY,[]);const head=`<div class="eyebrow tk-h">Sharpl
     <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>EV when logged</span>")}${by(eb,["2 to 3%","3 to 5%","5 to 8%","8% and up"])}</div>
     <div class="list tk-t" style="margin-top:10px">${th.replace("<span></span>","<span>Side</span>")}${by(r=>r.side==="o"?"Over":"Under",["Over","Under"])}</div>`:""}
     <div class="eyebrow" style="margin:14px 0 6px">Latest logged picks</div><div class="list">${recent.map(r=>`<div class="tb${r.res?" done":""}"><div class="nm">${h(r.name)} · ${r.side==="o"?"Over":"Under"} ${r.line} ${h(STAT[r.st]||r.st)} ${r.res?`<span class="rc r-${r.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[r.res]}</span>`:""}</div>
-      <div class="sub">${h(r.d)} · ${new Date(r.ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})} · DraftKings ${fmtAm(r.price)} · ${pp(r.p)} · EV ${pc(r.evAt)}${r.close?` · closed ${r.close.l} ${fmtAm(r.side==="o"?r.close.o:r.close.u)}, CLV ${pc(r.clv)}`:""} · model ${h(String(r.ver).slice(0,10))}</div></div>`).join("")}</div></div>`}
+      <div class="sub">${h(r.d)} · ${new Date(r.ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})} · DraftKings ${fmtAm(r.price)} · ${pp(r.p)} · EV ${pc(r.evAt)}${r.close?` · closed ${r.close.l} ${fmtAm(r.side==="o"?r.close.o:r.close.u)}, CLV ${pc(r.clv)}`:""} · model ${h(String(r.ver).slice(0,10))}</div></div>`).join("")}</div>${exp}</div>`}
 /* how the model did on this season's games it wasn't fit on (from model.json, refit nightly) */
 function backtestHTML(){const M=typeof PM_META!=="undefined"&&PM_META;if(!M||!M.calib)return"";const C=M.calib,b4=x=>x==null?"–":x.toFixed(4);
   const st=Object.entries(C.byStat).sort((a,b)=>b[1].n-a[1].n);
@@ -64,5 +65,8 @@ function backtestHTML(){const M=typeof PM_META!=="undefined"&&PM_META;if(!M||!M.
     <div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span>Raw EV band</span><span>Bets</span><span>Expected</span><span>Realized</span><span>±</span></div>${C.evBands.map(x=>`<div class="tr"><span>${x.lo<0?"Below 0":`${Math.round(x.lo*100)} to ${x.hi>=1?"+":Math.round(x.hi*100)+"%"}`}</span><span>${x.n}</span><span>${pc(x.expRoi)}</span><span>${pc(x.roi)}</span><span>${(100/Math.sqrt(x.n)).toFixed(1)}</span></div>`).join("")}</div>
     <div class="list tk-t tk5" style="margin-top:10px"><div class="tr th"><span>By stat</span><span>Lines</span><span>Brier</span><span>DK Brier</span><span>Edge counted</span></div>${st.map(([k,x])=>`<div class="tr"><span>${h(STAT_LBL[k]||k)}</span><span>${x.n}</span><span>${b4(x.brier)}</span><span>${b4(x.brierMkt)}</span><span>${M.catK&&M.catK[k]!=null?Math.round(M.catK[k]*100)+"%":"–"}</span></div>`).join("")}</div>
     <div class="hint" style="margin-top:6px">One month of games. Categories under a few hundred lines (steals, blocks) are too small to trust. NBA only; Sharpline has no other sport.</div></div>`}
-window.SLRecs={log,grade,html,agg,backtestHTML,_all:()=>LSg(KEY,[])};
+/* export: the full logged record as JSON, for review outside the app (scripts/props-model/review.mjs can read it) */
+function exportRecs(){const L=LSg(KEY,[]);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({exported:new Date().toISOString(),recs:L},null,1)],{type:"application/json"}));a.download="sharpline-record.json";a.click()}
+document.addEventListener("click",e=>{if(e.target.closest("[data-recexport]"))exportRecs()});
+window.SLRecs={log,grade,html,agg,backtestHTML,exportRecs,_all:()=>LSg(KEY,[])};
 })();

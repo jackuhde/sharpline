@@ -5,7 +5,7 @@ on:
     - cron: "41 0,1,2 * * *"
   workflow_dispatch:
   push:
-    paths: ["scripts/snapshot-pregame.mjs", ".github/workflows/pregame.yml"]
+    paths: ["scripts/snapshot-pregame.mjs", "scripts/props-model/predict.mjs", ".github/workflows/pregame.yml"]
 permissions:
   contents: write
 concurrency: pregame
@@ -19,12 +19,13 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/snapshot-pregame.mjs
+      - run: node scripts/props-model/predict.mjs
       - name: Commit if changed
         run: |
           git config user.name "sharpline-bot"
           git config user.email "sharpline-bot@users.noreply.github.com"
-          git add data/pregame
+          git add data/pregame data/nba/predictions
           git diff --cached --quiet && exit 0
           git commit -m "Pregame prop snapshot"
-          git pull --rebase -q origin main
-          git push -q origin HEAD:main
+          git pull --rebase -q origin "${{ github.ref_name }}"
+          git push -q origin "HEAD:${{ github.ref_name }}"

@@ -1,3 +1,110 @@
+# NBA pick review and model correction, Nov 23 2026
+
+Reproduce with `node scripts/props-model/review.mjs` (writes data/nba/review.json); tests in `node tests/model-review.test.mjs`.
+Method: walk-forward by week (each week priced only by models, calibration and k fit on earlier weeks). Validation week: Nov 9 to 15 (used for every choice). Untouched test week: Nov 16 to 21 (scored once, after every choice was fixed). 19,887 graded DraftKings lines from Oct 25 to Nov 21; 13,694 also have the opening line and prices. Postgame numbers (minutes played, final margin) are used only to describe misses, never as inputs.
+
+## 1. Historical picks reviewed
+
+- **The picks the app logged live are not on the server.** They sit on your phone (Tracker, "Sharpline's Top List record") and in your signed-in account, which only you can read. There is now an "Export this record (JSON)" button under that record, so they can be added to this review.
+- **What was reviewed instead:** the pre-audit model and grade rules (the ones the app ran until Nov 22) replayed on DraftKings' real prices. 178 picks at opening prices and 121 at closing prices, every one matched to the final box score (data/nba/review.json lists each with line, side, odds, chance, EV, grade, result, minutes and tags).
+- **Result:** at opening prices 100 won, 78 lost (56.2%, +6.6% ROI, +1.7% closing-line value). At closing prices 66-55 (54.5%, +2.9%). All from the validation week; in the test week the old rules made no picks. All 299 were Unders.
+
+## 2. Why the old picks lost
+
+| Share of losses (opening prices) | Cause |
+|---|---|
+| 59% | Minutes or role changed in the game (46% of losses had him play 8+ minutes more than his last-10 average, vs 10% of wins; 23% had him start after mostly coming off the bench) |
+| 22% | Variance: finished within a quarter of a typical game's spread of the line |
+| 19% | Wrong side with no single cause |
+
+What made losses more likely (share of losses vs share of wins): fading a player whose season average was above the line (21% vs 13%), and a minutes or role jump (mostly not knowable before the game: starting lineups come about 30 minutes before tip). Things that did not separate wins from losses: back-to-backs (80% vs 76%), teammates out (41% vs 35%), blowouts (22% vs 30%).
+
+## 3. Recurring patterns
+
+- **One direction only:** 299 of 299 picks were Unders.
+- **Stacking:** 87% were one of several picks on the same player that night (props on one player win or lose together).
+- **Back-to-back push:** 78% were on back-to-backs; the old model's back-to-back term pushed every prop of that player toward the Under.
+- **Player averages:** season, last-10 and last-5 averages against the line, and the recent hit rate, flip sign from week to week against DraftKings' closing price (t +0.8, -2.3, +1.0 for the season average). They are already in the line. A simple average-vs-line baseline lost 5 to 8% on every bet it liked.
+
+## 4. What carries information (pregame only, t-statistics in the three periods)
+
+| Factor | Beats DraftKings' closing price? | Predicts DraftKings' line move from open to close? |
+|---|---|---|
+| Season average vs line | no (0.8 / -2.3 / 1.0) | **yes (12.1 / 13.3 / 8.7)** |
+| Last-10 average vs line | no | **yes (12.1 / 13.4 / 8.1)** |
+| Last-5 average vs line | no | yes (11.8 / 10.6 / 4.9) |
+| Regular teammates out | no | yes (14.4 / 13.9 / 12.7), not used: see below |
+| Recent hit rate, bench role, minutes trend, home, total, opponent injuries | no | no consistent effect |
+| His team favored | weak (-2.3 / -0.3 / -4.0) | no |
+
+**Underweighted:** the averages and teammates out, as signals of where DraftKings' price is heading. **Overweighted (removed earlier and kept out):** the intercept, combo/count flags, back-to-back and hot-streak terms as signals of the result.
+
+## 5. Model changes
+
+- **New chance:** DraftKings' current no-vig chance, moved by the part of the predicted line move still to come (scripts/props-model/move.mjs, the same formula in the app's propModel). The move is predicted from the three average-vs-line gaps by ridge regression with **no intercept**. What DraftKings has already moved since opening is subtracted; a move the other way defers to DraftKings; the rest fades to zero by tip (full at 8+ hours, none at tip), because the same information does not beat the closing price.
+- **Removed from the move model:** teammates out. It is never negative, so with no intercept it worked as a constant Over push (predicted moves toward the Over 75 to 80% of the time, DraftKings actually moved that way 46 to 48%). After removing it: 49 to 53%.
+- **Out of sample** the realized move was 0.97, 1.93 and 1.06 times the predicted one (a real, slightly conservative forecast).
+- **Tiers (NBA only; NFL untouched):** conservative EV cut points S 10%+, A 5%+, B 1%+, C -1%+, D EV -5%+, F worse. S also needs a stat with 1,000+ lines, a live price and no injury question; A and S need 300+ lines for the stat; **one S or A per player per slate** (the strongest; the rest show B).
+- **No forced tiers:** the slate grade that labeled the top 3% of every slate S and let the top 30% onto the "closest options" list is gone. Props are ranked by expected return and show their real grade.
+- **Feedback loop:** every pregame snapshot now saves the corrected model's prediction for each prop at the line and price available then (data/nba/predictions/DATE.json, first and last before tip), and the nightly job grades them (review.json "liveRecord").
+
+## 6. Original vs corrected
+
+Log loss on every market (lower is better; DraftKings' own no-vig price for comparison):
+
+| | Original | Nov 22 | Corrected | Season-average baseline | DraftKings |
+|---|---|---|---|---|---|
+| Opening prices, validation | 0.6879 | 0.6880 | 0.6882 | 0.7230 | 0.6880 |
+| Opening prices, test | 0.6836 | 0.6843 | 0.6844 | 0.7081 | 0.6843 |
+| Closing prices, validation | 0.6900 | 0.6895 | 0.6900 | 0.7318 | 0.6895 |
+| Closing prices, test | 0.6828 | 0.6825 | 0.6825 | 0.7080 | 0.6825 |
+
+**The corrected model does not predict results better than DraftKings' price.** Neither does any other version; the baseline is clearly worse. What it does predict is where DraftKings' price is heading. At DraftKings' own price that move is smaller than the vig, so on a DraftKings-only slate it grades D or F, and it says so instead of forcing picks.
+
+## 7. Over/Under and categories
+
+- **Sides shown, corrected:** balanced; tonight 329 Over, 303 Under.
+- **Overs vs priced:** they won less often than DraftKings priced in most stats. The clearest case is Steals: Overs won 44.4%, 42.9% and 44.1% vs about 49% priced in the three periods. This stays in the grade as a penalty on Overs (as before).
+- **Projection error:** line 3.66, season average 3.82, last-10 3.83, last-5 4.01 (mean absolute error, 9,850 lines). DraftKings' line is the best single projection.
+
+## 8. Tiers, validated
+
+At DraftKings' own price, tiers are almost all D and F (nothing to beat). Tiers matter against another book, so they were tested on stale prices: DraftKings' own opening price on props whose line or price later moved, priced from the later DraftKings price, settled at the old number.
+
+| Tier | Before test week (cut points chosen here) | Test week (untouched) |
+|---|---|---|
+| S | 103 bets, 56.3% won, +13.2% | 86, 66.3%, **+28.2%** |
+| A | 260, 64.2%, +24.1% | 108, 64.8%, **+24.9%** |
+| B | 1,206, 60.9%, +14.5% | 662, 62.2%, **+16.9%** |
+| C | 479, 55.3%, +3.9% | 277, 55.6%, **+2.3%** |
+| D | 9,761, 53.7%, +0.4% | 2,399, 50.9%, **-5.2%** |
+| F | 1,149, 51.6%, -6.6% | 360, 53.6%, **-3.3%** |
+
+With the old cut points the test week ran S +21.7%, A +27.0% (S below A). With the new ones the test week runs S > A > B > C > D/F.
+
+**Not yet proven:** before the test week S trailed A (+13.2% vs +24.1%, on 103 S bets). S won 56% against 64% predicted; S is about 9 points of ROI noise either way at that size, so this is unresolved and is tracked.
+
+## 9. Historical mistakes the corrected model would have avoided
+
+- **At opening prices:** it would have made none of the 178 old picks. That avoids all 78 losses but also drops all 100 wins. On those picks that gives up +6.6% ROI and +1.7% CLV from a single week of one-sided, mostly stacked Unders. They were not reliably good bets, but dropping them was not free.
+- **Side:** it would have taken the other side on 33 of them.
+- **Losses it would still have made:** none.
+
+## 10. Limitations
+
+- **Logged picks:** your real pick history is on your phone and account (use the new export button).
+- **Missing data:**
+  - no other sportsbook prices in the free feed
+  - no foul trouble, pace or usage data
+  - starting lineups are not known pregame here
+  - intermediate prices between open and close are not stored, so the fade between 8 hours and tip is an assumption, not tested
+- **Short history:** one month of data. The live record (server predictions and your exported record) is the real test going forward.
+- **Server-side predictions:** these don't count teammates out (the model no longer uses it).
+
+Tests: all 11 suites pass (57 new checks in tests/model-review.test.mjs: no level term, the move model's direction is symmetric, only the remaining move counts, nothing after tip, tiers never invert as EV rises, NBA cut points don't touch NFL grades, one S/A per player, review chronology, saved predictions consistent). The app was run headless with the new model.json: every NBA prop is priced by the corrected model, every shown chance equals the model's chance for that side, and nothing is forced into a tier.
+
+---
+
 # Pick picker rebuild, Nov 22 2026 (third pass)
 
 Reproduce with `node scripts/props-model/grades.mjs` (writes data/nba/grades.json), `audit.mjs` and `fit.mjs`, and test with `node tests/grade.test.js`. All three scripts rerun nightly.

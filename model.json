@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T21:06:56.681Z",
+ "updated": "2026-11-23T17:37:32.741Z",
  "games": 241,
  "lines": 19887,
  "through": "2026-11-21",
@@ -494,6 +494,32 @@
     "overPriced": 0.496
    }
   ]
+ },
+ "move": {
+  "features": [
+   "gapS",
+   "gap10",
+   "gap5"
+  ],
+  "weights": {
+   "gapS": 0.0476,
+   "gap10": 0.0373,
+   "gap5": 0.008
+  },
+  "intercept": "none",
+  "lambda": 200,
+  "sdResidual": 0.2318,
+  "r2": 0.018,
+  "n": 19887,
+  "fullMoveHoursBeforeTip": 8,
+  "note": "chance = DraftKings' current no-vig chance moved by the predicted move still to come (fades to 0 by tip); validated in data/nba/review.json"
+ },
+ "tiers": {
+  "S": 0.1,
+  "A": 0.05,
+  "B": 0.01,
+  "C": -0.01,
+  "D": -0.05
  },
  "overs": {
   "n": 19887,

@@ -2,7 +2,7 @@
 // Model: logistic regression starting from DraftKings' no-vig Over chance, adjusted by the player's own numbers.
 // Each prop is used twice, at its opening and at its closing line and prices. Honesty check: the model is also scored each
 // week by a model fit only on earlier weeks (walk-forward), and those out-of-sample results are written next to the weights.
-import fs from "node:fs";import {buildRows} from "./rows.mjs";import {dec,evOf,sdFor,devig} from "./lib.mjs";
+import fs from "node:fs";import {createRequire} from "node:module";import {buildRows} from "./rows.mjs";import {MV,fitMove,openOf,NBA_TIERS,MOVE_LAMBDA} from "./move.mjs";import {dec,evOf,sdFor,devig} from "./lib.mjs";
 const IN=process.argv[2]||"data/props-history.json",OUT=process.argv[3]||"model.json";
 const {rows,games}=buildRows(IN);
 const lg=p=>Math.log(p/(1-p)),sg=z=>1/(1+Math.exp(-z)),cl=(v,a)=>Math.max(-a,Math.min(a,v));
@@ -76,8 +76,14 @@ function biasOf(L){const side=(f)=>{const o={n:0,w:0,pl:0},u={n:0,w:0,pl:0};L.fo
 const mktCal={};[...new Set(base.map(r=>r.st))].forEach(st=>{const a=base.filter(r=>r.st===st),n=a.length,gap=a.reduce((s,r)=>s+(r.over-r.pm),0)/n,
   se=Math.sqrt(a.reduce((s,r)=>s+r.pm*(1-r.pm),0)/n/n);mktCal[st]={n,overGap:+gap.toFixed(4),underGap:+(-gap).toFixed(4),se:+se.toFixed(4),validated:n>=1000}});
 const W=fit(S);
+/* corrected model (Nov 23 2026 review): predicted move of DraftKings' price from the opening line toward the player's
+   averages and teammates out, fit on every opening snapshot (no intercept). The app applies only the part still to come. */
+const RKm=createRequire(import.meta.url)("../../rank.js");const MVfit=fitMove(base.map(r=>openOf(r,RKm)).filter(Boolean));
 const out={updated:new Date().toISOString(),games:games.length,lines:base.length,through:dates.at(-1),split:mid,
   catK,catRec,calib,mktCal,center:W.mu,weights:Object.fromEntries([["b0",+W[0].toFixed(4)],...names.map((n,j)=>[n,+W[j+1].toFixed(4)])]),test,
   bias:biasOf(oos),
+  move:{features:MV,weights:MVfit.w,intercept:"none",lambda:MOVE_LAMBDA,sdResidual:+MVfit.sdRes.toFixed(4),r2:+MVfit.r2.toFixed(3),n:MVfit.n,fullMoveHoursBeforeTip:8,
+    note:"chance = DraftKings' current no-vig chance moved by the predicted move still to come (fades to 0 by tip); validated in data/nba/review.json"},
+  tiers:NBA_TIERS,
   overs:{n:base.length,hit:+(base.filter(r=>r.over).length/base.length).toFixed(3),fair:+(base.reduce((a,r)=>a+r.pm,0)/base.length).toFixed(3)}};
 fs.writeFileSync(OUT,JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1));
