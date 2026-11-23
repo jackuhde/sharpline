@@ -1,7 +1,7 @@
 {
- "version": "2026-11-23T13:50:00-05:00",
+ "version": "2026-11-23T14:58:00-05:00",
  "date": "2026-11-23",
- "asof": "Mon Nov 23, 1:50 PM ET",
+ "asof": "Mon Nov 23, 2:58 PM ET",
  "games": [
   {
    "tip": "2026-11-23T19:00:00-05:00",
@@ -137,6 +137,11 @@
      "b": "PHI",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": 140,
+       "b": -170
+      },
+      {
        "bk": "Sportbusy (book not named)",
        "a": 126,
        "b": -126
@@ -162,6 +167,13 @@
      "b": "PHI -2.5",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -110,
+       "b": -110,
+       "pa": "POR +3.5",
+       "pb": "PHI -3.5"
+      },
+      {
        "bk": "Sportbusy (book not named)",
        "a": 100,
        "b": 100
@@ -175,13 +187,20 @@
       }
      ],
      "fair": null,
-     "note": "Two point gap: 2.5 now vs 4.5 last night (Covers also shows 4.5). Portland is worth more at +4.5 if any book still has it."
+     "note": "Spread sits at 2.5 (Sportbusy), 3.5 (BetMGM) and 4.5 (FanDuel last night). Shop for the most points on Portland."
     },
     {
      "k": "Total 231",
      "a": "Over",
      "b": "Under",
      "q": [
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115,
+       "pa": "231.5",
+       "pb": "231.5"
+      },
       {
        "bk": "Sportbusy (book not named)",
        "a": -104,
@@ -216,6 +235,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "BetMGM blog",
+     "https://sports.betmgm.com/en/blog/nba/trail-blazers-76ers-player-prop-bets-picks-nba-nov-23-jaa/"
     ]
    ]
   },
@@ -239,6 +262,11 @@
      "a": "BKN",
      "b": "MIN",
      "q": [
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": 450,
+       "b": -625
+      },
       {
        "bk": "DraftKings (via NBC)",
        "a": 455,
@@ -264,6 +292,11 @@
      "b": "MIN -11.5",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115
+      },
+      {
        "bk": "DraftKings (via NBC)",
        "a": null,
        "b": null
@@ -284,6 +317,13 @@
      "a": "Over",
      "b": "Under",
      "q": [
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115,
+       "pa": "223.5",
+       "pb": "223.5"
+      },
       {
        "bk": "DraftKings (via NBC)",
        "a": null,
@@ -317,6 +357,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "BetMGM blog",
+     "https://sports.betmgm.com/en/blog/nba/nets-timberwolves-player-prop-bets-picks-nba-nov-23-jaa/"
     ]
    ]
   },
@@ -419,7 +463,7 @@
    "home": "Indiana Pacers",
    "move": "Spread moved from OKC -4.5 to -5.5 at Action Network's quote; BetMGM's blog still shows -4.5. Total dropped about a point after news on Shai Gilgeous-Alexander.",
    "notes": [
-    "Shai Gilgeous-Alexander (back): Predictem says out, Covers says questionable. Check before betting",
+    "Shai Gilgeous-Alexander (neck/back) is off the injury report and expected to play (RotoWire, today)",
     "Alex Caruso likely out",
     "Pacers without Tyrese Haliburton and T.J. McConnell"
    ],
@@ -434,6 +478,11 @@
      "a": "OKC",
      "b": "IND",
      "q": [
+      {
+       "bk": "BetMGM (via TheLines)",
+       "a": null,
+       "b": 170
+      },
       {
        "bk": "DraftKings (via Action)",
        "a": -191,
@@ -456,7 +505,8 @@
        0.71,
        0.29
       ]
-     }
+     },
+     "note": "BetMGM shows Indiana +165 on its blog and +170 in TheLines write-up."
     },
     {
      "k": "Spread 5.5",
@@ -498,7 +548,7 @@
      "fair": null
     }
    ],
-   "verdict": "Polymarket has OKC 71% and numberFire 78%, both above the 65.6% needed at -191. Lean OKC moneyline, but confirm Gilgeous-Alexander's status first.",
+   "verdict": "Gilgeous-Alexander is off the injury report. Polymarket 71% and numberFire 78% are both above the 65.6% needed at -191, so the Thunder moneyline is the play.",
    "src": [
     [
      "FanDuel Research",
@@ -519,6 +569,14 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "TheLines",
+     "https://www.thelines.com/nba/player-props/expert-nba-picks-and-player-props-best-nba-bets-today-nov-23/"
+    ],
+    [
+     "RotoWire",
+     "https://www.rotowire.com/basketball/headlines/shai-gilgeous-alexander-news-off-injury-report-540669"
     ]
    ]
   },
@@ -545,6 +603,11 @@
      "b": "NOP",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -165,
+       "b": 135
+      },
+      {
        "bk": "Action Network (book not named)",
        "a": -155,
        "b": 131
@@ -569,6 +632,11 @@
      "b": "NOP +3.5",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115
+      },
+      {
        "bk": "Action Network (book not named)",
        "a": -105,
        "b": -115
@@ -589,6 +657,11 @@
      "a": "Over",
      "b": "Under",
      "q": [
+      {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115
+      },
       {
        "bk": "Action Network (book not named)",
        "a": -115,
@@ -622,6 +695,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "BetMGM blog",
+     "https://sports.betmgm.com/en/blog/nba/suns-pelicans-player-prop-bets-picks-nba-nov-23-jaa/"
     ]
    ]
   },
@@ -739,6 +816,11 @@
      "b": "HOU",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": 475,
+       "b": -650
+      },
+      {
        "bk": "FanDuel Research slate (posted late last night)",
        "a": 440,
        "b": -592
@@ -758,6 +840,11 @@
      "b": "HOU -12.5",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -110,
+       "b": -110
+      },
+      {
        "bk": "FanDuel Research slate (posted late last night)",
        "a": null,
        "b": null
@@ -776,6 +863,13 @@
      "b": "Under",
      "q": [
       {
+       "bk": "BetMGM (blog, posted 9:30 AM today)",
+       "a": -105,
+       "b": -115,
+       "pa": "224.5",
+       "pb": "224.5"
+      },
+      {
        "bk": "FanDuel Research slate (posted late last night)",
        "a": null,
        "b": null
@@ -789,7 +883,7 @@
       }
      ],
      "fair": null,
-     "note": "Two point gap: 225.5 vs 223.5. Under is better at 225.5, Over at 223.5."
+     "note": "Total ranges 223.5 (Covers) to 225.5 (FanDuel last night); BetMGM 224.5."
     }
    ],
    "verdict": "Polymarket has Houston 82%; -592 needs 85.5%. Pass on sides and total.",
@@ -809,6 +903,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "BetMGM blog",
+     "https://sports.betmgm.com/en/blog/nba/clippers-rockets-player-prop-bets-picks-nba-nov-23-jaa/"
     ]
    ]
   },
@@ -818,7 +916,7 @@
    "home": "Sacramento Kings",
    "move": "SAS -10.5 and 224.5 at both quotes; no movement reported.",
    "notes": [
-    "Victor Wembanyama questionable (back)",
+    "Victor Wembanyama questionable (low back tightness) as of the 10:39 AM report; still unconfirmed",
     "De'Aaron Fox questionable (shin)",
     "Spurs without Dylan Harper"
    ],
@@ -894,6 +992,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "FanSided injury report",
+     "https://fansided.com/nba/is-victor-wembanyama-playing-tonight-full-nba-injury-report-for-spurs-vs-kings"
     ]
    ]
   },
@@ -948,6 +1050,13 @@
      "a": "UTA +13.5",
      "b": "LAL -13.5",
      "q": [
+      {
+       "bk": "BetMGM (via TheLines)",
+       "a": -113,
+       "b": null,
+       "pa": "UTA +14",
+       "pb": "LAL -14"
+      },
       {
        "bk": "DraftKings (via SI)",
        "a": -106,
@@ -1019,6 +1128,10 @@
     [
      "Covers moneyline",
      "https://www.covers.com/nba/moneyline-predictions-picks-nov-23-2026"
+    ],
+    [
+     "TheLines",
+     "https://www.thelines.com/nba/player-props/expert-nba-picks-and-player-props-best-nba-bets-today-nov-23/"
     ]
    ]
   }
@@ -1271,6 +1384,113 @@
     }
    ],
    "flag": "Austin Reaves out."
+  },
+  {
+   "g": 0,
+   "p": "Cedric Coward",
+   "tm": "Memphis Grizzlies",
+   "st": "Pts+Reb+Ast",
+   "q": [
+    {
+     "l": 26.5,
+     "o": -115,
+     "src": "Fanatics (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    },
+    {
+     "l": 26.5,
+     "o": -130,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "Fanatics -115 vs Novig -130 on the same over."
+  },
+  {
+   "g": 4,
+   "p": "Aday Mara",
+   "tm": "Oklahoma City Thunder",
+   "st": "Points",
+   "q": [
+    {
+     "l": 10.5,
+     "o": 100,
+     "src": "BetMGM (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    },
+    {
+     "l": 10.5,
+     "o": -104,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "Ruled out tonight. Do not bet."
+  },
+  {
+   "g": 3,
+   "p": "Brayden Burries",
+   "tm": "Milwaukee Bucks",
+   "st": "Pts+Reb+Ast",
+   "q": [
+    {
+     "l": 19.5,
+     "o": -106,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ]
+  },
+  {
+   "g": 5,
+   "p": "Yves Missi",
+   "tm": "New Orleans Pelicans",
+   "st": "Rebounds",
+   "q": [
+    {
+     "l": 8.5,
+     "o": 118,
+     "src": "FanDuel (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    },
+    {
+     "l": 8.5,
+     "o": 111,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "FanDuel +118 vs Novig +111 on the over."
+  },
+  {
+   "g": 5,
+   "p": "Jeremiah Fears",
+   "tm": "New Orleans Pelicans",
+   "st": "Points",
+   "q": [
+    {
+     "l": 17.5,
+     "o": 100,
+     "src": "Novig (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "Dejounte Murray out, more on-ball work."
+  },
+  {
+   "g": 2,
+   "p": "Jaden McDaniels",
+   "tm": "Minnesota Timberwolves",
+   "st": "Reb+Ast",
+   "q": [
+    {
+     "l": 8.5,
+     "o": 100,
+     "src": "BetRivers (via RotoBaller)",
+     "url": "https://www.rotoballer.com/todays-best-nba-player-prop-bets-11-23-26/2001450"
+    }
+   ],
+   "flag": "Anthony Edwards out."
   }
  ],
  "sug": [
@@ -1416,6 +1636,52 @@
    "p": 0.51,
    "t": "pass",
    "why": "-115 implies 53.5%. Book not named."
+  },
+  {
+   "s": "o",
+   "l": 26.5,
+   "p": 0.545,
+   "t": "lean",
+   "bp": -115,
+   "bk": "Fanatics",
+   "why": "Novig prices the over at -130 (56.5%). Fanatics at -115 only needs 53.5%, about a 1 point edge after a small haircut."
+  },
+  {
+   "s": "o",
+   "l": 10.5,
+   "p": 0.49,
+   "t": "pass",
+   "why": "Listed out on tonight's injury report, so this prop should not be played."
+  },
+  {
+   "s": "o",
+   "l": 19.5,
+   "p": 0.495,
+   "t": "pass",
+   "why": "One price only (Novig -106). No edge without a second book."
+  },
+  {
+   "s": "o",
+   "l": 8.5,
+   "p": 0.455,
+   "t": "pass",
+   "bp": 118,
+   "bk": "FanDuel",
+   "why": "Novig +111 implies 47.4%; after a haircut that is about what FanDuel +118 needs (45.9%). Thin."
+  },
+  {
+   "s": "o",
+   "l": 17.5,
+   "p": 0.48,
+   "t": "pass",
+   "why": "One price only (Novig even money). No edge without a second book."
+  },
+  {
+   "s": "o",
+   "l": 8.5,
+   "p": 0.48,
+   "t": "pass",
+   "why": "One price only (BetRivers even money). BetMGM notes he has gone over his assists line in 11 of his last 15."
   }
  ],
  "lines": [
@@ -1470,7 +1736,7 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "Line only. Portland was +4.5 last night.",
+   "why": "Line only. BetMGM has Portland +3.5 at -110 and FanDuel had +4.5 last night, so take the most points you can find.",
    "bp": 100,
    "bk": "Sportbusy quote (book not named)"
   },
@@ -1503,7 +1769,7 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "FanDuel had 12.5 last night, DraftKings 11.5. No fair price."
+   "why": "BetMGM is at 11.5 (-105), FanDuel had 12.5 last night. No fair price."
   },
   {
    "g": 2,
@@ -1552,9 +1818,9 @@
    "m": "Moneyline",
    "pick": "OKC ML",
    "s": "n",
-   "p": 0.68,
-   "t": "lean",
-   "why": "Polymarket 71%, numberFire 78%; -191 needs 65.6%. Shaded down for the Gilgeous-Alexander uncertainty.",
+   "p": 0.7,
+   "t": "strong",
+   "why": "Polymarket 71% and numberFire 78% vs 65.6% needed at -191. Gilgeous-Alexander is off the injury report.",
    "bp": -191,
    "bk": "DraftKings"
   },
@@ -1664,7 +1930,9 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "No price posted."
+   "why": "BetMGM has 12.5 at -110 both ways. No fair price.",
+   "bp": -110,
+   "bk": "BetMGM"
   },
   {
    "g": 7,
@@ -1673,7 +1941,7 @@
    "s": "u",
    "p": 0.5,
    "t": "pass",
-   "why": "225.5 vs 223.5 gap; no fair price."
+   "why": "Books range 223.5 to 225.5 (BetMGM 224.5). No fair price."
   },
   {
    "g": 8,
@@ -1726,7 +1994,7 @@
    "s": "n",
    "p": 0.5,
    "t": "pass",
-   "why": "FanDuel 14.5 vs DraftKings 13.5. No fair price; take the extra point if playing Utah."
+   "why": "FanDuel 14.5, Caesars and BetMGM 14, DraftKings 13.5. No fair price; take the most points if playing Utah."
   },
   {
    "g": 9,
@@ -1741,6 +2009,16 @@
  "top": [
   {
    "k": "l",
+   "i": 12,
+   "pick": "OKC ML",
+   "p": 0.7,
+   "bp": -191,
+   "head": "Thunder moneyline at Indiana",
+   "cond": "At -191 or better",
+   "why": "Gilgeous-Alexander is off the injury report. Polymarket 71% and numberFire 78% vs 65.6% needed. Indiana is without Haliburton and McConnell."
+  },
+  {
+   "k": "l",
    "i": 29,
    "pick": "Under 228.5",
    "p": 0.57,
@@ -1748,16 +2026,6 @@
    "head": "Jazz / Lakers Under 228.5",
    "cond": "Only if FanDuel still shows 228.5 (other books are at 224.5)",
    "why": "Total dropped from 230.5 to 224.5 at DraftKings and BetRivers. FanDuel showed 228.5; four points over the market is a big cushion."
-  },
-  {
-   "k": "l",
-   "i": 12,
-   "pick": "OKC ML",
-   "p": 0.68,
-   "bp": -191,
-   "head": "Thunder moneyline at Indiana",
-   "cond": "At -191 or better, after confirming Gilgeous-Alexander's status",
-   "why": "Polymarket 71% and numberFire 78% vs 65.6% needed. Indiana is without Haliburton and McConnell."
   },
   {
    "k": "l",
@@ -1788,6 +2056,16 @@
    "head": "Bucks moneyline at Toronto",
    "cond": "At +378 or better",
    "why": "Polymarket 22% vs 20.9% implied. Toronto without Leonard and Barrett."
+  },
+  {
+   "k": "p",
+   "i": 17,
+   "pick": "Over 26.5 PRA",
+   "p": 0.545,
+   "bp": -115,
+   "head": "Cedric Coward over 26.5 points, rebounds and assists",
+   "cond": "At -115 or better (Fanatics)",
+   "why": "Novig has this over at -130. Fanatics at -115 is a cheaper price on the same number."
   }
  ],
  "proj": [],
