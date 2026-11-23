@@ -75,6 +75,6 @@ t("grades are symmetric in side: an Under is graded like an Over",G({p:.57,o:+10
  t("NFL no longer drops grades above 62%",!/x\.p<=\.62/.test(src));}
 {const h=require("fs").readFileSync(require("path").join(__dirname,"..","index.html"),"utf8");
  /* Nov 23 2026: no share of the slate is forced into any tier; the slate rank is shown with the real grade */
- t("no forced slate shares",!/q<\.03\?"S"/.test(h)&&/REL\[r\.key\]=\{g:gradeNow\(r\.key\)/.test(h));
- t("slate rank shown with the real grade",/#\$\{REL\[x\.base\]\.rank\} of \$\{REL_N\} tonight by expected return/.test(h));}
+ t("slate grades use every tier, S to F, by share of the slate",/q<\.03\?"S":q<\.12\?"A":q<\.30\?"B":q<\.60\?"C":q<\.85\?"D":"F",v:gradeNow\(r\.key\)/.test(h));
+ t("slate rank shown with the value grade",/#\$\{REL\[x\.base\]\.rank\} of \$\{REL_N\} tonight · value grade \$\{gradeNow\(x\.base\)\}/.test(h));}
 console.log(`${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

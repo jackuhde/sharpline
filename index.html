@@ -1331,7 +1331,7 @@ function topItems(){
   /* below the line: the closest bets that don't qualify yet, players not already listed, one each, never counted as picks */
   /* below the line: the closest options tonight by expected return, graded C or better on their own value (no forced tiers), overlap-aware, never counted as picks */
   computeRel();
-  const BA=ok.concat(pool).filter(c=>!taken.has(c.base)&&REL[c.base]&&["S","A","B","C"].includes(REL[c.base].g)&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&c.fresh.lv!=="aging"&&!c.inj)
+  const BA=ok.concat(pool).filter(c=>!taken.has(c.base)&&REL[c.base]&&["S","A","B"].includes(REL[c.base].g)&&c.fresh.lv!=="stale"&&c.fresh.lv!=="started"&&c.fresh.lv!=="aging"&&!c.inj)
     .sort((a,b)=>REL[a.base].rank-REL[b.base].rank).map(c=>({...c,ev:REL[c.base].ev,conf:"High"}));
   topItems.watch=SLRank.selectTop(BA.filter((c,j,a)=>a.findIndex(d=>d.base===c.base)===j),{max:Math.max(0,10-out.length),perPlayer:"1x",perGame:"3",minEdge:-1}).out;
   topItems.qualified=Q.length;
@@ -1709,9 +1709,12 @@ function computeRel(){REL={};const L=[];PROPS.forEach((x,i)=>{const r=relScore(i
   L.sort((a,b)=>b.ev-a.ev||(b.mv||0)-(a.mv||0));REL_N=L.length;
   /* one S/A per player: keep the best-ranked, the rest drop to B */
   DEMOTE=new Set();const seenP=new Set();L.forEach(r=>{const g=gradeNow0(r.key);if(g!=="S"&&g!=="A")return;const pl=normN(PROPS[+r.key.slice(1)].p);if(seenP.has(pl))DEMOTE.add(r.key);else seenP.add(pl)});
-  L.forEach((r,j)=>{REL[r.key]={g:gradeNow(r.key),rank:j+1,ev:r.ev,side:r.side}})}
+  /* slate grade (Nov 23, at the user's request): each prop's place against tonight's board, S top 3%, A next 9%, B next 18%,
+     C next 30%, D next 25%, F the rest, so every tier is used on every slate. Shown with a dashed outline; the value grade
+     (does it beat the vig?) is shown next to it on cards and in the tooltip. */
+  L.forEach((r,j)=>{const q=(j+.5)/L.length;REL[r.key]={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",v:gradeNow(r.key),rank:j+1,ev:r.ev,side:r.side}})}
 function relTag(key,sz){const R=REL[key],v=gradeNow(key);if(!R)return gradeTag(v,sz);
-  return`<span class="grade g-${v}${sz?" "+sz:""}" title="Grade ${v}. #${R.rank} of ${REL_N} props tonight by expected return.">${v}</span>`}
+  return`<span class="grade g-${R.g} rel${sz?" "+sz:""}" title="Slate grade ${R.g}: #${R.rank} of ${REL_N} props tonight by expected return. Value grade ${v}.">${R.g}</span>`}
 
 /* ---------- helpers ---------- */
 const sideCls=s=>s==="o"?"o":s==="u"?"u":"n";
@@ -1860,7 +1863,7 @@ function topCard(x,n,watch){const N=nameOf(x.base),G=SNAP[N.g],isProp=x.base[0]!
         ${x.corr?`<li><b>Same player:</b> also listed as ${esc2(x.corr)}. These tend to win or lose together.</li>`:""}
       </ul></details>`:`<div class="why"><b style="color:var(--ink)">Why:</b> ${x.why||""}</div>`;
   return`<div class="top${watch?" lean":""}" data-key="${x.key}"><div class="rank">${n}</div>${freshTag(x.fresh)}
-    <div class="kind">${relTag(x.base,"md")}${REL[x.base]?`<span class="mine">#${REL[x.base].rank} of ${REL_N} tonight by expected return</span>`:""} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
+    <div class="kind">${relTag(x.base,"md")}${REL[x.base]?`<span class="mine">#${REL[x.base].rank} of ${REL_N} tonight · value grade ${gradeNow(x.base)}</span>`:""} ${watch?'<span class="lean-tag">Not an edge yet</span>':confTag(x.conf)} ${isProp?(x.side?(x.side==="o"?"Over":"Under")+" · ":"")+(STAT_LBL[x.st]||x.st):"Game line · "+x.st} ${x.mine?'<span class="mine">Your odds</span>':""}${x.corr?'<span class="mine">2nd prop · correlated</span>':""}</div>
     <div class="face" ${pfKeyAttr(x.base)}>${N.icon()}<div><h3 style="margin:0">${esc2(x.head)}</h3><div style="font:700 12px Archivo;color:var(--mute);margin-top:3px">${esc2(sub)}</div></div></div>
     <div style="margin-top:10px"><span class="pick n">${watch?(x.gb&&x.gb.pLo!=null?`${x.book} ${fmtAm(x.price)} now · at another book, grade B at ${fmtAm(needFor(x.gb.pLo,.01))} or better, A at ${fmtAm(needFor(x.gb.pLo,.035))}`:`${x.book} ${fmtAm(x.price)} now · needs ${fmtAm(needAm(x.p,SET.minEdge))} or better to qualify`):`Best price: ${x.book} ${fmtAm(x.price)}`}</span></div>
     <div class="stats">${cell("Sharpline",pct(x.p))}${cell("Price implies",pct(x.imp))}${cell("Expected value",sgn(x.ev),x.ev>=0?"var(--over)":"var(--under)")}</div>
@@ -1994,6 +1997,7 @@ function allPropItems(){
   L.forEach(it=>it.v=rowVals(it.key));
   return PSIDE==="all"?L:PSIDE==="mine"?L.filter(it=>it.v.mine):L.filter(it=>it.v.side===PSIDE&&!YN[it.st])}
 function renderProps(){
+  try{computeRel()}catch(e){console.warn("rel",e)}
   {const fs=document.getElementById("slFollow");if(fs&&window.SLF)try{fs.innerHTML=SLF.strip()}catch(e){console.error(e);fs.innerHTML=""}}
   const af=document.getElementById("addForm");if(af&&!af.dataset.init){af.innerHTML=addFormHTML();af.dataset.init=1}
   const items=allPropItems(),inGame=items.filter(x=>propGame==="all"||x.g==propGame);
