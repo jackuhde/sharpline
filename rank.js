@@ -62,9 +62,13 @@ function fairPrice(p,push){if(!(p>0))return NaN;return toAm(1+(1-p-(push||0))/p)
    anything with an injury question or a price that needs verifying tops out at C; a stale price or missing data is F.
    There is no limit on how many A or S grades a slate can have. */
 const GRADE_ORDER=["F","D","C","B","A","S"];
+/* NBA prop tiers on conservative expected return (Nov 23 2026 review): S 10%+, A 5%+, B 1%+, C -1%+, D EV -5%+, F worse */
+const NBA_TIERS={S:.10,A:.05,B:.01,C:-.01,D:-.05};
 function gradeBet(b){if(!b||!(b.p>0)||!isFinite(dec(b.o)))return{g:"F",ev:null,evLo:null,why:["no usable price or chance"]};
   const push=b.push||0,u=Math.max(0,b.u||0),ev=evPush(b.p,push,b.o),pLo=Math.max(.001,b.p-u),evLo=evPush(pLo,push,b.o),why=[];
-  let g=evLo>=.07?5:evLo>=.035?4:evLo>=.01?3:evLo>=-.01?2:ev>=-.05?1:0;
+  /* cut points: the default scale (NFL and game lines), or b.cuts (NBA props: NBA_TIERS, validated in scripts/props-model/review.mjs) */
+  const K=b.cuts||{S:.07,A:.035,B:.01,C:-.01,D:-.05};
+  let g=evLo>=K.S?5:evLo>=K.A?4:evLo>=K.B?3:evLo>=K.C?2:ev>=K.D?1:0;
   const conf=b.conf||"Low",fresh=b.fresh||"live";
   if(b.missing){g=0;why.push("missing data")}
   if(fresh==="stale"||fresh==="started"){g=0;why.push(fresh==="started"?"game started":"price is stale")}
@@ -111,6 +115,6 @@ function expertWeight(r){if(!r||!r.graded||!(r.n>=200))return{w:0,why:!r||!r.gra
   return{w,why:"graded record"}}
 /* blend: market chance moved toward the expert's side by the weight; each source counted once */
 function blendExperts(pMkt,picks){const seen=new Set();let p=pMkt;for(const k of picks||[]){if(!k||seen.has(k.src))continue;seen.add(k.src);const w=expertWeight(k.rec).w;if(w>0)p=p+w*((k.side==="o"?1:0)-p)*.1}return p}
-const api={dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,overlaps,probsAt,evPush,fairPrice,sdFit,gradeBet,GRADE_ORDER,expertWeight,blendExperts};
+const api={NBA_TIERS,dec,imp,ev,toAm,fairAm,devig,Phi,invPhi,poisOver,poisMean,sdFor,overAt,selectTop,overlaps,probsAt,evPush,fairPrice,sdFit,gradeBet,GRADE_ORDER,expertWeight,blendExperts};
 root.SLRank=api;if(typeof module!=="undefined")module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

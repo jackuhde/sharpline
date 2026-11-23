@@ -1,117 +1,117 @@
 {
- "updated": "2026-11-22T21:07:00.523Z",
- "lines": 19887,
+ "updated": "2026-11-23T17:39:21.796Z",
+ "lines": 20503,
  "walkForwardFrom": "2026-11-09",
  "facts": {
   "all": {
-   "n": 19887,
+   "n": 20503,
    "overWon": 47.6,
    "overPriced": 49.5,
    "lineMinusActual": -0.05,
-   "seasonAvgMinusActual": -0.27,
-   "last10MinusActual": -0.22,
+   "seasonAvgMinusActual": -0.28,
+   "last10MinusActual": -0.23,
    "appProjMinusActual": -0.18,
    "appProjMinusLine": -0.13
   },
   "byStat": {
    "Points": {
-    "n": 2769,
+    "n": 2863,
     "overWon": 47.6,
     "overPriced": 50,
     "lineMinusActual": -0.13,
-    "seasonAvgMinusActual": -0.4,
-    "last10MinusActual": -0.34,
+    "seasonAvgMinusActual": -0.41,
+    "last10MinusActual": -0.35,
     "appProjMinusActual": -0.29,
     "appProjMinusLine": -0.16
    },
    "Assists": {
-    "n": 2032,
-    "overWon": 48.4,
-    "overPriced": 49.3,
-    "lineMinusActual": -0.12,
-    "seasonAvgMinusActual": -0.1,
-    "last10MinusActual": -0.07,
-    "appProjMinusActual": -0.14,
+    "n": 2090,
+    "overWon": 48.6,
+    "overPriced": 49.4,
+    "lineMinusActual": -0.13,
+    "seasonAvgMinusActual": -0.11,
+    "last10MinusActual": -0.08,
+    "appProjMinusActual": -0.16,
     "appProjMinusLine": -0.02
    },
    "Rebounds": {
-    "n": 2580,
-    "overWon": 48.2,
-    "overPriced": 49.1,
-    "lineMinusActual": -0.12,
-    "seasonAvgMinusActual": -0.07,
-    "last10MinusActual": -0.06,
-    "appProjMinusActual": -0.15,
+    "n": 2669,
+    "overWon": 48.4,
+    "overPriced": 49.2,
+    "lineMinusActual": -0.13,
+    "seasonAvgMinusActual": -0.08,
+    "last10MinusActual": -0.07,
+    "appProjMinusActual": -0.16,
     "appProjMinusLine": -0.03
    },
    "3-Pointers": {
-    "n": 2235,
+    "n": 2308,
     "overWon": 48.7,
     "overPriced": 47.9,
-    "lineMinusActual": -0.15,
+    "lineMinusActual": -0.16,
     "seasonAvgMinusActual": -0.09,
     "last10MinusActual": -0.07,
-    "appProjMinusActual": -0.06,
+    "appProjMinusActual": -0.07,
     "appProjMinusLine": 0.09
    },
    "Steals": {
-    "n": 865,
-    "overWon": 43.9,
-    "overPriced": 48.9,
-    "lineMinusActual": -0.02,
+    "n": 885,
+    "overWon": 43.6,
+    "overPriced": 48.7,
+    "lineMinusActual": -0.01,
     "seasonAvgMinusActual": 0.15,
     "last10MinusActual": 0.14,
     "appProjMinusActual": 0.12,
-    "appProjMinusLine": 0.14
+    "appProjMinusLine": 0.13
    },
    "Blocks": {
-    "n": 413,
-    "overWon": 44.3,
+    "n": 419,
+    "overWon": 43.9,
     "overPriced": 47.4,
-    "lineMinusActual": -0.05,
+    "lineMinusActual": -0.04,
     "seasonAvgMinusActual": 0.14,
     "last10MinusActual": 0.14,
     "appProjMinusActual": 0.1,
-    "appProjMinusLine": 0.15
+    "appProjMinusLine": 0.14
    },
    "Pts+Ast": {
-    "n": 2115,
-    "overWon": 47.7,
+    "n": 2176,
+    "overWon": 47.5,
     "overPriced": 49.9,
-    "lineMinusActual": 0.02,
+    "lineMinusActual": 0.04,
     "seasonAvgMinusActual": -0.54,
-    "last10MinusActual": -0.45,
-    "appProjMinusActual": -0.29,
-    "appProjMinusLine": -0.3
+    "last10MinusActual": -0.44,
+    "appProjMinusActual": -0.27,
+    "appProjMinusLine": -0.31
    },
    "Pts+Reb": {
-    "n": 2611,
+    "n": 2700,
     "overWon": 47,
     "overPriced": 50,
     "lineMinusActual": 0.02,
-    "seasonAvgMinusActual": -0.43,
-    "last10MinusActual": -0.37,
-    "appProjMinusActual": -0.24,
-    "appProjMinusLine": -0.26
+    "seasonAvgMinusActual": -0.46,
+    "last10MinusActual": -0.39,
+    "appProjMinusActual": -0.25,
+    "appProjMinusLine": -0.27
    },
    "Reb+Ast": {
-    "n": 2084,
+    "n": 2145,
     "overWon": 48.8,
     "overPriced": 49.8,
-    "lineMinusActual": -0.08,
-    "seasonAvgMinusActual": -0.15,
-    "last10MinusActual": -0.11,
-    "appProjMinusActual": -0.15,
+    "lineMinusActual": -0.11,
+    "seasonAvgMinusActual": -0.18,
+    "last10MinusActual": -0.14,
+    "appProjMinusActual": -0.17,
     "appProjMinusLine": -0.07
    },
    "Pts+Reb+Ast": {
-    "n": 2183,
-    "overWon": 46.6,
+    "n": 2248,
+    "overWon": 46.5,
     "overPriced": 50,
-    "lineMinusActual": 0.17,
-    "seasonAvgMinusActual": -0.57,
+    "lineMinusActual": 0.18,
+    "seasonAvgMinusActual": -0.58,
     "last10MinusActual": -0.48,
-    "appProjMinusActual": -0.23,
+    "appProjMinusActual": -0.22,
     "appProjMinusLine": -0.4
    }
   },
@@ -162,33 +162,33 @@
    },
    {
     "from": "2026-11-16",
-    "n": 4542,
-    "overWon": 48.6,
-    "overPriced": 49.6,
-    "lineMinusActual": -0.24,
-    "seasonAvgMinusActual": -0.48,
-    "last10MinusActual": -0.35,
+    "n": 5158,
+    "overWon": 48.4,
+    "overPriced": 49.5,
+    "lineMinusActual": -0.23,
+    "seasonAvgMinusActual": -0.51,
+    "last10MinusActual": -0.37,
     "appProjMinusActual": -0.33,
-    "appProjMinusLine": -0.09
+    "appProjMinusLine": -0.1
    }
   ]
  },
  "deployed": {
-  "lines": 19887,
-  "marketsLeaningUnder": 84.4,
-  "picks": 132,
+  "lines": 20503,
+  "marketsLeaningUnder": 84.1,
+  "picks": 133,
   "overPicks": 5,
   "underShare": 96.2
  },
  "before": {
   "rowSide": {
-   "over": 13.1,
-   "under": 86.9
+   "over": 13.3,
+   "under": 86.7
   },
-  "lines": 9850,
+  "lines": 10466,
   "from": "2026-11-09",
-  "marketsLeaningOver": 12.2,
-  "marketsLeaningUnder": 87.8,
+  "marketsLeaningOver": 12.7,
+  "marketsLeaningUnder": 87.3,
   "picks2": {
    "all": {
     "n": 121,
@@ -345,15 +345,15 @@
   ],
   "leanCalibration": {
    "leanUnder": {
-    "n": 7475,
-    "predictedUnder": 51.9,
-    "actualUnder": 50.7,
+    "n": 7861,
+    "predictedUnder": 51.8,
+    "actualUnder": 50.6,
     "dkUnder": 49.9
    },
    "leanOver": {
-    "n": 516,
+    "n": 577,
     "predictedOver": 46.6,
-    "actualOver": 45.2,
+    "actualOver": 44.2,
     "dkOver": 45.6
    }
   },
@@ -366,63 +366,63 @@
    },
    {
     "from": "2026-11-16",
-    "modelShiftPts": -1,
-    "rawShiftPts": -1.52,
-    "realizedOverMinusDkPts": -0.99
+    "modelShiftPts": -0.98,
+    "rawShiftPts": -1.49,
+    "realizedOverMinusDkPts": -1.13
    }
   ],
-  "brier": 0.2468,
-  "brierMarket": 0.2466,
-  "logLoss": 0.6867,
-  "logLossMarket": 0.6863,
+  "brier": 0.2469,
+  "brierMarket": 0.2467,
+  "logLoss": 0.6869,
+  "logLossMarket": 0.6865,
   "calibration": [
    {
     "range": "0.4-0.5",
-    "n": 2248,
-    "predicted": 47.3,
-    "actual": 46.5
+    "n": 2427,
+    "predicted": 47.4,
+    "actual": 46.7
    },
    {
     "range": "0.5-0.52",
-    "n": 2078,
+    "n": 2217,
     "predicted": 51,
     "actual": 49.8
    },
    {
     "range": "0.52-0.54",
-    "n": 2129,
+    "n": 2246,
     "predicted": 53,
-    "actual": 53.2
+    "actual": 52.7
    },
    {
     "range": "0.54-0.56",
-    "n": 1374,
+    "n": 1437,
     "predicted": 54.9,
-    "actual": 56.4
-   },
-   {
-    "range": "0.56-0.6",
-    "n": 1067,
-    "predicted": 57.7,
     "actual": 56.2
    },
    {
+    "range": "0.56-0.6",
+    "n": 1138,
+    "predicted": 57.7,
+    "actual": 55.9
+   },
+   {
     "range": "0.6-1",
-    "n": 881,
+    "n": 923,
     "predicted": 63.7,
-    "actual": 61.5
+    "actual": 62
    }
   ]
  },
  "after": {
   "rowSide": {
-   "over": 48.1,
-   "under": 51.9
+   "over": 48.2,
+   "under": 51.8
   },
-  "lines": 9850,
+  "lines": 10466,
   "from": "2026-11-09",
-  "marketsLeaningOver": 12.5,
-  "marketsLeaningUnder": 11.2,
+  "marketsLeaningOver": 12,
+  "marketsLeaningUnder": 10.9,
   "picks2": {
    "all": {
     "n": 0,
@@ -496,13 +496,13 @@
     "from": "2026-11-16",
     "modelShiftPts": 0,
     "rawShiftPts": 0.05,
-    "realizedOverMinusDkPts": -0.99
+    "realizedOverMinusDkPts": -1.13
    }
   ],
-  "brier": 0.2466,
-  "brierMarket": 0.2466,
-  "logLoss": 0.6863,
-  "logLossMarket": 0.6863,
+  "brier": 0.2467,
+  "brierMarket": 0.2467,
+  "logLoss": 0.6865,
+  "logLossMarket": 0.6865,
   "calibration": [
    {
     "range": "0.4-0.5",
@@ -512,46 +512,46 @@
    },
    {
     "range": "0.5-0.52",
-    "n": 4024,
+    "n": 4284,
     "predicted": 51,
-    "actual": 50.4
+    "actual": 50.3
    },
    {
     "range": "0.52-0.54",
-    "n": 2521,
+    "n": 2684,
     "predicted": 52.7,
-    "actual": 55.2
+    "actual": 55
    },
    {
     "range": "0.54-0.56",
-    "n": 1075,
+    "n": 1139,
     "predicted": 54.9,
-    "actual": 55.6
+    "actual": 55
    },
    {
     "range": "0.56-0.6",
-    "n": 1155,
+    "n": 1230,
     "predicted": 57.7,
-    "actual": 58.8
+    "actual": 58.5
    },
    {
     "range": "0.6-1",
-    "n": 964,
+    "n": 1018,
     "predicted": 63.6,
-    "actual": 62.2
+    "actual": 62.5
    }
   ]
  },
  "concentration": {
   "deployedOldList": {
-   "slates": 25,
+   "slates": 26,
    "slatesWithAPlayerTwice": 0,
    "overlappingSamePlayerPairs": 0,
    "mostPicksOnOnePlayer": 1,
    "examples": []
   },
   "deployedNewList": {
-   "slates": 25,
+   "slates": 26,
    "slatesWithAPlayerTwice": 0,
    "overlappingSamePlayerPairs": 0,
    "mostPicksOnOnePlayer": 1,
@@ -584,9 +584,9 @@
   "picks": 4,
   "unders": 4,
   "won": 0,
-  "hisLinesOverWon": 43.4,
-  "hisLinesOverPriced": 48.1,
-  "linesThoseWeeks": 53
+  "hisLinesOverWon": 41.3,
+  "hisLinesOverPriced": 48.5,
+  "linesThoseWeeks": 63
  },
  "trace": [
   {

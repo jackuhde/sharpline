@@ -25,6 +25,8 @@ export function buildRows(file,pregame){
         min:avg(H,"min"),min10:l10.length?avg(l10,"min"):null,min3:H.length?avg(H.slice(-3),"min"):null,
         startRate:gp?H.filter(x=>x.st).length/gp:null,starter:p.st,home,spread,tot:g.tot,b2b:b2b[tm],miss:missing[tm],missPts:missPts[tm],oppMiss:missing[home?g.aid:g.hid],
         hitRate10:l10.length?l10.filter(x=>sum(x)>l).length/l10.length:null,
+        /* postgame, for diagnosing misses only (never a model input): his actual minutes and his team's final margin */
+        post:{min:p.min,margin:g.hs!=null&&g.as!=null?(home?g.hs-g.as:g.as-g.hs):null},
         comp:Object.fromEntries(c.map(k=>[k,{s:avg(H,k),r:l10.length?avg(l10,k):null}]))};
       rows.push(r)}
     Object.values(pl).forEach(p=>{if(!p.play)return;(hist[p.id]=hist[p.id]||[]).push({...p,d:g.d})});
