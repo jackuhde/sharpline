@@ -1193,7 +1193,10 @@ function explain(key,best,gap,real){const k=key[0],i=+key.slice(1),bits=[];
   return bits.join(" ")||"Enter the line and odds to see the difference."}
 const recCls={},recBest={};
 function updRec(key){{const sr=document.getElementById("srec-"+key);if(sr){sr.innerHTML=recHTML(key);sr.className="rec t-"+(recCls[key]||"na")}}const el=document.getElementById("rec-"+key);if(!el)return;el.innerHTML=recHTML(key);el.className="rec t-"+(recCls[key]||"na");
-  const row=el.closest(".row,.mrow");if(row){const gt=row.querySelector(".est .grade,.mk .grade");const g=(recBest[key]&&recBest[key].grade)||baseGrade(key);if(gt){gt.className="grade g-"+g;gt.textContent=g}}
+  /* refresh the row's badge: the slate grade for props (it used to be overwritten here with the value grade, so the Props
+     screen showed mostly D), the value grade for game lines */
+  const row=el.closest(".row,.mrow");if(row){const gt=row.querySelector(".est .grade,.mk .grade");if(gt){
+    if(key[0]==="p"&&REL[key])gt.outerHTML=relTag(key);else{const g=(recBest[key]&&recBest[key].grade)||baseGrade(key);gt.className="grade g-"+g;gt.textContent=g}}}
   const b=recBest[key],box=document.querySelector(`[data-edbox="${key}"]`),sv=document.getElementById("sv-"+key);
   const real=b&&!b.assumed;box.classList.toggle("hit",!!(real&&b.ev>=.02));box.classList.toggle("thin",!!(real&&b.ev>=-.01&&b.ev<.02));box.classList.toggle("bad",!!(real&&b.ev<-.01));
   if(sv)sv.remove()}

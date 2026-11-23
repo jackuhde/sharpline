@@ -77,4 +77,6 @@ t("grades are symmetric in side: an Under is graded like an Over",G({p:.57,o:+10
  /* Nov 23 2026: no share of the slate is forced into any tier; the slate rank is shown with the real grade */
  t("slate grades use every tier, S to F, by share of the slate",/q<\.03\?"S":q<\.12\?"A":q<\.30\?"B":q<\.60\?"C":q<\.85\?"D":"F",v:gradeNow\(r\.key\)/.test(h));
  t("slate rank shown with the value grade",/#\$\{REL\[x\.base\]\.rank\} of \$\{REL_N\} tonight · value grade \$\{gradeNow\(x\.base\)\}/.test(h));}
+{const h=require("fs").readFileSync(require("path").join(__dirname,"..","index.html"),"utf8");
+ t("row refresh keeps the slate grade on props",/if\(key\[0\]==="p"&&REL\[key\]\)gt\.outerHTML=relTag\(key\)/.test(h));}
 console.log(`${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;
