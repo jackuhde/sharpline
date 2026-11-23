@@ -1,6 +1,7 @@
 /* NFL data for Sharpline, built in GitHub Actions from ESPN's free feeds and committed to data/nfl/.
    - stats.json: every completed game this season, offensive and kicking box score lines per player (targets included),
      final scores, team list, and each rostered player's position, jersey and roster status.
+   - def.json: defensive box score lines per player per game (tackles, sacks, TFL, passes defended, QB hits, INT, defensive TDs).
    - lines.json: DraftKings player-prop lines (no prices: ESPN's NFL feed carries lines only) per game, saved before
      kickoff and kept after it, so the model can be backtested against the lines that were actually posted.
    Completed games are fetched once and cached in the files; later runs only add new games. */
@@ -14,13 +15,19 @@ const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n};
 async function pool(items,n,fn){const out=[];let i=0;await Promise.all(Array.from({length:n},async()=>{while(i<items.length){const k=i++;out[k]=await fn(items[k]);await sleep(120)}}));return out}
 
 /* stat columns stored per player per game (order matters: the app reads them by index) */
-const COLS=["cmp","att","pYds","pTD","int","sk","car","rYds","rTD","rLng","rec","recYds","recTD","recLng","tgt","fgM","fgA","xpM","kPts"];
+const COLS=["cmp","att","pYds","pTD","int","sk","car","rYds","rTD","rLng","rec","recYds","recTD","recLng","tgt","fgM","fgA","xpM","kPts","fumL"];
+/* defensive box score columns, kept in their own file (def.json) so the main file the app loads stays small */
+const DCOLS=["tkl","tklT","sacks","tfl","pd","qbh","dInt","dTD"];
 function parseBox(sum){const out={};const bx=sum&&sum.boxscore;if(!bx||!bx.players)return out;
   bx.players.forEach(T=>{const tid=T.team&&T.team.id;(T.statistics||[]).forEach(cat=>{const keys=cat.keys||[];(cat.athletes||[]).forEach(a=>{const id=a.athlete&&a.athlete.id;if(!id)return;
     const r=out[id]||(out[id]={t:tid,n:a.athlete.displayName,v:new Array(COLS.length).fill(0)});const st=a.stats||[];const at=k=>st[keys.indexOf(k)];
     if(cat.name==="passing"){const[c,t]=String(at("completions/passingAttempts")||"0/0").split("/");r.v[0]=num(c);r.v[1]=num(t);r.v[2]=num(at("passingYards"));r.v[3]=num(at("passingTouchdowns"));r.v[4]=num(at("interceptions"));r.v[5]=num(String(at("sacks-sackYardsLost")||"0").split("-")[0])}
     if(cat.name==="rushing"){r.v[6]=num(at("rushingAttempts"));r.v[7]=num(at("rushingYards"));r.v[8]=num(at("rushingTouchdowns"));r.v[9]=num(at("longRushing"))}
     if(cat.name==="receiving"){r.v[10]=num(at("receptions"));r.v[11]=num(at("receivingYards"));r.v[12]=num(at("receivingTouchdowns"));r.v[13]=num(at("longReception"));r.v[14]=num(at("receivingTargets"))}
+    if(cat.name==="fumbles"){r.v[19]=num(at("fumblesLost"))}
+    if(cat.name==="defensive"||cat.name==="interceptions"){const d=r.d||(r.d=new Array(DCOLS.length).fill(0));
+      if(cat.name==="defensive"){d[0]=num(at("soloTackles"));d[1]=num(at("totalTackles"));d[2]=num(at("sacks"));d[3]=num(at("tacklesForLoss"));d[4]=num(at("passesDefended"));d[5]=num(at("QBHits"));d[7]+=num(at("defensiveTouchdowns"))}
+      else{d[6]=num(at("interceptions"));d[7]+=num(at("interceptionTouchdowns"))}}
     if(cat.name==="kicking"){const[fm,fa]=String(at("fieldGoalsMade/fieldGoalAttempts")||"0/0").split("/");const[xm]=String(at("extraPointsMade/extraPointAttempts")||"0/0").split("/");r.v[15]=num(fm);r.v[16]=num(fa);r.v[17]=num(xm);r.v[18]=num(at("totalKickingPoints"))}})})});
   return out}
 /* two-sided over/under player props ESPN lists for the NFL (type id -> stat key used in the app) */
@@ -36,7 +43,10 @@ const teamsJ=await j(S+"/teams");const teams={};((teamsJ&&teamsJ.sports&&teamsJ.
 const ath={};await pool(Object.keys(teams),4,async tid=>{const r=await j(`${S}/teams/${tid}/roster`);((r&&r.athletes)||[]).forEach(g=>(g.items||[]).forEach(a=>{
   const inj=(a.injuries||[])[0];ath[a.id]=[a.displayName,(a.position&&a.position.abbreviation)||"",tid,a.jersey||"",inj?inj.status:(a.status&&a.status.abbreviation)||"",g.position]}))});
 
-const prev=load("stats.json",{});const games={};(prev.season===season?prev.games||[]:[]).forEach(g=>{games[g.id]=g});
+const prev=load("stats.json",{}),prevD=load("def.json",{});const games={};
+/* refetch every final when the stored columns change (or the defensive file is missing), otherwise keep the cache */
+const sameCols=prev.season===season&&JSON.stringify(prev.cols)===JSON.stringify(COLS)&&prevD.season===season&&JSON.stringify(prevD.cols)===JSON.stringify(DCOLS);
+(sameCols?prev.games||[]:[]).forEach(g=>{games[g.id]=g});const defG=sameCols?prevD.games||{}:{};
 const lines=load("lines.json",{});if(lines.season!==season){for(const k of Object.keys(lines))delete lines[k];lines.season=season;lines.games={}}
 lines.games=lines.games||{};
 const weeks=[];for(let w=1;w<=(stype===2?week:18);w++)weeks.push([2,w]);if(stype===3)for(let w=1;w<=week;w++)weeks.push([3,w]);
@@ -46,6 +56,7 @@ console.log(`season ${season} type ${stype} week ${week}: ${evs.length} events, 
 await pool(todo,3,async({e,t,w})=>{const c=e.competitions[0],H=c.competitors.find(x=>x.homeAway==="home"),A=c.competitors.find(x=>x.homeAway==="away");
   const sum=await j(`${S}/summary?event=${e.id}`);if(!sum)return;const box=parseBox(sum);
   games[e.id]={id:e.id,t,w,d:e.date,h:[H.team.id,+H.score],a:[A.team.id,+A.score],p:Object.fromEntries(Object.entries(box).filter(([,r])=>r.v.some(x=>x)).map(([id,r])=>{if(!ath[id])ath[id]=[r.n,"",r.t,"","",""];return[id,[r.t,...r.v]]}))};
+  defG[e.id]=Object.fromEntries(Object.entries(box).filter(([,r])=>r.d&&r.d.some(x=>x)).map(([id,r])=>{if(!ath[id])ath[id]=[r.n,"",r.t,"","",""];return[id,[r.t,...r.d]]}));
   if(!lines.games[e.id]){const L=await propLines(e.id);if(Object.keys(L).length)lines.games[e.id]={w,t,final:1,l:L}}});
 /* upcoming and in-progress games: save lines while still pregame, keep the last pregame snapshot after kickoff */
 const open=evs.filter(({e})=>e.competitions[0].status.type.state==="pre");
@@ -86,12 +97,14 @@ ps.forEach(r=>{const g=gByWT[r.week+"|"+tid(r.team)];const eid=byGsis[r.player_i
   const f=k=>{const v=parseFloat(r[k]);return isNaN(v)?undefined:Math.round(v*1000)/1000};x.ay=f("receiving_air_yards");x.ts=f("target_share");x.as=f("air_yards_share");x.pay=f("passing_air_yards");x.tg=f("targets")});
 adv.forEach(r=>{const g=gByWT[r.week+"|"+tid(r.team)];const eid=byPfr[r.pfr_player_id];if(!g||!eid)return;const v=parseFloat(r.times_pressured_pct);if(!isNaN(v))xt(g,eid).prs=Math.round(v*1000)/1000});
 console.log(`nflverse: ${pl.length} id rows, ${sn.length} snap rows (${nvN} joined), ${ps.length} stat rows, ${adv.length} pressure rows`);
-const used=new Set();Object.values(games).forEach(g=>Object.keys(g.p).forEach(id=>used.add(id)));Object.values(lines.games).forEach(g=>Object.keys(g.l).forEach(k=>used.add(k.split("|")[0])));
+const used=new Set();Object.values(games).forEach(g=>Object.keys(g.p).forEach(id=>used.add(id)));Object.values(defG).forEach(g=>Object.keys(g).forEach(id=>used.add(id)));Object.values(lines.games).forEach(g=>Object.keys(g.l).forEach(k=>used.add(k.split("|")[0])));
 const athOut={};for(const id of used)if(ath[id])athOut[id]=ath[id];
 /* players on current rosters at skill positions are kept even without stats yet (rookies, backups) */
 for(const[id,a]of Object.entries(ath))if(/^(QB|RB|FB|WR|TE|PK|K)$/.test(a[1])&&a[5]!=="practiceSquad")athOut[id]=a;
 /* this week's games still to play: venue and weather forecast (forecasts change; refreshed every run) */
 const next={};await pool(open,3,async({e})=>{const c=e.competitions[0],v=c.venue||{};const g={d:e.date,ven:{n:v.fullName,c:v.address&&v.address.city,s:v.address&&v.address.state,in:v.indoor?1:0}};g.wx=await weather(g);next[e.id]={ven:g.ven,wx:g.wx,at:new Date().toISOString()}});
 const out={updated:new Date().toISOString(),season,stype,week,cols:COLS,teams,ath:athOut,next,games:Object.values(games).sort((a,b)=>a.d<b.d?-1:1)};
-fs.writeFileSync(DIR+"/stats.json",JSON.stringify(out));fs.writeFileSync(DIR+"/lines.json",JSON.stringify(lines));
+fs.writeFileSync(DIR+"/stats.json",JSON.stringify(out));
+const defOut={updated:out.updated,season,cols:DCOLS,games:Object.fromEntries(Object.entries(defG).filter(([id])=>games[id]))};fs.writeFileSync(DIR+"/def.json",JSON.stringify(defOut));
+{let n=0,sk=0,tk=0;Object.values(defOut.games).forEach(g=>Object.values(g).forEach(r=>{n++;tk+=r[2];sk+=r[3]}));console.log(`def.json: ${Object.keys(defOut.games).length} games, ${n} defender lines, ${tk} total tackles, ${sk} sacks`)}fs.writeFileSync(DIR+"/lines.json",JSON.stringify(lines));
 console.log(`wrote ${out.games.length} games, ${Object.keys(athOut).length} players, lines for ${Object.keys(lines.games).length} games`);

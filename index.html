@@ -177,6 +177,17 @@ body.pf-lock{overflow:hidden}
 .pf-load i{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pfDot 1s infinite ease-in-out}.pf-load i:nth-child(2){animation-delay:.15s}.pf-load i:nth-child(3){animation-delay:.3s}
 .pf-load span{margin-left:6px}
 @keyframes pfDot{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:none}}
+.nfp-tm{display:flex;align-items:center;gap:7px;font:800 12.5px Archivo;color:var(--ink);margin-bottom:2px}.nfp-tm .nf-logo{transform:scale(.82);transform-origin:left center}
+.nfp-model{grid-template-columns:1.2fr .9fr .9fr 1.1fr}.pf-model .v.sm{font-size:14px;line-height:1.25}
+.pf-sc .v.sm{font-size:14px;line-height:23px}.pf-sc .a{font:700 9.5px Archivo;color:var(--dim);margin-top:3px;white-space:nowrap}
+.nfp-us{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}.nfp-us>div{padding:10px 11px;border-radius:13px;background:var(--bg);border:1px solid var(--line)}
+.nfp-us .k{font:800 10.5px Archivo;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}.nfp-us .v{font:900 18px JetBrains Mono,monospace;letter-spacing:-.5px;margin-top:3px}.nfp-us .s{font:700 11px/1.35 Archivo;color:var(--dim);margin-top:2px}
+.nfp-h{font:800 11px Archivo;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc2);margin:14px 2px 8px}
+.nfp-act{gap:8px;flex-wrap:wrap}.addbtn.go{background:linear-gradient(160deg,var(--acc),#b8922a);color:#14120c;border-color:transparent}
+.nfp-pl tbody tr{cursor:pointer}.nfp-pl tr.hot td{color:var(--acc2)}
+#nfOdds{z-index:80}
+@media(min-width:720px){.pf-grid{grid-template-columns:repeat(5,1fr)}}
+.nf-plist{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.nf-plist button{padding:6px 10px;border-radius:10px;background:var(--s2);border:1px solid var(--line);font:800 12px Archivo;color:var(--ink)}.nf-plist small{color:var(--mute);font-weight:700;margin-left:4px}
 .pf-foot{margin:16px 4px 0;font:600 11.5px/1.5 Archivo;color:var(--dim)}
 @media (prefers-reduced-motion:reduce){.prof.on,.prof.out,.pf-swap{animation:none}.pf-chart.anim .bar rect{transform:none}.pf-chart.anim .bar text{opacity:1}}
 
@@ -958,7 +969,7 @@ html,body{overscroll-behavior-y:none}
 <script src="rank.js?v=1795900005"></script>
 <script src="nfl-model.js?v=1795900005"></script>
 <script src="live.js?v=1795600001"></script>
-<script src="profile.js?v=1795500001"></script>
+<script src="profile.js?v=1796000001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795800001"></script>
 <script src="tracker2.js?v=1795900010"></script>
@@ -966,7 +977,8 @@ html,body{overscroll-behavior-y:none}
 <script src="gamemodel.js?v=1795900004"></script>
 <script src="corr.js?v=1795900002"></script>
 <script src="livegame.js?v=1795900005"></script>
-<script src="nfl.js?v=1795900021"></script>
+<script src="nfl.js?v=1796000001"></script>
+<script src="nfl-profile.js?v=1796000001"></script>
 <script src="betparse.js?v=1795900002"></script>
 <script src="scanner.js?v=1795900003"></script>
 <script>
@@ -1738,7 +1750,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
     <div class="hint" style="margin-top:10px">Win rate alone doesn't mean profit. At your average odds (${S.avgO==null?"–":fmtAm(S.avgO)}) you need to win ${S.be==null?"about 52%":pct1(S.be)} just to break even. ROI is what counts, and it takes 100+ bets before it says much.</div>
   </div>
   ${pend.length?`<div class="eyebrow tk-h">Open bets · ${pend.length}</div><div class="list">${pend.map(b=>`<div class="tb tb2" data-tid="${b.id}"><div class="tb-main">
-     <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}${b.late?'<span class="late-tag">added late</span>':""}</div><div class="sub">${[b.game,b.type==="parlay"?"":b.mkt,b.src].filter(Boolean).join(" · ")}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
+     <div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({sp:b.sport==="nfl"?"nfl":"",n:b.name,t:b.tm,s:b.mkt,k:b.sport!=="nfl"&&b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}${b.late?'<span class="late-tag">added late</span>':""}</div><div class="sub">${[b.game,b.type==="parlay"?"":b.mkt,b.src].filter(Boolean).join(" · ")}${b.grade?` · grade ${b.grade}`:""}${b.p!=null?` · est ${pct(b.p)}`:""}</div></div><button class="x" data-tdel="${b.id}" title="Delete">×</button></div>
      ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="tb-in"><div><label>${b.type==="parlay"?"Parlay odds you got":"Odds you got"}</label>${oddsBox(b)}</div><div><label>Stake $</label><input type="number" inputmode="decimal" data-tstake="${b.id}" value="${b.stake}"></div></div>
      ${b.spec&&!b.noAuto?`<div class="hint" style="margin-top:8px">Grades itself when the game is final.</div>`:""}<div class="tb-res"><button data-res="${b.id}|W" class="w">Won</button><button data-res="${b.id}|L" class="l">Lost</button><button data-res="${b.id}|P">Push</button><button data-res="${b.id}|V">Void</button></div></div><aside class="tpanel" data-tpanel="${b.id}"></aside></div>`).join("")}</div>`:""}
   ${Object.keys(byM).length?`<div class="eyebrow tk-h">By market</div><div class="list tk-t">${Object.entries(byM).map(([m,l])=>{const x=trackStats(l);return`<div class="tr"><span>${m}</span><span>${x.W}-${x.L}${x.P?"-"+x.P:""}</span><span style="color:${x.net>0?"var(--over)":x.net<0?"var(--under)":"var(--mute)"}">${x.n?money(x.net):"–"}</span><span>${x.roi==null?"–":(x.roi>=0?"+":"")+(x.roi*100).toFixed(0)+"%"}</span></div>`}).join("")}</div>`:""}
@@ -1747,7 +1759,7 @@ function renderTrack(){const box=document.getElementById("trackBox");if(!box)ret
      <div class="stats">${cell("Sharpline score",C.brier.toFixed(3))}${cell("Book price score",C.bookB==null?"–":C.bookB.toFixed(3))}${cell("Coin flip",".250")}</div>
      <div class="list tk-t" style="margin-top:10px"><div class="tr th"><span>Estimate</span><span>Bets</span><span>Expected</span><span>Actual</span></div>${C.bins.filter(x=>x.n).map(x=>`<div class="tr"><span>${x.lb}</span><span>${x.n}</span><span>${pct(x.est)}</span><span>${pct(x.act)}</span></div>`).join("")}</div>
      <div class="hint" style="margin-top:8px">If "Actual" keeps landing well below "Expected", Sharpline is overconfident and its edges should be trusted less.</div></div>`:""}
-  ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({n:b.name,t:b.tm,s:b.mkt,k:b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}${b.late?'<span class="late-tag">added late</span>':""} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
+  ${done.length?`<div class="eyebrow tk-h">Settled · ${done.length}</div><div class="list">${done.slice(0,40).map(b=>`<div class="tb done"><div class="tb-top"><div><div class="nm">${b.key[0]==="l"?"":`<span class="pfn" ${pfAttr({sp:b.sport==="nfl"?"nfl":"",n:b.name,t:b.tm,s:b.mkt,k:b.sport!=="nfl"&&b.date===DATA_DATE&&b.key[0]==="p"&&PROPS[+b.key.slice(1)]&&normN(PROPS[+b.key.slice(1)].p)===normN(b.name)?b.key:"",a:b.ath})}>${b.name}</span> · `}${b.pick}${b.late?'<span class="late-tag">added late</span>':""} <span class="rc r-${b.res}">${{W:"Won",L:"Lost",P:"Push",V:"Void"}[b.res]}</span></div>
      ${b.type==="parlay"&&window.TR2?TR2.legsHTML(b):""}<div class="sub">${b.auto?`<span class="autog">Auto-graded</span> ${b.gnote} · `:""}${b.date} · ${b.odds!=null?fmtAm(b.odds):"no odds"} · $${b.stake} · <b style="color:${profitOf(b)>0?"var(--over)":profitOf(b)<0?"var(--under)":"var(--mute)"}">${money(profitOf(b))}</b></div></div><button class="x" data-treopen="${b.id}" title="Reopen">↺</button></div></div>`).join("")}</div>`:""}
   ${unitHTML()}
   <div class="addall" style="justify-content:center;margin-top:14px"><button class="addbtn" data-csv="1">Export CSV</button></div>`;if(window.TR2&&TR2.extras)TR2.extras(box);if(window.LiveUI)LiveUI.paintTracker()}
