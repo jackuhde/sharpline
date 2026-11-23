@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T17:37:40.017Z",
+ "updated": "2026-11-23T17:40:30.443Z",
  "method": "walk-forward by week; validation and untouched test periods",
  "periods": {
   "validation": [
@@ -8,12 +8,12 @@
   ],
   "test": [
    "2026-11-16",
-   "2026-11-21"
+   "2026-11-22"
   ],
   "dataFrom": "2026-10-25"
  },
- "lines": 19887,
- "openingLines": 19887,
+ "lines": 20503,
+ "openingLines": 20503,
  "historicalPicks": {
   "note": "Reconstructed by replaying the pre-audit model and grade rules on DraftKings' real prices. The picks the app actually logged live on the user's phone (Tracker > Sharpline's record) and in their account, which this script cannot read.",
   "open": {
@@ -10933,9 +10933,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.015,
-     "t": 1,
-     "n": 4542
+     "r": 0.026,
+     "t": 1.9,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -10950,9 +10950,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.129,
+     "r": 0.122,
      "t": 8.7,
-     "n": 4542
+     "n": 5158
     }
    }
   },
@@ -10969,9 +10969,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.011,
-     "t": 0.7,
-     "n": 4542
+     "r": 0.018,
+     "t": 1.3,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -10986,9 +10986,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.12,
-     "t": 8.1,
-     "n": 4542
+     "r": 0.106,
+     "t": 7.6,
+     "n": 5158
     }
    }
   },
@@ -11005,9 +11005,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.012,
-     "t": -0.8,
-     "n": 4542
+     "r": -0.008,
+     "t": -0.6,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11022,9 +11022,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.073,
+     "r": 0.069,
      "t": 4.9,
-     "n": 4542
+     "n": 5158
     }
    }
   },
@@ -11041,9 +11041,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.01,
-     "t": -0.7,
-     "n": 4542
+     "r": -0.014,
+     "t": -1,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11058,9 +11058,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.189,
-     "t": 12.7,
-     "n": 4542
+     "r": 0.191,
+     "t": 13.7,
+     "n": 5158
     }
    }
   },
@@ -11077,9 +11077,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.004,
-     "t": -0.3,
-     "n": 4542
+     "r": -0.002,
+     "t": -0.1,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11094,9 +11094,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.002,
-     "t": 0.2,
-     "n": 4542
+     "r": 0,
+     "t": 0,
+     "n": 5158
     }
    }
   },
@@ -11113,9 +11113,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.005,
-     "t": 0.3,
-     "n": 4542
+     "r": -0.007,
+     "t": -0.5,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11130,9 +11130,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.004,
-     "t": -0.2,
-     "n": 4542
+     "r": -0.006,
+     "t": -0.4,
+     "n": 5158
     }
    }
   },
@@ -11149,9 +11149,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.051,
-     "t": -3.4,
-     "n": 4542
+     "r": -0.045,
+     "t": -3.2,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11166,9 +11166,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.054,
-     "t": -3.6,
-     "n": 4542
+     "r": -0.042,
+     "t": -3,
+     "n": 5158
     }
    }
   },
@@ -11185,9 +11185,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.009,
-     "t": -0.6,
-     "n": 4542
+     "r": -0.012,
+     "t": -0.9,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11202,9 +11202,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.142,
-     "t": 9.6,
-     "n": 4542
+     "r": 0.108,
+     "t": 7.8,
+     "n": 5158
     }
    }
   },
@@ -11221,9 +11221,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.059,
-     "t": -4,
-     "n": 4542
+     "r": -0.058,
+     "t": -4.1,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11238,9 +11238,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.01,
-     "t": -0.7,
-     "n": 4542
+     "r": 0.002,
+     "t": 0.1,
+     "n": 5158
     }
    }
   },
@@ -11257,9 +11257,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.013,
-     "t": -0.9,
-     "n": 4542
+     "r": -0.007,
+     "t": -0.5,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11274,9 +11274,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.018,
-     "t": -1.2,
-     "n": 4542
+     "r": 0.029,
+     "t": 2.1,
+     "n": 5158
     }
    }
   },
@@ -11293,9 +11293,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.014,
-     "t": -0.9,
-     "n": 4542
+     "r": 0.004,
+     "t": 0.3,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11310,9 +11310,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.019,
-     "t": 1.2,
-     "n": 4542
+     "r": 0.037,
+     "t": 2.7,
+     "n": 5158
     }
    }
   },
@@ -11329,9 +11329,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.049,
-     "t": 3.3,
-     "n": 4542
+     "r": 0.056,
+     "t": 4,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11346,9 +11346,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.015,
-     "t": 1,
-     "n": 4542
+     "r": 0.005,
+     "t": 0.3,
+     "n": 5158
     }
    }
   },
@@ -11365,9 +11365,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.004,
-     "t": -0.3,
-     "n": 4542
+     "r": -0.01,
+     "t": -0.7,
+     "n": 5158
     }
    },
    "predictsLineMove": {
@@ -11382,9 +11382,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.026,
-     "t": 1.8,
-     "n": 4542
+     "r": 0.023,
+     "t": 1.7,
+     "n": 5158
     }
    }
   }
@@ -11402,8 +11402,8 @@
     "overPriced": 49.9
    },
    "test": {
-    "n": 615,
-    "overWon": 48.9,
+    "n": 709,
+    "overWon": 48.7,
     "overPriced": 50
    }
   },
@@ -11419,9 +11419,9 @@
     "overPriced": 49.1
    },
    "test": {
-    "n": 479,
-    "overWon": 49.7,
-    "overPriced": 49.4
+    "n": 537,
+    "overWon": 50.3,
+    "overPriced": 49.5
    }
   },
   "Rebounds": {
@@ -11436,8 +11436,8 @@
     "overPriced": 49
    },
    "test": {
-    "n": 572,
-    "overWon": 48.3,
+    "n": 661,
+    "overWon": 48.9,
     "overPriced": 49.1
    }
   },
@@ -11453,8 +11453,8 @@
     "overPriced": 47.6
    },
    "test": {
-    "n": 501,
-    "overWon": 49.1,
+    "n": 574,
+    "overWon": 49,
     "overPriced": 48.2
    }
   },
@@ -11470,9 +11470,9 @@
     "overPriced": 48.8
    },
    "test": {
-    "n": 202,
-    "overWon": 44.1,
-    "overPriced": 49.4
+    "n": 222,
+    "overWon": 42.8,
+    "overPriced": 48.6
    }
   },
   "Blocks": {
@@ -11487,9 +11487,9 @@
     "overPriced": 49.1
    },
    "test": {
-    "n": 97,
-    "overWon": 41.2,
-    "overPriced": 48.3
+    "n": 103,
+    "overWon": 39.8,
+    "overPriced": 48
    }
   },
   "Pts+Ast": {
@@ -11504,8 +11504,8 @@
     "overPriced": 50
    },
    "test": {
-    "n": 499,
-    "overWon": 47.5,
+    "n": 560,
+    "overWon": 46.8,
     "overPriced": 50.1
    }
   },
@@ -11521,8 +11521,8 @@
     "overPriced": 50
    },
    "test": {
-    "n": 578,
-    "overWon": 49.1,
+    "n": 667,
+    "overWon": 48.9,
     "overPriced": 50.1
    }
   },
@@ -11538,7 +11538,7 @@
     "overPriced": 49.7
    },
    "test": {
-    "n": 491,
+    "n": 552,
     "overWon": 50.5,
     "overPriced": 49.8
    }
@@ -11555,29 +11555,29 @@
     "overPriced": 50
    },
    "test": {
-    "n": 508,
-    "overWon": 48.6,
+    "n": 573,
+    "overWon": 48,
     "overPriced": 50.1
    }
   }
  },
  "projectionError": {
-  "n": 9850,
+  "n": 10466,
   "line": {
-   "mae": 3.66,
+   "mae": 3.69,
    "bias": -0.19
   },
   "seasonAverage": {
-   "mae": 3.82,
-   "bias": -0.42
+   "mae": 3.84,
+   "bias": -0.44
   },
   "last10": {
-   "mae": 3.83,
-   "bias": -0.33
+   "mae": 3.86,
+   "bias": -0.34
   },
   "last5": {
-   "mae": 4.01,
-   "bias": -0.24
+   "mae": 4.04,
+   "bias": -0.25
   }
  },
  "report": {
@@ -12207,83 +12207,83 @@
    "test": {
     "original": {
      "prob": {
-      "n": 4542,
-      "brier": 0.245,
+      "n": 5158,
+      "brier": 0.246,
       "brierMarket": 0.246,
-      "logLoss": 0.6836,
-      "logLossMarket": 0.6843
+      "logLoss": 0.684,
+      "logLossMarket": 0.6846
      },
      "accuracy": {
       "allLeans": {
-       "n": 4096,
-       "won": 54.4,
+       "n": 4650,
+       "won": 54.1,
        "predicted": 52.9,
-       "roi": -1.1,
+       "roi": -1.8,
        "clv": -4.4
       },
       "overLeans": {
-       "n": 823,
-       "won": 56.7,
+       "n": 907,
+       "won": 56.3,
        "predicted": 52.9,
-       "roi": 2.1,
-       "clv": -2.8
+       "roi": 1.5,
+       "clv": -2.7
       },
       "underLeans": {
-       "n": 3273,
-       "won": 53.9,
+       "n": 3743,
+       "won": 53.5,
        "predicted": 52.9,
-       "roi": -1.9,
+       "roi": -2.6,
        "clv": -4.8
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 583,
+       "n": 652,
        "predicted": 44.8,
-       "won": 46.1
+       "won": 45.2
       },
       {
        "range": "48-50%",
-       "n": 645,
+       "n": 730,
        "predicted": 49.1,
-       "won": 51.5
+       "won": 51
       },
       {
        "range": "50-52%",
-       "n": 984,
+       "n": 1132,
        "predicted": 51,
-       "won": 51.2
+       "won": 51.9
       },
       {
        "range": "52-54%",
-       "n": 940,
+       "n": 1074,
        "predicted": 52.9,
-       "won": 56.7
+       "won": 55.6
       },
       {
        "range": "54-56%",
-       "n": 529,
+       "n": 597,
        "predicted": 54.8,
-       "won": 57.3
+       "won": 56.8
       },
       {
        "range": "56-58%",
-       "n": 247,
+       "n": 284,
        "predicted": 56.9,
-       "won": 57.1
+       "won": 56.7
       },
       {
        "range": "58-62%",
-       "n": 366,
+       "n": 409,
        "predicted": 59.9,
        "won": 60.1
       },
       {
        "range": "62-100%",
-       "n": 248,
-       "predicted": 65.4,
-       "won": 69
+       "n": 280,
+       "predicted": 65.3,
+       "won": 68.6
       }
      ],
      "picks": {
@@ -12309,101 +12309,101 @@
        "n": 0
       },
       "C": {
-       "n": 488,
-       "won": 50.6,
+       "n": 529,
+       "won": 51,
        "predicted": 53,
-       "roi": -5.2,
-       "clv": -3.2
+       "roi": -4.5,
+       "clv": -3.3
       },
       "D": {
-       "n": 1600,
-       "won": 53.3,
-       "predicted": 52.6,
-       "roi": -1.5,
+       "n": 1809,
+       "won": 52.5,
+       "predicted": 52.5,
+       "roi": -2.9,
        "clv": -3.6
       },
       "F": {
-       "n": 2454,
-       "won": 55.9,
-       "predicted": 52.5,
-       "roi": 1,
-       "clv": -5.2
+       "n": 2820,
+       "won": 55.6,
+       "predicted": 52.6,
+       "roi": 0.4,
+       "clv": -5
       }
      }
     },
     "current": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.246,
       "brierMarket": 0.246,
-      "logLoss": 0.6843,
-      "logLossMarket": 0.6843
+      "logLoss": 0.6846,
+      "logLossMarket": 0.6846
      },
      "accuracy": {
       "allLeans": {
-       "n": 4011,
+       "n": 4551,
        "won": 55.1,
        "predicted": 54.5,
-       "roi": -4.6,
+       "roi": -4.5,
        "clv": -5.9
       },
       "overLeans": {
-       "n": 1917,
+       "n": 2137,
        "won": 53.4,
        "predicted": 54.1,
-       "roi": -6.9,
+       "roi": -6.8,
        "clv": -6.3
       },
       "underLeans": {
-       "n": 2094,
+       "n": 2414,
        "won": 56.7,
-       "predicted": 54.9,
+       "predicted": 54.8,
        "roi": -2.4,
-       "clv": -5.5
+       "clv": -5.6
       }
      },
      "calibration": [
       {
        "range": "48-50%",
-       "n": 10,
+       "n": 11,
        "predicted": 49.7,
-       "won": 50
+       "won": 54.5
       },
       {
        "range": "50-52%",
-       "n": 1841,
+       "n": 2121,
        "predicted": 50.9,
-       "won": 51.1
+       "won": 51.6
       },
       {
        "range": "52-54%",
-       "n": 1199,
+       "n": 1344,
        "predicted": 52.7,
-       "won": 53.4
+       "won": 53.5
       },
       {
        "range": "54-56%",
-       "n": 449,
+       "n": 510,
        "predicted": 54.9,
-       "won": 54.1
+       "won": 54.9
       },
       {
        "range": "56-58%",
-       "n": 336,
+       "n": 372,
        "predicted": 57,
-       "won": 56
+       "won": 55.6
       },
       {
        "range": "58-62%",
-       "n": 397,
+       "n": 456,
        "predicted": 59.8,
-       "won": 61.7
+       "won": 61.4
       },
       {
        "range": "62-100%",
-       "n": 310,
-       "predicted": 65.4,
-       "won": 67.1
+       "n": 344,
+       "predicted": 65.3,
+       "won": 66.6
       }
      ],
      "picks": {
@@ -12432,278 +12432,278 @@
        "n": 0
       },
       "D": {
-       "n": 639,
+       "n": 720,
        "won": 64.3,
-       "predicted": 62.6,
-       "roi": -1.9,
-       "clv": -4.6
+       "predicted": 62.5,
+       "roi": -1.8,
+       "clv": -4.7
       },
       "F": {
-       "n": 3903,
-       "won": 52.7,
+       "n": 4438,
+       "won": 53,
        "predicted": 52.6,
-       "roi": -5.7,
+       "roi": -5.1,
        "clv": -6.2
       }
      }
     },
     "baseline": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.256,
       "brierMarket": 0.246,
-      "logLoss": 0.7081,
-      "logLossMarket": 0.6843
+      "logLoss": 0.7069,
+      "logLossMarket": 0.6846
      },
      "accuracy": {
       "allLeans": {
-       "n": 4393,
-       "won": 50.3,
+       "n": 4993,
+       "won": 50.6,
        "predicted": 58.5,
-       "roi": -6.2,
-       "clv": -5.1
+       "roi": -5.7,
+       "clv": -5.2
       },
       "overLeans": {
-       "n": 2009,
-       "won": 48.1,
-       "predicted": 57.4,
-       "roi": -9.3,
+       "n": 2226,
+       "won": 48.4,
+       "predicted": 57.3,
+       "roi": -8.7,
        "clv": -5.6
       },
       "underLeans": {
-       "n": 2384,
-       "won": 52.2,
-       "predicted": 59.4,
-       "roi": -3.6,
-       "clv": -4.8
+       "n": 2767,
+       "won": 52.4,
+       "predicted": 59.5,
+       "roi": -3.2,
+       "clv": -4.9
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 315,
-       "predicted": 43.8,
-       "won": 44.4
+       "n": 361,
+       "predicted": 43.9,
+       "won": 43.8
       },
       {
        "range": "48-50%",
-       "n": 226,
+       "n": 250,
        "predicted": 49.1,
-       "won": 41.6
+       "won": 42.4
       },
       {
        "range": "50-52%",
-       "n": 402,
+       "n": 454,
        "predicted": 51.1,
-       "won": 44.8
+       "won": 45.2
       },
       {
        "range": "52-54%",
-       "n": 534,
+       "n": 607,
        "predicted": 53,
        "won": 46.8
       },
       {
        "range": "54-56%",
-       "n": 489,
-       "predicted": 55,
-       "won": 48.7
+       "n": 553,
+       "predicted": 54.9,
+       "won": 49.7
       },
       {
        "range": "56-58%",
-       "n": 456,
+       "n": 518,
        "predicted": 57,
-       "won": 49.1
+       "won": 48.6
       },
       {
        "range": "58-62%",
-       "n": 806,
+       "n": 926,
        "predicted": 59.9,
-       "won": 54.2
+       "won": 55.4
       },
       {
        "range": "62-100%",
-       "n": 1314,
+       "n": 1489,
        "predicted": 68.2,
-       "won": 54.4
+       "won": 54.7
       }
      ],
      "picks": {
-      "n": 2976,
-      "won": 49.8,
+      "n": 3372,
+      "won": 50.5,
       "predicted": 61.1,
-      "roi": -6.6,
-      "clv": -4.9,
+      "roi": -5.3,
+      "clv": -4.8,
       "over": {
-       "n": 1313,
-       "won": 46.5,
-       "predicted": 59.9,
-       "roi": -11.5,
+       "n": 1446,
+       "won": 47.2,
+       "predicted": 59.8,
+       "roi": -10.3,
        "clv": -5.3
       },
       "under": {
-       "n": 1663,
-       "won": 52.3,
-       "predicted": 62,
-       "roi": -2.7,
+       "n": 1926,
+       "won": 53,
+       "predicted": 62.1,
+       "roi": -1.5,
        "clv": -4.5
       },
       "byStat": {
        "Points": {
-        "n": 441,
-        "won": 47.2,
-        "predicted": 61.3,
-        "roi": -11,
+        "n": 509,
+        "won": 47.9,
+        "predicted": 61.4,
+        "roi": -9.6,
         "clv": -4.3
        },
        "Assists": {
-        "n": 276,
+        "n": 309,
         "won": 54,
-        "predicted": 59.4,
-        "roi": 2.9,
-        "clv": -4.1
+        "predicted": 59.3,
+        "roi": 3.2,
+        "clv": -4.3
        },
        "Rebounds": {
-        "n": 362,
-        "won": 43.6,
+        "n": 413,
+        "won": 44.6,
         "predicted": 59.5,
-        "roi": -16.7,
+        "roi": -15.1,
         "clv": -4.4
        },
        "3-Pointers": {
-        "n": 345,
-        "won": 52.5,
-        "predicted": 62.7,
-        "roi": -4.1,
-        "clv": -4.7
+        "n": 395,
+        "won": 53.7,
+        "predicted": 63.1,
+        "roi": -2.4,
+        "clv": -4.6
        },
        "Steals": {
-        "n": 137,
-        "won": 51.8,
-        "predicted": 61.1,
-        "roi": -2,
-        "clv": -6.1
+        "n": 146,
+        "won": 52.7,
+        "predicted": 60.9,
+        "roi": 0.1,
+        "clv": -6.2
        },
        "Pts+Ast": {
-        "n": 334,
-        "won": 48.8,
-        "predicted": 61.8,
-        "roi": -8.4,
-        "clv": -5.9
+        "n": 378,
+        "won": 50,
+        "predicted": 61.7,
+        "roi": -6.2,
+        "clv": -5.7
        },
        "Pts+Reb": {
-        "n": 388,
-        "won": 51,
+        "n": 449,
+        "won": 52.1,
         "predicted": 62,
-        "roi": -4.4,
+        "roi": -2.4,
         "clv": -5.1
        },
        "Reb+Ast": {
-        "n": 296,
-        "won": 53.4,
+        "n": 325,
+        "won": 52.6,
         "predicted": 59.8,
-        "roi": 0,
-        "clv": -4
+        "roi": -1.6,
+        "clv": -4.1
        },
        "Pts+Reb+Ast": {
-        "n": 330,
-        "won": 52.1,
-        "predicted": 61.6,
-        "roi": -2.1,
-        "clv": -5.9
+        "n": 377,
+        "won": 52.5,
+        "predicted": 61.5,
+        "roi": -1.4,
+        "clv": -5.8
        },
        "Blocks": {
-        "n": 67,
-        "won": 34.3,
-        "predicted": 61.2,
-        "roi": -39.9,
-        "clv": -5.1
+        "n": 71,
+        "won": 38,
+        "predicted": 61.4,
+        "roi": -33.5,
+        "clv": -4.9
        }
       },
-      "samePlayerNights2plus": 558,
+      "samePlayerNights2plus": 639,
       "maxOnOnePlayer": 10
      },
      "byTier": null
     },
     "corrected": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.246,
       "brierMarket": 0.246,
-      "logLoss": 0.6844,
-      "logLossMarket": 0.6843
+      "logLoss": 0.6846,
+      "logLossMarket": 0.6846
      },
      "accuracy": {
       "allLeans": {
-       "n": 4056,
-       "won": 54.3,
+       "n": 4592,
+       "won": 54.6,
        "predicted": 54.1,
-       "roi": -4.6,
+       "roi": -4,
        "clv": -5.4
       },
       "overLeans": {
-       "n": 1888,
-       "won": 52.4,
+       "n": 2077,
+       "won": 52.8,
        "predicted": 53.8,
-       "roi": -7.4,
-       "clv": -5.8
+       "roi": -6.7,
+       "clv": -5.7
       },
       "underLeans": {
-       "n": 2168,
-       "won": 56,
+       "n": 2515,
+       "won": 56.1,
        "predicted": 54.3,
-       "roi": -2.2,
-       "clv": -5.1
+       "roi": -1.7,
+       "clv": -5.2
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 220,
+       "n": 243,
        "predicted": 46.9,
-       "won": 38.6
+       "won": 39.1
       },
       {
        "range": "48-50%",
-       "n": 699,
+       "n": 807,
        "predicted": 49.1,
-       "won": 49.9
+       "won": 50.4
       },
       {
        "range": "50-52%",
-       "n": 1134,
+       "n": 1294,
        "predicted": 51,
-       "won": 52.5
-      },
-      {
-       "range": "52-54%",
-       "n": 979,
-       "predicted": 52.9,
        "won": 52.9
       },
       {
+       "range": "52-54%",
+       "n": 1108,
+       "predicted": 52.9,
+       "won": 53.5
+      },
+      {
        "range": "54-56%",
-       "n": 417,
+       "n": 479,
        "predicted": 54.9,
-       "won": 52.8
+       "won": 53.9
       },
       {
        "range": "56-58%",
-       "n": 330,
+       "n": 366,
        "predicted": 57,
-       "won": 54.8
+       "won": 55.2
       },
       {
        "range": "58-62%",
-       "n": 414,
+       "n": 473,
        "predicted": 59.8,
-       "won": 61.6
+       "won": 60.5
       },
       {
        "range": "62-100%",
-       "n": 349,
-       "predicted": 65.6,
-       "won": 66.2
+       "n": 388,
+       "predicted": 65.5,
+       "won": 66
       }
      ],
      "picks": {
@@ -12732,28 +12732,28 @@
        "n": 0
       },
       "D": {
-       "n": 1935,
+       "n": 2199,
        "won": 55.9,
-       "predicted": 56.6,
-       "roi": -5.2,
-       "clv": -4.4
+       "predicted": 56.5,
+       "roi": -5.1,
+       "clv": -4.5
       },
       "F": {
-       "n": 2607,
-       "won": 51.9,
+       "n": 2959,
+       "won": 52.5,
        "predicted": 51.5,
-       "roi": -5.2,
+       "roi": -4.1,
        "clv": -6.2
       }
      }
     },
     "market": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.246,
       "brierMarket": 0.246,
-      "logLoss": 0.6843,
-      "logLossMarket": 0.6843
+      "logLoss": 0.6846,
+      "logLossMarket": 0.6846
      }
     }
    }
@@ -13366,81 +13366,201 @@
    "test": {
     "original": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.245,
       "brierMarket": 0.245,
-      "logLoss": 0.6828,
-      "logLossMarket": 0.6825
+      "logLoss": 0.6836,
+      "logLossMarket": 0.6834
      },
      "accuracy": {
       "allLeans": {
-       "n": 4120,
-       "won": 53.2,
+       "n": 4659,
+       "won": 52.8,
        "predicted": 52.7,
-       "roi": -3.3,
+       "roi": -4,
        "clv": null
       },
       "overLeans": {
-       "n": 864,
-       "won": 53.5,
+       "n": 959,
+       "won": 52.6,
        "predicted": 52.7,
-       "roi": -3.8,
+       "roi": -5.4,
        "clv": null
       },
       "underLeans": {
-       "n": 3256,
-       "won": 53.2,
+       "n": 3700,
+       "won": 52.9,
        "predicted": 52.7,
-       "roi": -3.2,
+       "roi": -3.7,
        "clv": null
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 608,
+       "n": 680,
        "predicted": 44.9,
-       "won": 40.1
+       "won": 40.3
       },
       {
        "range": "48-50%",
-       "n": 665,
+       "n": 777,
        "predicted": 49.1,
-       "won": 48.3
+       "won": 49.2
       },
       {
        "range": "50-52%",
-       "n": 1017,
+       "n": 1156,
        "predicted": 51,
-       "won": 51.3
+       "won": 51.2
       },
       {
        "range": "52-54%",
-       "n": 932,
-       "predicted": 53,
-       "won": 56.5
+       "n": 1049,
+       "predicted": 52.9,
+       "won": 55.2
       },
       {
        "range": "54-56%",
-       "n": 512,
+       "n": 575,
        "predicted": 54.9,
-       "won": 57.6
+       "won": 57
       },
       {
        "range": "56-58%",
-       "n": 255,
+       "n": 299,
        "predicted": 56.9,
-       "won": 55.7
+       "won": 54.2
       },
       {
        "range": "58-62%",
-       "n": 308,
+       "n": 350,
        "predicted": 59.8,
-       "won": 62.3
+       "won": 62.6
       },
       {
        "range": "62-100%",
-       "n": 245,
+       "n": 272,
+       "predicted": 65.1,
+       "won": 66.5
+      }
+     ],
+     "picks": {
+      "n": 0,
+      "over": {
+       "n": 0
+      },
+      "under": {
+       "n": 0
+      },
+      "byStat": {},
+      "samePlayerNights2plus": 0,
+      "maxOnOnePlayer": 0
+     },
+     "byTier": {
+      "S": {
+       "n": 0
+      },
+      "A": {
+       "n": 0
+      },
+      "B": {
+       "n": 0
+      },
+      "C": {
+       "n": 514,
+       "won": 49.6,
+       "predicted": 52.9,
+       "roi": -7,
+       "clv": null
+      },
+      "D": {
+       "n": 1742,
+       "won": 51.3,
+       "predicted": 52.5,
+       "roi": -5.4,
+       "clv": null
+      },
+      "F": {
+       "n": 2902,
+       "won": 54.1,
+       "predicted": 52.3,
+       "roi": -2.3,
+       "clv": null
+      }
+     }
+    },
+    "current": {
+     "prob": {
+      "n": 5158,
+      "brier": 0.245,
+      "brierMarket": 0.245,
+      "logLoss": 0.6834,
+      "logLossMarket": 0.6834
+     },
+     "accuracy": {
+      "allLeans": {
+       "n": 4616,
+       "won": 56.6,
+       "predicted": 54.3,
+       "roi": -1.6,
+       "clv": null
+      },
+      "overLeans": {
+       "n": 2223,
+       "won": 55.9,
+       "predicted": 54,
+       "roi": -2.2,
+       "clv": null
+      },
+      "underLeans": {
+       "n": 2393,
+       "won": 57.3,
+       "predicted": 54.7,
+       "roi": -1,
+       "clv": null
+      }
+     },
+     "calibration": [
+      {
+       "range": "48-50%",
+       "n": 8,
+       "predicted": 49.6,
+       "won": 62.5
+      },
+      {
+       "range": "50-52%",
+       "n": 2150,
+       "predicted": 51,
+       "won": 51.8
+      },
+      {
+       "range": "52-54%",
+       "n": 1313,
+       "predicted": 52.7,
+       "won": 57.1
+      },
+      {
+       "range": "54-56%",
+       "n": 574,
+       "predicted": 54.9,
+       "won": 57.7
+      },
+      {
+       "range": "56-58%",
+       "n": 364,
+       "predicted": 57,
+       "won": 56
+      },
+      {
+       "range": "58-62%",
+       "n": 427,
+       "predicted": 59.8,
+       "won": 63.2
+      },
+      {
+       "range": "62-100%",
+       "n": 322,
        "predicted": 65.2,
        "won": 66.1
       }
@@ -13468,401 +13588,281 @@
        "n": 0
       },
       "C": {
-       "n": 475,
-       "won": 49.1,
-       "predicted": 52.8,
-       "roi": -8,
-       "clv": null
-      },
-      "D": {
-       "n": 1551,
-       "won": 51.9,
-       "predicted": 52.6,
-       "roi": -4.5,
-       "clv": null
-      },
-      "F": {
-       "n": 2516,
-       "won": 54.3,
-       "predicted": 52.3,
-       "roi": -1.8,
-       "clv": null
-      }
-     }
-    },
-    "current": {
-     "prob": {
-      "n": 4542,
-      "brier": 0.245,
-      "brierMarket": 0.245,
-      "logLoss": 0.6825,
-      "logLossMarket": 0.6825
-     },
-     "accuracy": {
-      "allLeans": {
-       "n": 4060,
-       "won": 57.4,
-       "predicted": 54.4,
-       "roi": -0.3,
-       "clv": null
-      },
-      "overLeans": {
-       "n": 1958,
-       "won": 56.7,
-       "predicted": 54,
-       "roi": -0.7,
-       "clv": null
-      },
-      "underLeans": {
-       "n": 2102,
-       "won": 57.9,
-       "predicted": 54.7,
-       "roi": 0.1,
-       "clv": null
-      }
-     },
-     "calibration": [
-      {
-       "range": "48-50%",
-       "n": 8,
-       "predicted": 49.6,
-       "won": 62.5
-      },
-      {
-       "range": "50-52%",
-       "n": 1890,
-       "predicted": 51,
-       "won": 52.2
-      },
-      {
-       "range": "52-54%",
-       "n": 1150,
-       "predicted": 52.7,
-       "won": 57.7
-      },
-      {
-       "range": "54-56%",
-       "n": 510,
-       "predicted": 55,
-       "won": 59.4
-      },
-      {
-       "range": "56-58%",
-       "n": 322,
-       "predicted": 57,
-       "won": 56.8
-      },
-      {
-       "range": "58-62%",
-       "n": 374,
-       "predicted": 59.8,
-       "won": 63.4
-      },
-      {
-       "range": "62-100%",
-       "n": 288,
-       "predicted": 65.3,
-       "won": 66
-      }
-     ],
-     "picks": {
-      "n": 0,
-      "over": {
-       "n": 0
-      },
-      "under": {
-       "n": 0
-      },
-      "byStat": {},
-      "samePlayerNights2plus": 0,
-      "maxOnOnePlayer": 0
-     },
-     "byTier": {
-      "S": {
-       "n": 0
-      },
-      "A": {
-       "n": 0
-      },
-      "B": {
-       "n": 0
-      },
-      "C": {
        "n": 0
       },
       "D": {
-       "n": 579,
-       "won": 65.1,
-       "predicted": 62.7,
-       "roi": -0.6,
+       "n": 652,
+       "won": 65.2,
+       "predicted": 62.6,
+       "roi": -0.4,
        "clv": null
       },
       "F": {
-       "n": 3963,
-       "won": 55.3,
+       "n": 4506,
+       "won": 54.6,
        "predicted": 52.6,
-       "roi": -1.1,
+       "roi": -2.3,
        "clv": null
       }
      }
     },
     "baseline": {
      "prob": {
-      "n": 4542,
-      "brier": 0.257,
+      "n": 5158,
+      "brier": 0.255,
       "brierMarket": 0.245,
-      "logLoss": 0.708,
-      "logLossMarket": 0.6825
+      "logLoss": 0.7051,
+      "logLossMarket": 0.6834
      },
      "accuracy": {
       "allLeans": {
-       "n": 4398,
-       "won": 50,
+       "n": 5002,
+       "won": 50.6,
        "predicted": 58.7,
-       "roi": -6.9,
+       "roi": -5.7,
        "clv": null
       },
       "overLeans": {
-       "n": 2084,
-       "won": 48.6,
-       "predicted": 57.6,
-       "roi": -8.8,
+       "n": 2310,
+       "won": 49,
+       "predicted": 57.5,
+       "roi": -8,
        "clv": null
       },
       "underLeans": {
-       "n": 2314,
-       "won": 51.4,
-       "predicted": 59.7,
-       "roi": -5.1,
+       "n": 2692,
+       "won": 52.1,
+       "predicted": 59.8,
+       "roi": -3.8,
        "clv": null
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 324,
+       "n": 361,
        "predicted": 44.1,
-       "won": 44.1
+       "won": 43.5
       },
       {
        "range": "48-50%",
-       "n": 230,
-       "predicted": 49.1,
-       "won": 36.5
+       "n": 260,
+       "predicted": 49,
+       "won": 38.5
       },
       {
        "range": "50-52%",
-       "n": 389,
+       "n": 432,
        "predicted": 51.1,
-       "won": 44.2
+       "won": 43.5
       },
       {
        "range": "52-54%",
-       "n": 508,
+       "n": 582,
        "predicted": 53,
-       "won": 49.4
+       "won": 49.1
       },
       {
        "range": "54-56%",
-       "n": 504,
+       "n": 575,
        "predicted": 55,
-       "won": 49.4
+       "won": 50.1
       },
       {
        "range": "56-58%",
-       "n": 446,
+       "n": 506,
        "predicted": 57,
-       "won": 50.7
+       "won": 51.2
       },
       {
        "range": "58-62%",
-       "n": 776,
+       "n": 892,
        "predicted": 59.9,
-       "won": 50.3
+       "won": 52
       },
       {
        "range": "62-100%",
-       "n": 1365,
-       "predicted": 68.4,
-       "won": 54.9
+       "n": 1550,
+       "predicted": 68.5,
+       "won": 55.5
       }
      ],
      "picks": {
-      "n": 3033,
-      "won": 49.2,
-      "predicted": 61.2,
-      "roi": -7.8,
+      "n": 3441,
+      "won": 50.6,
+      "predicted": 61.3,
+      "roi": -5.2,
       "clv": null,
       "over": {
-       "n": 1383,
-       "won": 47.1,
-       "predicted": 60,
-       "roi": -11,
+       "n": 1529,
+       "won": 47.9,
+       "predicted": 59.9,
+       "roi": -9.4,
        "clv": null
       },
       "under": {
-       "n": 1650,
-       "won": 51,
-       "predicted": 62.3,
-       "roi": -5.1,
+       "n": 1912,
+       "won": 52.7,
+       "predicted": 62.4,
+       "roi": -1.9,
        "clv": null
       },
       "byStat": {
        "Points": {
-        "n": 442,
-        "won": 48.2,
-        "predicted": 61.7,
-        "roi": -9,
+        "n": 506,
+        "won": 49,
+        "predicted": 61.8,
+        "roi": -7.5,
         "clv": null
        },
        "Assists": {
-        "n": 290,
-        "won": 49.3,
-        "predicted": 59,
-        "roi": -6.1,
+        "n": 327,
+        "won": 49.5,
+        "predicted": 58.9,
+        "roi": -5.6,
         "clv": null
        },
        "Rebounds": {
-        "n": 368,
-        "won": 41.3,
-        "predicted": 60.1,
-        "roi": -22.9,
+        "n": 425,
+        "won": 43.5,
+        "predicted": 59.9,
+        "roi": -18.5,
         "clv": null
        },
        "3-Pointers": {
-        "n": 341,
-        "won": 49.6,
-        "predicted": 62.8,
-        "roi": -9.7,
+        "n": 394,
+        "won": 51.3,
+        "predicted": 63.1,
+        "roi": -7.1,
         "clv": null
        },
        "Steals": {
-        "n": 140,
-        "won": 48.6,
-        "predicted": 58.6,
-        "roi": -4.5,
+        "n": 150,
+        "won": 49.3,
+        "predicted": 58.5,
+        "roi": -2.7,
         "clv": null
        },
        "Pts+Ast": {
-        "n": 347,
-        "won": 53,
-        "predicted": 62.2,
-        "roi": -0.8,
+        "n": 387,
+        "won": 54.3,
+        "predicted": 62.3,
+        "roi": 1.6,
         "clv": null
        },
        "Pts+Reb": {
-        "n": 395,
-        "won": 50.6,
-        "predicted": 62.2,
-        "roi": -5.1,
+        "n": 457,
+        "won": 52.7,
+        "predicted": 62.3,
+        "roi": -1.1,
         "clv": null
        },
        "Reb+Ast": {
-        "n": 304,
-        "won": 52,
-        "predicted": 59.8,
-        "roi": -2,
+        "n": 341,
+        "won": 52.5,
+        "predicted": 59.9,
+        "roi": -1.1,
         "clv": null
        },
        "Pts+Reb+Ast": {
-        "n": 339,
-        "won": 52.5,
-        "predicted": 62.3,
-        "roi": -1.9,
+        "n": 383,
+        "won": 54.6,
+        "predicted": 62.2,
+        "roi": 2,
         "clv": null
        },
        "Blocks": {
-        "n": 67,
-        "won": 40.3,
-        "predicted": 62.7,
-        "roi": -30.2,
+        "n": 71,
+        "won": 43.7,
+        "predicted": 62.8,
+        "roi": -24.7,
         "clv": null
        }
       },
-      "samePlayerNights2plus": 570,
+      "samePlayerNights2plus": 648,
       "maxOnOnePlayer": 10
      },
      "byTier": null
     },
     "corrected": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.245,
       "brierMarket": 0.245,
-      "logLoss": 0.6825,
-      "logLossMarket": 0.6825
+      "logLoss": 0.6833,
+      "logLossMarket": 0.6834
      },
      "accuracy": {
       "allLeans": {
-       "n": 4068,
-       "won": 54.4,
-       "predicted": 54,
-       "roi": -4.5,
+       "n": 4621,
+       "won": 54.8,
+       "predicted": 53.9,
+       "roi": -3.6,
        "clv": null
       },
       "overLeans": {
-       "n": 1937,
-       "won": 53.2,
+       "n": 2159,
+       "won": 53.5,
        "predicted": 53.7,
-       "roi": -5.8,
+       "roi": -5.2,
        "clv": null
       },
       "underLeans": {
-       "n": 2131,
-       "won": 55.4,
+       "n": 2462,
+       "won": 55.9,
        "predicted": 54.2,
-       "roi": -3.2,
+       "roi": -2.1,
        "clv": null
       }
      },
      "calibration": [
       {
        "range": "0-48%",
-       "n": 216,
+       "n": 246,
        "predicted": 46.9,
-       "won": 37.5
+       "won": 39.8
       },
       {
        "range": "48-50%",
-       "n": 720,
+       "n": 817,
        "predicted": 49.1,
-       "won": 44.3
+       "won": 46.6
       },
       {
        "range": "50-52%",
-       "n": 1128,
+       "n": 1288,
        "predicted": 51,
-       "won": 52.3
+       "won": 53.1
       },
       {
        "range": "52-54%",
-       "n": 953,
+       "n": 1080,
        "predicted": 52.9,
        "won": 55.4
       },
       {
        "range": "54-56%",
-       "n": 489,
+       "n": 563,
        "predicted": 55,
-       "won": 60.3
+       "won": 58.4
       },
       {
        "range": "56-58%",
-       "n": 321,
+       "n": 354,
        "predicted": 57,
-       "won": 55.8
+       "won": 55.4
       },
       {
        "range": "58-62%",
-       "n": 373,
+       "n": 429,
        "predicted": 59.7,
-       "won": 61.7
+       "won": 61.5
       },
       {
        "range": "62-100%",
-       "n": 342,
-       "predicted": 65.4,
-       "won": 64.9
+       "n": 381,
+       "predicted": 65.3,
+       "won": 65.1
       }
      ],
      "picks": {
@@ -13891,28 +13891,28 @@
        "n": 0
       },
       "D": {
-       "n": 1956,
-       "won": 56.3,
-       "predicted": 56.3,
-       "roi": -4,
+       "n": 2219,
+       "won": 56.6,
+       "predicted": 56.2,
+       "roi": -3.4,
        "clv": null
       },
       "F": {
-       "n": 2586,
-       "won": 51.9,
+       "n": 2939,
+       "won": 52.5,
        "predicted": 51.5,
-       "roi": -5.4,
+       "roi": -4.2,
        "clv": null
       }
      }
     },
     "market": {
      "prob": {
-      "n": 4542,
+      "n": 5158,
       "brier": 0.245,
       "brierMarket": 0.245,
-      "logLoss": 0.6825,
-      "logLossMarket": 0.6825
+      "logLoss": 0.6834,
+      "logLossMarket": 0.6834
      }
     }
    }
@@ -13920,7 +13920,7 @@
  },
  "priceShopping": {
   "note": "DraftKings opening price on props whose line or price later moved, priced from the later DraftKings price, settled at the old number",
-  "n": 16850,
+  "n": 17371,
   "oldCuts": {
    "beforeTest": {
     "S": {
@@ -14012,45 +14012,45 @@
    },
    "test": {
     "S": {
-     "n": 321,
-     "won": 64.2,
-     "predicted": 63.2,
-     "roi": 21.7,
+     "n": 376,
+     "won": 62,
+     "predicted": 63.3,
+     "roi": 17.6,
      "clv": null
     },
     "A": {
-     "n": 270,
-     "won": 67,
+     "n": 298,
+     "won": 66.8,
      "predicted": 58.3,
-     "roi": 27,
+     "roi": 26.3,
      "clv": null
     },
     "B": {
-     "n": 265,
-     "won": 57.4,
+     "n": 318,
+     "won": 55.3,
      "predicted": 56.6,
-     "roi": 7.7,
+     "roi": 3.9,
      "clv": null
     },
     "C": {
-     "n": 277,
-     "won": 55.6,
+     "n": 314,
+     "won": 53.8,
      "predicted": 56.3,
-     "roi": 2.3,
+     "roi": -0.9,
      "clv": null
     },
     "D": {
-     "n": 2399,
-     "won": 50.9,
+     "n": 2702,
+     "won": 50.7,
      "predicted": 53.1,
-     "roi": -5.2,
+     "roi": -5.6,
      "clv": null
     },
     "F": {
-     "n": 360,
-     "won": 53.6,
+     "n": 405,
+     "won": 54.8,
      "predicted": 51.4,
-     "roi": -3.3,
+     "roi": -1.3,
      "clv": null
     }
    }
@@ -14146,45 +14146,45 @@
    },
    "test": {
     "S": {
-     "n": 86,
-     "won": 66.3,
+     "n": 99,
+     "won": 64.6,
      "predicted": 63.5,
-     "roi": 28.2,
+     "roi": 24.5,
      "clv": null
     },
     "A": {
-     "n": 108,
-     "won": 64.8,
-     "predicted": 58.6,
-     "roi": 24.9,
+     "n": 118,
+     "won": 62.7,
+     "predicted": 58.5,
+     "roi": 21.3,
      "clv": null
     },
     "B": {
-     "n": 662,
-     "won": 62.2,
-     "predicted": 59.3,
-     "roi": 16.9,
+     "n": 775,
+     "won": 60.6,
+     "predicted": 59.4,
+     "roi": 13.9,
      "clv": null
     },
     "C": {
-     "n": 277,
-     "won": 55.6,
+     "n": 314,
+     "won": 53.8,
      "predicted": 56.3,
-     "roi": 2.3,
+     "roi": -0.9,
      "clv": null
     },
     "D": {
-     "n": 2399,
-     "won": 50.9,
+     "n": 2702,
+     "won": 50.7,
      "predicted": 53.1,
-     "roi": -5.2,
+     "roi": -5.6,
      "clv": null
     },
     "F": {
-     "n": 360,
-     "won": 53.6,
+     "n": 405,
+     "won": 54.8,
      "predicted": 51.4,
-     "roi": -3.3,
+     "roi": -1.3,
      "clv": null
     }
    }
@@ -14291,13 +14291,13 @@
   "lambda": 200,
   "intercept": "none",
   "weights": {
-   "gapS": 0.0476,
-   "gap10": 0.0373,
-   "gap5": 0.008
+   "gapS": 0.0521,
+   "gap10": 0.0314,
+   "gap5": 0.0086
   },
-  "sdResidual": 0.2318,
-  "r2": 0.018,
-  "n": 19887,
+  "sdResidual": 0.2326,
+  "r2": 0.017,
+  "n": 20503,
   "byWeek": [
    {
     "week": [
@@ -14320,10 +14320,10 @@
    {
     "week": [
      "2026-11-16",
-     "2026-11-21"
+     "2026-11-22"
     ],
-    "n": 4542,
-    "r2": 0.013,
+    "n": 5158,
+    "r2": 0.011,
     "fitOn": 15345
    }
   ]
