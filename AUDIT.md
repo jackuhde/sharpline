@@ -1,7 +1,7 @@
 # NBA pick review and model correction, Nov 23 2026
 
 Reproduce with `node scripts/props-model/review.mjs` (writes data/nba/review.json); tests in `node tests/model-review.test.mjs`.
-Method: walk-forward by week (each week priced only by models, calibration and k fit on earlier weeks). Validation week: Nov 9 to 15 (used for every choice). Untouched test week: Nov 16 to 21 (scored once, after every choice was fixed). 19,887 graded DraftKings lines from Oct 25 to Nov 21; 13,694 also have the opening line and prices. Postgame numbers (minutes played, final margin) are used only to describe misses, never as inputs.
+Method: walk-forward by week (each week priced only by models, calibration and k fit on earlier weeks). Validation week: Nov 9 to 15 (used for every choice). Untouched test week: Nov 16 to 22 (scored once, after every choice was fixed). 20,503 graded DraftKings lines from Oct 25 to Nov 22, with opening and closing lines and prices. Postgame numbers (minutes played, final margin) are used only to describe misses, never as inputs.
 
 ## 1. Historical picks reviewed
 
@@ -55,9 +55,9 @@ Log loss on every market (lower is better; DraftKings' own no-vig price for comp
 | | Original | Nov 22 | Corrected | Season-average baseline | DraftKings |
 |---|---|---|---|---|---|
 | Opening prices, validation | 0.6879 | 0.6880 | 0.6882 | 0.7230 | 0.6880 |
-| Opening prices, test | 0.6836 | 0.6843 | 0.6844 | 0.7081 | 0.6843 |
+| Opening prices, test | 0.6840 | 0.6846 | 0.6846 | 0.7069 | 0.6846 |
 | Closing prices, validation | 0.6900 | 0.6895 | 0.6900 | 0.7318 | 0.6895 |
-| Closing prices, test | 0.6828 | 0.6825 | 0.6825 | 0.7080 | 0.6825 |
+| Closing prices, test | 0.6836 | 0.6834 | 0.6833 | 0.7051 | 0.6834 |
 
 **The corrected model does not predict results better than DraftKings' price.** Neither does any other version; the baseline is clearly worse. What it does predict is where DraftKings' price is heading. At DraftKings' own price that move is smaller than the vig, so on a DraftKings-only slate it grades D or F, and it says so instead of forcing picks.
 
@@ -73,14 +73,14 @@ At DraftKings' own price, tiers are almost all D and F (nothing to beat). Tiers 
 
 | Tier | Before test week (cut points chosen here) | Test week (untouched) |
 |---|---|---|
-| S | 103 bets, 56.3% won, +13.2% | 86, 66.3%, **+28.2%** |
-| A | 260, 64.2%, +24.1% | 108, 64.8%, **+24.9%** |
-| B | 1,206, 60.9%, +14.5% | 662, 62.2%, **+16.9%** |
-| C | 479, 55.3%, +3.9% | 277, 55.6%, **+2.3%** |
-| D | 9,761, 53.7%, +0.4% | 2,399, 50.9%, **-5.2%** |
-| F | 1,149, 51.6%, -6.6% | 360, 53.6%, **-3.3%** |
+| S | 103 bets, 56.3% won, +13.2% | 99, 64.6%, **+24.5%** |
+| A | 260, 64.2%, +24.1% | 118, 62.7%, **+21.3%** |
+| B | 1,206, 60.9%, +14.5% | 775, 60.6%, **+13.9%** |
+| C | 479, 55.3%, +3.9% | 314, 53.8%, **-0.9%** |
+| D | 9,761, 53.7%, +0.4% | 2,702, 50.7%, **-5.6%** |
+| F | 1,149, 51.6%, -6.6% | 405, 54.8%, **-1.3%** |
 
-With the old cut points the test week ran S +21.7%, A +27.0% (S below A). With the new ones the test week runs S > A > B > C > D/F.
+With the old cut points the test week ran S +17.6%, A +26.3%, B +3.9% (S below A). With the new ones the test week runs S > A > B > C, and D and F are both negative (F slightly less so, -1.3% vs -5.6%).
 
 **Not yet proven:** before the test week S trailed A (+13.2% vs +24.1%, on 103 S bets). S won 56% against 64% predicted; S is about 9 points of ROI noise either way at that size, so this is unresolved and is tracked.
 
