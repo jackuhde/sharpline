@@ -19,7 +19,8 @@ window.pfAttr=o=>`data-prof="${esc(new URLSearchParams(Object.entries(o).filter(
 window.pfKeyAttr=key=>{if(!key)return"";const k=key[0];if(k==="p"&&PROPS[+key.slice(1)])return pfAttr({k:key});if(k==="c"){const C=custOf(+key.slice(1));if(C)return pfAttr({n:C.p,t:C.tm,s:C.st})}return""};
 
 /* ---------- open / close ---------- */
-window.openProfile=function(o){let name=o.n,tm=o.t,st=o.s,key=o.k||null,gi=-1;
+window.openProfile=function(o){if(o.sp==="nfl"&&window.NFL){if(o.a)return NFL.openProfileId(o.a);const id=NFL.N.stats&&Object.keys(NFL.N.stats.ath).find(k=>normN(NFL.N.stats.ath[k][0])===normN(o.n||""));if(id)return NFL.openProfileId(id);if(window.toast)toast("NFL data is still loading; open the NFL tab and try again");return}
+  let name=o.n,tm=o.t,st=o.s,key=o.k||null,gi=-1;
   if(key&&key[0]==="p"){const x=PROPS[+key.slice(1)];if(x){name=x.p;tm=x.tm;st=x.st;gi=x.g}else key=null}
   if(!name)return;const id=o.a||athIdOf(name);
   if(!tm&&id&&LIVE.ids[id]){const T=LIVE.ids[id].tm;Object.keys(LIVE.ev).forEach(g=>{const e=LIVE.ev[g];if(e.homeId===T)tm=SNAP[g].home;if(e.awayId===T)tm=SNAP[g].away})}
