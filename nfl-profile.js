@@ -88,7 +88,7 @@ function heroHTML(id,a,e,c){const {T,h,N,nflAvatar}=X(),tm=T(a[2]),pos=a[1];cons
   return`<header class="pf-hero" style="--c1:${tm[2]};--c2:${tm[3]}"><div class="pf-av">${nflAvatar(id)}</div>
     <div class="pf-id"><div class="eyebrow">${h(tm[0])} · ${h(pos||"–")}${a[3]?" · #"+h(a[3]):""} · ${h(N.stats.season)} season</div><h2>${h(a[0])}</h2>
       <div class="pf-mu"><span class="nfp-tm">${X().logo(a[2])}${h(tm[1])}</span>
-      ${e&&c?`${c.side==="home"?"vs":"@"} ${h(opp[1])}<span>${when}${odds?" · "+odds:""}</span>`:`<span>No game for ${h(tm[4]||tm[0])} in week ${h(N.week)}${N.bye&&N.bye.includes(tm[0])?" (bye)":""}</span>`}</div></div></header>`}
+      ${e&&c?`${c.side==="home"?"vs":"@"} ${h(opp[1])}<span>${when}${odds?" · "+odds:""}</span>`:`<span>${!N.events.length?"This week's schedule hasn't loaded from ESPN yet":`No game for ${h(tm[4]||tm[0])} in week ${h(N.week)}${N.bye&&N.bye.includes(tm[0])?" (bye)":""}`}</span>`}</div></div></header>`}
 
 function statusHTML(id,a,e){const {N,h,ago}=X(),inj=N.inj[id];let s="";
   if(inj){const lv=inj.lv==="out"?"out":inj.lv==="doubt"?"doubt":inj.lv==="quest"?"quest":"";s+=`<span class="pf-chip ${lv?"inj-"+lv:""}">${h(inj.st)}</span><span class="pf-note">${h(inj.txt||"")}${inj.date?` · ESPN injury report, ${new Date(inj.date).toLocaleDateString([],{month:"short",day:"numeric"})}`:""}</span>`}
