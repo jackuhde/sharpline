@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T21:40:09.433Z",
+ "updated": "2026-11-24T20:21:47.166Z",
  "method": "walk-forward by week; validation and untouched test periods",
  "periods": {
   "validation": [
@@ -12,8 +12,8 @@
   ],
   "dataFrom": "2026-10-25"
  },
- "lines": 20503,
- "openingLines": 20503,
+ "lines": 21473,
+ "openingLines": 21473,
  "historicalPicks": {
   "note": "Reconstructed by replaying the pre-audit model and grade rules on DraftKings' real prices. The picks the app actually logged live on the user's phone (Tracker > Sharpline's record) and in their account, which this script cannot read.",
   "open": {
@@ -10933,9 +10933,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.026,
-     "t": 1.9,
-     "n": 5158
+     "r": 0.021,
+     "t": 1.7,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -10950,9 +10950,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.122,
-     "t": 8.7,
-     "n": 5158
+     "r": 0.123,
+     "t": 9.6,
+     "n": 6128
     }
    }
   },
@@ -10969,9 +10969,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.018,
-     "t": 1.3,
-     "n": 5158
+     "r": 0.016,
+     "t": 1.2,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -10986,9 +10986,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.106,
-     "t": 7.6,
-     "n": 5158
+     "r": 0.104,
+     "t": 8.1,
+     "n": 6128
     }
    }
   },
@@ -11005,9 +11005,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.008,
-     "t": -0.6,
-     "n": 5158
+     "r": -0.002,
+     "t": -0.2,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11022,9 +11022,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.069,
-     "t": 4.9,
-     "n": 5158
+     "r": 0.073,
+     "t": 5.7,
+     "n": 6128
     }
    }
   },
@@ -11041,9 +11041,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.014,
-     "t": -1,
-     "n": 5158
+     "r": -0.008,
+     "t": -0.6,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11058,9 +11058,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.191,
-     "t": 13.7,
-     "n": 5158
+     "r": 0.19,
+     "t": 14.8,
+     "n": 6128
     }
    }
   },
@@ -11077,9 +11077,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.002,
+     "r": -0.001,
      "t": -0.1,
-     "n": 5158
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11094,9 +11094,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0,
-     "t": 0,
-     "n": 5158
+     "r": -0.001,
+     "t": -0.1,
+     "n": 6128
     }
    }
   },
@@ -11113,9 +11113,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.007,
-     "t": -0.5,
-     "n": 5158
+     "r": -0.01,
+     "t": -0.8,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11130,9 +11130,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.006,
-     "t": -0.4,
-     "n": 5158
+     "r": -0.007,
+     "t": -0.6,
+     "n": 6128
     }
    }
   },
@@ -11149,9 +11149,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.045,
-     "t": -3.2,
-     "n": 5158
+     "r": -0.037,
+     "t": -2.9,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11166,9 +11166,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.042,
-     "t": -3,
-     "n": 5158
+     "r": -0.048,
+     "t": -3.8,
+     "n": 6128
     }
    }
   },
@@ -11185,9 +11185,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.012,
-     "t": -0.9,
-     "n": 5158
+     "r": -0.014,
+     "t": -1.1,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11202,9 +11202,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.108,
-     "t": 7.8,
-     "n": 5158
+     "r": 0.088,
+     "t": 6.9,
+     "n": 6128
     }
    }
   },
@@ -11221,9 +11221,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.058,
-     "t": -4.1,
-     "n": 5158
+     "r": -0.043,
+     "t": -3.4,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11238,9 +11238,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.002,
-     "t": 0.1,
-     "n": 5158
+     "r": 0.028,
+     "t": 2.2,
+     "n": 6128
     }
    }
   },
@@ -11257,9 +11257,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.007,
-     "t": -0.5,
-     "n": 5158
+     "r": 0.001,
+     "t": 0.1,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11274,9 +11274,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.029,
-     "t": 2.1,
-     "n": 5158
+     "r": 0.02,
+     "t": 1.6,
+     "n": 6128
     }
    }
   },
@@ -11293,9 +11293,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.004,
-     "t": 0.3,
-     "n": 5158
+     "r": -0.004,
+     "t": -0.3,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11310,9 +11310,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.037,
-     "t": 2.7,
-     "n": 5158
+     "r": 0.041,
+     "t": 3.2,
+     "n": 6128
     }
    }
   },
@@ -11329,9 +11329,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.056,
-     "t": 4,
-     "n": 5158
+     "r": 0.052,
+     "t": 4.1,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11346,9 +11346,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.005,
-     "t": 0.3,
-     "n": 5158
+     "r": -0.001,
+     "t": -0.1,
+     "n": 6128
     }
    }
   },
@@ -11365,9 +11365,9 @@
      "n": 5308
     },
     "test": {
-     "r": -0.01,
-     "t": -0.7,
-     "n": 5158
+     "r": -0.008,
+     "t": -0.6,
+     "n": 6128
     }
    },
    "predictsLineMove": {
@@ -11382,9 +11382,9 @@
      "n": 5308
     },
     "test": {
-     "r": 0.023,
-     "t": 1.7,
-     "n": 5158
+     "r": 0.024,
+     "t": 1.9,
+     "n": 6128
     }
    }
   }
@@ -11402,9 +11402,9 @@
     "overPriced": 49.9
    },
    "test": {
-    "n": 709,
-    "overWon": 48.7,
-    "overPriced": 50
+    "n": 849,
+    "overWon": 49.1,
+    "overPriced": 49.9
    }
   },
   "Assists": {
@@ -11419,9 +11419,9 @@
     "overPriced": 49.1
    },
    "test": {
-    "n": 537,
-    "overWon": 50.3,
-    "overPriced": 49.5
+    "n": 639,
+    "overWon": 52.1,
+    "overPriced": 49.6
    }
   },
   "Rebounds": {
@@ -11436,8 +11436,8 @@
     "overPriced": 49
    },
    "test": {
-    "n": 661,
-    "overWon": 48.9,
+    "n": 790,
+    "overWon": 48.7,
     "overPriced": 49.1
    }
   },
@@ -11453,9 +11453,9 @@
     "overPriced": 47.6
    },
    "test": {
-    "n": 574,
-    "overWon": 49,
-    "overPriced": 48.2
+    "n": 686,
+    "overWon": 49.6,
+    "overPriced": 48.4
    }
   },
   "Steals": {
@@ -11470,8 +11470,8 @@
     "overPriced": 48.8
    },
    "test": {
-    "n": 222,
-    "overWon": 42.8,
+    "n": 250,
+    "overWon": 42,
     "overPriced": 48.6
    }
   },
@@ -11487,9 +11487,9 @@
     "overPriced": 49.1
    },
    "test": {
-    "n": 103,
-    "overWon": 39.8,
-    "overPriced": 48
+    "n": 115,
+    "overWon": 40,
+    "overPriced": 47.9
    }
   },
   "Pts+Ast": {
@@ -11504,9 +11504,9 @@
     "overPriced": 50
    },
    "test": {
-    "n": 560,
-    "overWon": 46.8,
-    "overPriced": 50.1
+    "n": 666,
+    "overWon": 48.5,
+    "overPriced": 50
    }
   },
   "Pts+Reb": {
@@ -11521,8 +11521,8 @@
     "overPriced": 50
    },
    "test": {
-    "n": 667,
-    "overWon": 48.9,
+    "n": 797,
+    "overWon": 49.7,
     "overPriced": 50.1
    }
   },
@@ -11538,9 +11538,9 @@
     "overPriced": 49.7
    },
    "test": {
-    "n": 552,
+    "n": 653,
     "overWon": 50.5,
-    "overPriced": 49.8
+    "overPriced": 49.9
    }
   },
   "Pts+Reb+Ast": {
@@ -11555,29 +11555,29 @@
     "overPriced": 50
    },
    "test": {
-    "n": 573,
-    "overWon": 48,
+    "n": 683,
+    "overWon": 48.9,
     "overPriced": 50.1
    }
   }
  },
  "projectionError": {
-  "n": 10466,
+  "n": 11436,
   "line": {
-   "mae": 3.69,
-   "bias": -0.19
+   "mae": 3.68,
+   "bias": -0.22
   },
   "seasonAverage": {
-   "mae": 3.84,
-   "bias": -0.44
+   "mae": 3.83,
+   "bias": -0.46
   },
   "last10": {
-   "mae": 3.86,
-   "bias": -0.34
+   "mae": 3.84,
+   "bias": -0.35
   },
   "last5": {
-   "mae": 4.04,
-   "bias": -0.25
+   "mae": 4.01,
+   "bias": -0.24
   }
  },
  "report": {
@@ -13920,7 +13920,7 @@
  },
  "priceShopping": {
   "note": "DraftKings opening price on props whose line or price later moved, priced from the later DraftKings price, settled at the old number",
-  "n": 17371,
+  "n": 18205,
   "oldCuts": {
    "beforeTest": {
     "S": {
@@ -14191,10 +14191,10 @@
   }
  },
  "liveRecord": {
-  "days": 0,
+  "days": 1,
   "note": "Every saved pregame prediction at the DraftKings price available then, graded on the final box score; CLV against DraftKings' closing price at the same line.",
   "first": {
-   "graded": 0,
+   "graded": 730,
    "byTier": {
     "S": {
      "n": 0
@@ -14209,17 +14209,111 @@
      "n": 0
     },
     "D": {
-     "n": 0
+     "n": 231,
+     "won": 55,
+     "predicted": 56,
+     "roi": -5.8,
+     "clv": -4.3
     },
     "F": {
-     "n": 0
+     "n": 499,
+     "won": 50.3,
+     "predicted": 51.7,
+     "roi": -8.2,
+     "clv": -4.1
     }
    },
-   "bySide": {},
-   "byStat": {}
+   "bySide": {
+    "Under": {
+     "n": 348,
+     "won": 47.1,
+     "predicted": 53.2,
+     "roi": -15.7,
+     "clv": -3.5
+    },
+    "Over": {
+     "n": 382,
+     "won": 56,
+     "predicted": 53,
+     "roi": 0.1,
+     "clv": -4.7
+    }
+   },
+   "byStat": {
+    "Points": {
+     "n": 114,
+     "won": 53.5,
+     "predicted": 50.9,
+     "roi": 0.2,
+     "clv": -3
+    },
+    "Assists": {
+     "n": 80,
+     "won": 48.8,
+     "predicted": 56,
+     "roi": -16.9,
+     "clv": -6.3
+    },
+    "Rebounds": {
+     "n": 97,
+     "won": 56.7,
+     "predicted": 54.4,
+     "roi": -1.6,
+     "clv": -4.9
+    },
+    "3-Pointers": {
+     "n": 96,
+     "won": 53.1,
+     "predicted": 57.5,
+     "roi": -12,
+     "clv": -5.5
+    },
+    "Pts+Ast": {
+     "n": 82,
+     "won": 45.1,
+     "predicted": 51,
+     "roi": -15.8,
+     "clv": -2.6
+    },
+    "Pts+Reb": {
+     "n": 94,
+     "won": 57.4,
+     "predicted": 51.1,
+     "roi": 6.3,
+     "clv": -3
+    },
+    "Reb+Ast": {
+     "n": 80,
+     "won": 48.8,
+     "predicted": 52.9,
+     "roi": -13.2,
+     "clv": -5.1
+    },
+    "Pts+Reb+Ast": {
+     "n": 83,
+     "won": 45.8,
+     "predicted": 50.9,
+     "roi": -15,
+     "clv": -3.1
+    },
+    "Steals": {
+     "n": 3,
+     "won": 100,
+     "predicted": 59.7,
+     "roi": 60.1,
+     "clv": -6
+    },
+    "Blocks": {
+     "n": 1,
+     "won": 100,
+     "predicted": 61.3,
+     "roi": 55.6,
+     "clv": -7.4
+    }
+   }
   },
   "last": {
-   "graded": 0,
+   "graded": 812,
    "byTier": {
     "S": {
      "n": 0
@@ -14234,14 +14328,108 @@
      "n": 0
     },
     "D": {
-     "n": 0
+     "n": 99,
+     "won": 61.6,
+     "predicted": 60.7,
+     "roi": -3,
+     "clv": -5.2
     },
     "F": {
-     "n": 0
+     "n": 713,
+     "won": 48.8,
+     "predicted": 52.5,
+     "roi": -12.3,
+     "clv": -4.7
     }
    },
-   "bySide": {},
-   "byStat": {}
+   "bySide": {
+    "Over": {
+     "n": 409,
+     "won": 52.3,
+     "predicted": 53.3,
+     "roi": -7.5,
+     "clv": -5.8
+    },
+    "Under": {
+     "n": 403,
+     "won": 48.4,
+     "predicted": 53.7,
+     "roi": -14.9,
+     "clv": -3.6
+    }
+   },
+   "byStat": {
+    "Points": {
+     "n": 116,
+     "won": 47.4,
+     "predicted": 51.3,
+     "roi": -12.7,
+     "clv": -3.9
+    },
+    "Assists": {
+     "n": 83,
+     "won": 45.8,
+     "predicted": 56.4,
+     "roi": -23.2,
+     "clv": -6.7
+    },
+    "Rebounds": {
+     "n": 108,
+     "won": 51.9,
+     "predicted": 54.6,
+     "roi": -10.4,
+     "clv": -5.7
+    },
+    "3-Pointers": {
+     "n": 97,
+     "won": 53.6,
+     "predicted": 57.7,
+     "roi": -11.7,
+     "clv": -5.1
+    },
+    "Steals": {
+     "n": 17,
+     "won": 70.6,
+     "predicted": 61.2,
+     "roi": 11,
+     "clv": -2.9
+    },
+    "Blocks": {
+     "n": 5,
+     "won": 100,
+     "predicted": 60.1,
+     "roi": 59.9,
+     "clv": -6.7
+    },
+    "Pts+Ast": {
+     "n": 90,
+     "won": 51.1,
+     "predicted": 51.6,
+     "roi": -6.9,
+     "clv": -3.7
+    },
+    "Pts+Reb": {
+     "n": 111,
+     "won": 48.6,
+     "predicted": 51.3,
+     "roi": -10.8,
+     "clv": -3.5
+    },
+    "Reb+Ast": {
+     "n": 89,
+     "won": 43.8,
+     "predicted": 53.2,
+     "roi": -22.5,
+     "clv": -5.7
+    },
+    "Pts+Reb+Ast": {
+     "n": 96,
+     "won": 54.2,
+     "predicted": 51.1,
+     "roi": -0.7,
+     "clv": -4.3
+    }
+   }
   }
  },
  "tierCutsSetOn": {
@@ -14291,13 +14479,13 @@
   "lambda": 200,
   "intercept": "none",
   "weights": {
-   "gapS": 0.0521,
-   "gap10": 0.0314,
-   "gap5": 0.0086
+   "gapS": 0.0584,
+   "gap10": 0.025,
+   "gap5": 0.0087
   },
-  "sdResidual": 0.2326,
+  "sdResidual": 0.2323,
   "r2": 0.017,
-  "n": 20503,
+  "n": 21473,
   "byWeek": [
    {
     "week": [
@@ -14325,6 +14513,15 @@
     "n": 5158,
     "r2": 0.011,
     "fitOn": 15345
+   },
+   {
+    "week": [
+     "2026-11-23",
+     "2026-11-23"
+    ],
+    "n": 970,
+    "r2": -0.011,
+    "fitOn": 20503
    }
   ]
  }
