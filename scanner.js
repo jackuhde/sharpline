@@ -162,7 +162,7 @@ function reviewHTML(){if(!S.bets.length)return"";const n=S.bets.filter(b=>b.on!=
     ${b.payMismatch?`<div class="sc-miss">The payout on the slip doesn't match the odds read. Check both.</div>`:""}
     ${needs?`<label class="sc-ok"><input type="checkbox" data-scok="${b.id}" ${b.ok?"checked":""}> I checked this against the screenshot</label>`:""}${b.img?`<div class="sc-raw">From screenshot ${b.img}${b.ocrConf!=null?` · text read at ${b.ocrConf}% average confidence`:""}</div>`:""}</div>`}).join("")+
   (()=>{const wait=S.bets.filter(b=>b.on!==false&&!b.ok&&b.legs.some(L=>(L.unc||[]).length||(L.missing||[]).length)).length;
-    return`${wait?`<p class="sc-p dim">${wait} bet${wait>1?"s have":" has"} a field Sharpline couldn't read with confidence. Check ${wait>1?"them":"it"} (or uncheck ${wait>1?"them":"it"}) before analyzing.</p>`:""}<button class="go2" data-scanalyze="1" ${n&&!wait?"":"disabled"}>Analyze ${n} bet${n===1?"":"s"}</button>`})()}
+    return`${wait?`<p class="sc-p dim">${wait} bet${wait>1?"s have":" has"} a field Sharpline couldn't read with confidence. They're highlighted below and marked in the results.</p>`:""}<button class="go2" data-scanalyze="1" ${n?"":"disabled"}>Analyze ${n} bet${n===1?"":"s"}</button>`})()}
 
 /* ---------- comparative tiers (Nov 24 2026) ----------
    Every scanned bet with a chance and a price is ranked against tonight's whole board (the Props tab's slate ranking) plus
