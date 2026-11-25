@@ -1,0 +1,117 @@
+{
+ "f1-inline-buttons": [
+  {
+   "player": "Anthony Edwards",
+   "stat": "Points",
+   "line": 26.5,
+   "over": -112,
+   "under": -108
+  },
+  {
+   "player": "Julius Randle",
+   "stat": "Points",
+   "line": 19.5,
+   "over": 100,
+   "under": -120
+  },
+  {
+   "player": "Rudy Gobert",
+   "stat": "Points",
+   "line": 11.5,
+   "over": -135,
+   "under": 110
+  }
+ ],
+ "f2-dark-slip": [
+  {
+   "player": "Cade Cunningham",
+   "stat": "Assists",
+   "line": 8.5,
+   "side": "over",
+   "odds": -118
+  }
+ ],
+ "f3-tweet": [
+  {
+   "player": "Shai Gilgeous-Alexander",
+   "stat": "Points",
+   "line": 30.5,
+   "side": "over",
+   "odds": -115
+  },
+  {
+   "player": "Chet Holmgren",
+   "stat": "Rebounds",
+   "line": 8.5,
+   "side": "under",
+   "odds": 102
+  }
+ ],
+ "f4-parlay-light": [
+  {
+   "player": "Pascal Siakam",
+   "stat": "Points",
+   "line": 21.5,
+   "side": "over",
+   "odds": -110,
+   "parlay": true
+  },
+  {
+   "player": "Tyrese Haliburton",
+   "stat": "Assists",
+   "line": 9.5,
+   "side": "over",
+   "odds": -105,
+   "parlay": true
+  },
+  {
+   "player": "Myles Turner",
+   "stat": "Rebounds",
+   "line": 6.5,
+   "side": "under",
+   "odds": -120,
+   "parlay": true
+  }
+ ],
+ "f5-one-player-blue": [
+  {
+   "player": "Nikola Jokic",
+   "stat": "Points",
+   "line": 28.5,
+   "over": -110,
+   "under": -110
+  },
+  {
+   "player": "Nikola Jokic",
+   "stat": "Rebounds",
+   "line": 12.5,
+   "over": 105,
+   "under": -125
+  },
+  {
+   "player": "Nikola Jokic",
+   "stat": "Assists",
+   "line": 9.5,
+   "over": -120,
+   "under": 100
+  }
+ ],
+ "f6-pickem-dark": [
+  {
+   "player": "Paolo Banchero",
+   "stat": "Points",
+   "line": 24.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  },
+  {
+   "player": "Franz Wagner",
+   "stat": "Points",
+   "line": 21.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  }
+ ]
+}

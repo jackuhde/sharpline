@@ -1,0 +1,277 @@
+{
+ "01-stacked-light": [
+  {
+   "player": "Tyrese Maxey",
+   "stat": "Points",
+   "line": 27.5,
+   "over": -115,
+   "under": -105
+  },
+  {
+   "player": "Joel Embiid",
+   "stat": "Points",
+   "line": 30.5,
+   "over": -110,
+   "under": -110
+  },
+  {
+   "player": "Jaylen Brown",
+   "stat": "Points",
+   "line": 22.5,
+   "over": 100,
+   "under": -120
+  },
+  {
+   "player": "Kevin Durant",
+   "stat": "Points",
+   "line": 26.5,
+   "over": -125,
+   "under": 105
+  }
+ ],
+ "02-headers-light": [
+  {
+   "player": "Victor Wembanyama",
+   "stat": "Rebounds",
+   "line": 11.5,
+   "over": -130,
+   "under": 110
+  },
+  {
+   "player": "Stephon Castle",
+   "stat": "Rebounds",
+   "line": 4.5,
+   "over": -105,
+   "under": -115
+  },
+  {
+   "player": "Alperen Sengun",
+   "stat": "Rebounds",
+   "line": 9.5,
+   "over": 105,
+   "under": -125
+  },
+  {
+   "player": "Amen Thompson",
+   "stat": "Rebounds",
+   "line": 7.5,
+   "over": -110,
+   "under": -110
+  }
+ ],
+ "03-dark-buttons": [
+  {
+   "player": "Luka Doncic",
+   "stat": "Pts+Reb+Ast",
+   "line": 50.5,
+   "over": -115,
+   "under": -105
+  },
+  {
+   "player": "Quentin Grimes",
+   "stat": "Points",
+   "line": 13.5,
+   "over": 110,
+   "under": -140
+  },
+  {
+   "player": "Luka Doncic",
+   "stat": "Assists",
+   "line": 8.5,
+   "over": -120,
+   "under": 100
+  }
+ ],
+ "04-slip-single": [
+  {
+   "player": "Donovan Mitchell",
+   "stat": "Points",
+   "line": 25.5,
+   "side": "over",
+   "odds": -112
+  }
+ ],
+ "05-parlay-dark": [
+  {
+   "player": "Devin Booker",
+   "stat": "Points",
+   "line": 24.5,
+   "side": "under",
+   "odds": -110,
+   "parlay": true
+  },
+  {
+   "player": "Scottie Barnes",
+   "stat": "Rebounds",
+   "line": 7.5,
+   "side": "over",
+   "odds": -125,
+   "parlay": true
+  },
+  {
+   "player": "Immanuel Quickley",
+   "stat": "3-Pointers",
+   "line": 2.5,
+   "side": "over",
+   "odds": -140,
+   "parlay": true
+  }
+ ],
+ "06-grid-more-less": [
+  {
+   "player": "Ace Bailey",
+   "stat": "Points",
+   "line": 17.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  },
+  {
+   "player": "Jared McCain",
+   "stat": "Points",
+   "line": 14.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  },
+  {
+   "player": "Jeremiah Fears",
+   "stat": "Assists",
+   "line": 5.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  },
+  {
+   "player": "Cedric Coward",
+   "stat": "Rebounds",
+   "line": 6.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  }
+ ],
+ "07-social-post": [
+  {
+   "player": "Andrew Nembhard",
+   "stat": "Assists",
+   "line": 6.5,
+   "side": "over",
+   "odds": -120
+  },
+  {
+   "player": "Isaiah Hartenstein",
+   "stat": "Rebounds",
+   "line": 9.5,
+   "side": "under",
+   "odds": 105
+  },
+  {
+   "player": "Michael Porter Jr.",
+   "stat": "Points",
+   "line": 22.5,
+   "side": "over",
+   "odds": -110
+  }
+ ],
+ "08-one-player-markets": [
+  {
+   "player": "Joel Embiid",
+   "stat": "Points",
+   "line": 30.5,
+   "over": -110,
+   "under": -110
+  },
+  {
+   "player": "Joel Embiid",
+   "stat": "Rebounds",
+   "line": 11.5,
+   "over": -120,
+   "under": 100
+  },
+  {
+   "player": "Joel Embiid",
+   "stat": "Assists",
+   "line": 3.5,
+   "over": 120,
+   "under": -150
+  },
+  {
+   "player": "Joel Embiid",
+   "stat": "Pts+Reb",
+   "line": 42.5,
+   "over": -115,
+   "under": -105
+  }
+ ],
+ "09-cropped": [
+  {
+   "player": "Kevin Durant",
+   "stat": "Assists",
+   "line": 6.5,
+   "over": -105,
+   "under": -115
+  },
+  {
+   "player": "Alperen Sengun",
+   "stat": "Assists",
+   "line": 5.5,
+   "over": 110,
+   "under": -130
+  },
+  {
+   "player": "Amen Thompson",
+   "stat": "Assists",
+   "cutOff": true
+  }
+ ],
+ "10-lowres": [
+  {
+   "player": "Tyrese Maxey",
+   "stat": "Points",
+   "line": 27.5,
+   "over": -115,
+   "under": -105
+  },
+  {
+   "player": "Joel Embiid",
+   "stat": "Points",
+   "line": 30.5,
+   "over": -110,
+   "under": -110
+  },
+  {
+   "player": "Jaylen Brown",
+   "stat": "Points",
+   "line": 22.5,
+   "over": 100,
+   "under": -120
+  },
+  {
+   "player": "Kevin Durant",
+   "stat": "Points",
+   "line": 26.5,
+   "over": -125,
+   "under": 105
+  }
+ ],
+ "11-kalshi": [
+  {
+   "player": "Victor Wembanyama",
+   "stat": "Points",
+   "line": 24.5,
+   "over": -117,
+   "under": 113
+  }
+ ],
+ "12-obscured-odds": [
+  {
+   "player": "Jaden McDaniels",
+   "stat": "Points",
+   "line": 12.5,
+   "over": null,
+   "under": null,
+   "noOdds": true
+  }
+ ]
+}

@@ -61,9 +61,9 @@ function gradeNfl(x){if(!x)return{g:null,why:"no prop"};
 /* slate grades: every modeled prop in games not started, ranked by EV at your price (else the assumed -115), graded by
    position: S top 3%, A next 9%, B next 18%, C next 30%, D next 25%, F the rest. Relative ("best options this week"), shown
    with a dashed outline; the value grade above stays on each card. */
-let NREL={},NREL_N=0;
+let NREL={},NREL_N=0,NREL_EVS=[];
 function computeRelNfl(){NREL={};const L=allProps().filter(x=>x.p!=null&&x.e&&x.e.state==="pre"&&!(x.yn&&x.price==null)).map(x=>{const GN=gradeNfl(x);return{key:x.key,ev:GN.ev??-9,mv:Math.abs(x.p-.5)}}).filter(r=>r.ev>-9);
-  L.sort((a,b)=>b.ev-a.ev||b.mv-a.mv);NREL_N=L.length;L.forEach((r,j)=>{const q=(j+.5)/L.length;NREL[r.key]={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",rank:j+1}})}
+  L.sort((a,b)=>b.ev-a.ev||b.mv-a.mv);NREL_N=L.length;NREL_EVS=L.map(r=>r.ev);L.forEach((r,j)=>{const q=(j+.5)/L.length;NREL[r.key]={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",rank:j+1}})}
 const trusted=st=>{const b=N.model&&N.model.byStat&&N.model.byStat[st];return!!(b&&b.picks>=100&&b.hit>=.54)};
 function btNote(st){const b=N.model&&N.model.byStat&&N.model.byStat[st];if(!b)return"Not backtested";if(!b.picks||b.hit==null)return`Backtest: no edge found (${b.n} lines)`;
   return`Backtest: right side ${pc1(b.hit)} of ${b.picks} picks${trusted(st)?"":" · not enough to trust"}`}
@@ -528,6 +528,6 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,SHORT,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
+window.NFL={N,SHORT,relEVs:()=>NREL_EVS,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
   _p:{N,M,RK,T,ath,h,am,pc,pc1,evs,r1,ago,evalProp,evalTD,gradeNfl,ctxFor,LBL,SHORT,STAT_ORDER,btNote,trusted,oddsSheet,nflAvatar,logo,priceOf,NFL_STANDIN,computeRelNfl,rel:()=>({R:NREL,n:NREL_N}),ensure,loadProps,getJSON}};
 })();

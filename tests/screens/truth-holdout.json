@@ -1,0 +1,89 @@
+{
+ "h1-line-column": [
+  {
+   "player": "Jalen Smith",
+   "stat": "Rebounds",
+   "line": 7.5,
+   "over": -118,
+   "under": -102
+  },
+  {
+   "player": "Isaiah Hartenstein",
+   "stat": "Rebounds",
+   "line": 8.5,
+   "over": 102,
+   "under": -122
+  },
+  {
+   "player": "Aday Mara",
+   "stat": "Rebounds",
+   "line": 5.5,
+   "over": -140,
+   "under": 115
+  }
+ ],
+ "h2-two-straights": [
+  {
+   "player": "Scottie Barnes",
+   "stat": "Points",
+   "line": 20.5,
+   "side": "over",
+   "odds": 105
+  },
+  {
+   "player": "Kevin Durant",
+   "stat": "Assists",
+   "line": 5.5,
+   "side": "under",
+   "odds": -125
+  }
+ ],
+ "h3-dark-higher-lower": [
+  {
+   "player": "Brayden Burries",
+   "stat": "3-Pointers",
+   "line": 1.5,
+   "over": 130,
+   "under": -160
+  },
+  {
+   "player": "Yves Missi",
+   "stat": "Rebounds",
+   "line": 8.5,
+   "over": -108,
+   "under": -112
+  }
+ ],
+ "h4-paren-buttons": [
+  {
+   "player": "Michael Porter Jr.",
+   "stat": "Pts+Reb+Ast",
+   "line": 31.5,
+   "over": -120,
+   "under": -108
+  }
+ ],
+ "h5-tiny-2x": [
+  {
+   "player": "James Harden",
+   "stat": "Assists",
+   "line": 8.5,
+   "over": -130,
+   "under": 105
+  },
+  {
+   "player": "Donovan Mitchell",
+   "stat": "Assists",
+   "line": 5.5,
+   "over": 100,
+   "under": -125
+  },
+  {
+   "player": "Jaylen Brown",
+   "stat": "Assists",
+   "line": 3.5,
+   "over": -115,
+   "under": -105
+  }
+ ]
+}

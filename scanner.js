@@ -1,6 +1,9 @@
 /* Sharpline universal bet scanner.
    1) Input: screenshots (tap, drag and drop, or paste), pasted text, or a bet typed by hand. Screenshots are read on the
-      device with Tesseract (free OCR, text only).
+      device (readImage): the image is normalized so dark mode, colored buttons and small text all become dark text on white,
+      Tesseract finds every word and its position (sparse-text mode), layout.js rebuilds which line, price and side belong
+      together from those positions, and every number keeps its recognition confidence. An optional vision model (your own
+      free Gemini key, Settings) can read the screenshot instead; its answer goes through the same checks.
    2) Extraction: betparse.js turns the text into bets (singles, parlays, board rows) and lists anything it couldn't read.
    3) Review: every bet is editable before anything is analyzed.
    4) Verification and analysis: each leg is matched to a real player, team, game and market. The SUBMITTED line and odds
@@ -142,20 +145,47 @@ function legEditor(b,L,j){const sp=L.sport||"",isGame=L.mk&&L.mk!=="prop"&&L.mk!
     <div class="sc-row">${sel([["","Sport?"],["nba","NBA"],["nfl","NFL"]],sp,`data-scf="sport"`)}${who}${b.legs.length>1?`<button class="sc-x" data-scrmleg="${b.id}|${j}" aria-label="Remove leg">×</button>`:""}</div>
     <div class="sc-row">${sel(mkOpts,mk,`data-scf="mk"`)}${side}${L.mk==="ml"||YN.has(L.stat)?"":`<input data-scf="line" inputmode="decimal" value="${L.line??""}" placeholder="Line">`}
       ${L.side===null&&L.mk==="prop"?`<input data-scf="over" value="${am(L.over)==="–"?"":am(L.over)}" placeholder="Over odds"><input data-scf="under" value="${am(L.under)==="–"?"":am(L.under)}" placeholder="Under odds">`:`<input data-scf="odds" inputmode="text" value="${L.odds!=null?am(L.odds):""}" placeholder="Odds">`}</div>
-    ${pmNote}${L.missing.length?`<div class="sc-miss">Couldn't read: ${h(L.missing.join(", "))}</div>`:""}<div class="sc-raw">“${h(L.raw)}”</div></div>`}
+    ${pmNote}${L.missing.length?`<div class="sc-miss">Couldn't read: ${h(L.missing.join(", "))}</div>`:""}
+    ${(L.unc||[]).length?`<div class="sc-unc">Read with low confidence: ${h(L.unc.map(u=>({line:"the line",odds:"the odds",player:"the player's name (closest match shown)",market:"the market"})[u]||u).join(", "))}. Compare with the screenshot.</div>`:""}
+    ${L.tabNote&&!L.stat?`<div class="sc-unc">The screenshot shows several market tabs and none stood out as selected. Pick the market.</div>`:""}
+    <div class="sc-raw">${L.via==="vision"?"Vision model: ":""}“${h(L.raw)}”</div></div>`}
 function reviewHTML(){if(!S.bets.length)return"";const n=S.bets.filter(b=>b.on!==false).length;
   return`<div class="sc-h2"><b>Check what Sharpline read</b><span>Fix anything wrong, then analyze. Nothing is graded yet.</span></div>`+
-  S.bets.map(b=>`<div class="sc-card ${b.on===false?"off":""}" data-b="${b.id}">
+  S.bets.map(b=>{const needs=b.legs.some(L=>(L.unc||[]).length||(L.missing||[]).length);return`<div class="sc-card ${b.on===false?"off":""} ${needs&&!b.ok?"needs":""}" data-b="${b.id}">
     <div class="sc-ch"><label class="ck"><input type="checkbox" data-scon="${b.id}" ${b.on!==false?"checked":""}></label>
       <b>${b.kind==="parlay"?`${b.pickem?"Pick'em entry":b.sgp?"Same-game parlay":"Parlay"} · ${b.legs.length} legs`:b.board?"Board line (no side picked)":"Single bet"}</b>
       <input class="sc-book" data-scbf="book" value="${h(b.book||"")}" placeholder="Book or app"></div>
-    ${b.dup?`<div class="sc-miss">Duplicate of another bet in this scan</div>`:""}${b.board?`<div class="sc-m">Both sides are listed, so Sharpline will show the better side and won't treat it as your pick.</div>`:""}
+    ${b.dup?`<div class="sc-miss">Duplicate of another bet in this scan</div>`:""}${b.board?`<div class="sc-m">Both sides are listed, so this isn't your pick. Sharpline checks both sides and shows one only if it beats its price; otherwise it says pass.</div>`:""}
     ${b.legs.map((L,j)=>legEditor(b,L,j)).join("")}
     <div class="sc-row sc-money">${b.kind==="parlay"?`<label>Parlay odds<input data-scbf="parlayOdds" value="${b.parlayOdds!=null?am(b.parlayOdds):""}" placeholder="${b.pickem?"e.g. +400 for 5x":"from the slip"}"></label>`:""}
       <label>Stake $<input data-scbf="stake" inputmode="decimal" value="${b.stake??""}" placeholder="optional"></label></div>
-    ${b.payMismatch?`<div class="sc-miss">The payout on the slip doesn't match the odds read. Check both.</div>`:""}</div>`).join("")+
-  `<button class="go2" data-scanalyze="1" ${n?"":"disabled"}>Analyze ${n} bet${n===1?"":"s"}</button>`}
+    ${b.payMismatch?`<div class="sc-miss">The payout on the slip doesn't match the odds read. Check both.</div>`:""}
+    ${needs?`<label class="sc-ok"><input type="checkbox" data-scok="${b.id}" ${b.ok?"checked":""}> I checked this against the screenshot</label>`:""}${b.img?`<div class="sc-raw">From screenshot ${b.img}${b.ocrConf!=null?` · text read at ${b.ocrConf}% average confidence`:""}</div>`:""}</div>`}).join("")+
+  (()=>{const wait=S.bets.filter(b=>b.on!==false&&!b.ok&&b.legs.some(L=>(L.unc||[]).length||(L.missing||[]).length)).length;
+    return`${wait?`<p class="sc-p dim">${wait} bet${wait>1?"s have":" has"} a field Sharpline couldn't read with confidence. Check ${wait>1?"them":"it"} (or uncheck ${wait>1?"them":"it"}) before analyzing.</p>`:""}<button class="go2" data-scanalyze="1" ${n&&!wait?"":"disabled"}>Analyze ${n} bet${n===1?"":"s"}</button>`})()}
 
+/* ---------- comparative tiers (Nov 24 2026) ----------
+   Every scanned bet with a chance and a price is ranked against tonight's whole board (the Props tab's slate ranking) plus
+   the other bets in this scan, S top 3%, A next 9%, B next 18%, C next 30%, D next 25%, F the rest. The ranking score is the
+   expected return at the submitted price, reduced for what makes it less trustworthy: medium or low reliability (thin
+   history, a line far from the market, no market anchor), an injury question, a line that moved away since the screenshot,
+   and a second bet on the same player that shares a stat with a stronger one (they win or lose together, so it is not
+   independent evidence). The score never uses the projection's distance from the line on its own. */
+function scoreOf(R){if(!R||R.ev==null||R.p==null||R.v==="na")return null;let s=R.ev;const lv=R.rel?R.rel.lv:1;s-=lv>=3?0:lv===2?.015:.035;
+  if((R.A.checks||[]).some(c=>c.ok===null&&/injur|questionable|doubtful/i.test(c.t)))s-=.03;
+  const M=R.A.market||{};if(M.dkL!=null&&R.leg.line!=null&&M.dkL!==R.leg.line&&((R.leg.side==="over")===(M.dkL>R.leg.line)))s-=.01;
+  if(R.noEdge)s=Math.min(s,R.ev);return s}
+function tierScan(){const items=[];S.res.forEach((o,i)=>{const R=o.R||null,sc=o.b.kind==="parlay"?(o.ev!=null?o.ev-(o.legs.every(r=>r.rel&&r.rel.lv>=2)?.01:.04):null):scoreOf(R);if(sc!=null)items.push({i,sc,R})});
+  /* same player, overlapping stat: the weaker one counts as correlated */
+  items.sort((a,b)=>b.sc-a.sc);const seen=[];items.forEach(x=>{const L=x.R&&x.R.leg;if(!L||L.mk!=="prop")return;const nm=(x.R.A.player||L.player||"").toLowerCase();
+    const hit=seen.find(y=>y.nm===nm&&RK.overlaps(y.st,L.stat));if(hit){x.sc-=.02;S.res[x.i].corrWith=hit.i}else seen.push({nm,st:L.stat,i:x.i})});
+  const pool=[];try{if(typeof REL!=="undefined")Object.values(REL).forEach(r=>{if(r&&r.ev!=null)pool.push(r.ev)})}catch(e){}
+  try{if(window.NFL&&NFL.relEVs)pool.push(...NFL.relEVs())}catch(e){}
+  const all=[...pool,...items.map(x=>x.sc)].sort((a,b)=>b-a),N=all.length;
+  items.forEach(x=>{const rank=all.indexOf(x.sc)+1,q=(rank-.5)/N;S.res[x.i].tier={g:q<.03?"S":q<.12?"A":q<.30?"B":q<.60?"C":q<.85?"D":"F",rank,N,sc:x.sc,pool:pool.length}})}
+function tierTag(o){const T=o.tier;if(!T)return o.v==="na"?`<span class="grade g-F rel" title="Not ranked: no chance or no price">–</span>`:"";
+  return`<span class="grade g-${T.g} rel" title="#${T.rank} of ${T.N} bets ${T.pool?"on tonight's board and this scan":"in this scan"}, by expected return adjusted for reliability">${T.g}</span>`+
+    `<small class="sc-tier">#${T.rank} of ${T.N}${o.corrWith!=null?` · overlaps a stronger bet on the same player`:""}</small>`}
 /* ---------- render: results ---------- */
 const VLBL={fav:"Favorable",neu:"Neutral",unfav:"Unfavorable",na:"Can't assess"};
 const ck=c=>`<li class="${c.ok===true?"ok":c.ok===false?"bad":"warn"}"><i>${c.ok===true?"✓":c.ok===false?"✕":"!"}</i>${h(c.t)}</li>`;
@@ -200,8 +230,8 @@ function actionsHTML(o,i){const R=o.R||o.legs[0],A=R.A,L=R.leg;const bt=[];
 function singleHTML(o,i){const R=o.R,L=R.leg,b=o.b;const toWin=b.stake!=null&&R.odds!=null?b.stake*(decA(R.odds)-1):null;
   const subm=[["Selection",pickTxt(L,R.A)],["Line",L.line??(YN.has(L.stat)?"yes/no":"–")],["Odds",L.pm?`${L.pm.pick?L.pm.pick.toUpperCase():""} ${L.pm.cents}¢${L.pm.qty?" × "+L.pm.qty:""}`:am(L.odds)],["Book",b.book||"not shown"],["Stake",b.stake!=null?"$"+b.stake:"–"],["To win",toWin!=null?"$"+toWin.toFixed(2):"–"]];
   return`<article class="sc-res v-${R.v}" id="scr${i}">
-    <header><div><b>${h(pickTxt(L,R.A))}</b><span>${h(R.A.game||"")}${R.A.sport?` · ${R.A.sport.toUpperCase()}`:""}</span></div><em class="sc-v ${R.v}">${VLBL[R.v]}</em></header>
-    ${b.board?`<p class="sc-p sc-note">The screenshot listed both sides, so this isn't a pick you made. Shown: the side Sharpline rates better at the listed prices.</p>`:""}
+    <header><div><b>${h(pickTxt(L,R.A))}</b><span>${h(R.A.game||"")}${R.A.sport?` · ${R.A.sport.toUpperCase()}`:""}</span></div><em class="sc-v ${R.v}">${VLBL[R.v]}</em>${tierTag(o)}</header>
+    ${b.board?`<p class="sc-p sc-note">${R.noEdge?"The screenshot listed both sides and neither has an edge at these prices, so no side is recommended.":"The screenshot listed both sides, so this isn't a pick you made. Shown: the side with a positive expected return at the listed price."}</p>`:""}
     <section><h4>Submitted bet</h4><div class="sc-kv">${subm.map(([k,v])=>`<div><i>${k}</i><b>${h(v)}</b></div>`).join("")}</div>${b.dup?`<p class="sc-p dim">Same as another bet in this scan.</p>`:""}</section>
     <section><h4>Verification</h4><ul class="sc-ck">${R.A.checks.map(ck).join("")}</ul>${R.A.cands&&R.A.cands.length>1?`<p class="sc-p">Possible matches: ${h(R.A.cands.slice(0,6).map(c=>c.p+" ("+(c.ab||c.pos||"")+")").join(", "))}. Go back to review and pick one.</p>`:""}</section>
     <section><h4>Current market</h4>${marketHTML(R)}</section>
@@ -213,7 +243,7 @@ function parlayHTML(o,i){const b=o.b;const legRows=o.legs.map((r,j)=>`<div class
   const sum=[["Legs",b.legs.length],["Parlay odds",o.parAm!=null?am(o.parAm)+(o.parSrc==="legs multiplied"?" (legs multiplied)":""):"–"],["Legs multiplied",am(o.multAm)],["Stake",b.stake!=null?"$"+b.stake:"–"],["Payout",o.payout!=null?"$"+o.payout.toFixed(2):"–"],["Combined chance",o.p!=null?pc(o.p):"not estimated"],["Implied",o.implied!=null?pc(o.implied):"–"],["Expected value",evs(o.ev)]];
   const drop=o.drop?`<p class="sc-p"><b>Dropping one leg</b> (priced at the remaining legs multiplied; a book's real price can differ):</p><div class="sc-t sc-dropt">${o.drop.map(d=>`<div><span>Without ${h(pickTxt(o.legs[d.i].leg,o.legs[d.i].A))}</span><span>${pc0(d.p)}</span><span>${am(d.am)}</span><span>${evs(d.ev)}</span></div>`).join("")}</div><p class="sc-p dim">A shorter parlay wins more often but pays less. It's only better if its EV is higher, not just its chance.</p>`:"";
   const vt=o.v==="na"?o.pNote:`${o.pNote} Sharpline's chance that every leg hits is ${pc(o.p)}; ${am(o.parAm)} needs ${pc(o.implied)}, so the expected value is ${evs(o.ev)}.`;
-  return`<article class="sc-res v-${o.v}" id="scr${i}"><header><div><b>${b.legs.length}-leg ${b.pickem?"pick'em entry":o.sameGame?"same-game parlay":"parlay"}</b><span>${h(b.book||"Book not shown")}</span></div><em class="sc-v ${o.v}">${VLBL[o.v]}</em></header>
+  return`<article class="sc-res v-${o.v}" id="scr${i}">${tierTag(o)}<header><div><b>${b.legs.length}-leg ${b.pickem?"pick'em entry":o.sameGame?"same-game parlay":"parlay"}</b><span>${h(b.book||"Book not shown")}</span></div><em class="sc-v ${o.v}">${VLBL[o.v]}</em></header>
     <section><h4>Legs as submitted, each graded on its own</h4><div class="sc-t sc-legs"><div class="th"><span>Leg</span><span>Odds</span><span>Chance</span><span>Implied</span><span>EV</span><span></span></div>${legRows}</div>
       ${o.best!=null?`<p class="sc-p">Strongest leg: ${h(pickTxt(o.legs[o.best].leg,o.legs[o.best].A))}. Weakest: ${h(pickTxt(o.legs[o.worst].leg,o.legs[o.worst].A))}.</p>`:""}
       ${b.pickem?`<p class="sc-p dim">Pick'em legs have no individual odds, so the leg EVs are blank. The entry is graded at its payout multiplier.</p>`:""}</section>
@@ -250,11 +280,83 @@ const SAVED_K="sl_scans";const savedGet=()=>{try{return JSON.parse(localStorage.
 function saveOne(i){const o=S.res[i];const list=savedGet();const R=o.R||o;
   list.unshift({ts:Date.now(),at:S.at,bet:JSON.parse(JSON.stringify(o.b)),title:o.b.kind==="parlay"?`${o.b.legs.length}-leg parlay`:pickTxt(o.R.leg,o.R.A),v:R.v,ev:R.ev??null,p:R.p??null});
   try{localStorage.setItem(SAVED_K,JSON.stringify(list.slice(0,60)))}catch(e){}o.saved=true}
+/* optional vision model settings (your own key, kept on this device) */
+function visHTML(){if(!window.SLVision)return"";const c=SLVision.get();
+  return`<p class="sc-p dim">Screenshots are read on your phone for free. For harder layouts you can add your own Google Gemini API key: Gemini's free tier costs nothing within its daily limits (on the free tier Google may use what you send to improve its products). The key stays in this browser and is sent only to Google. Whatever the model reads still goes through the review step.</p>
+  ${c.key?`<p class="sc-p">Key saved (ends ${h(c.key.slice(-4))}). ${c.on!==false?"In use.":"Turned off."}</p><button class="addbtn" data-scvis="${c.on!==false?"off":"on"}">${c.on!==false?"Turn off":"Turn on"}</button> <button class="addbtn" data-scvis="del">Remove key</button>`:
+  `<input id="scVisKey" type="password" autocomplete="off" placeholder="Gemini API key"> <button class="addbtn" data-scvis="save">Save key</button>`}`}
 function savedHTML(){const L=savedGet();if(!L.length)return"";return`<details class="sc-saved"><summary>Saved analyses (${L.length})</summary>${L.map((x,i)=>`<div><span><b>${h(x.title)}</b><small>${new Date(x.ts).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} · then ${VLBL[x.v]||""}${x.ev!=null?" "+evs(x.ev):""}</small></span><button class="addbtn" data-screopen="${i}">Re-check now</button><button class="sc-x" data-scdel="${i}" aria-label="Delete">×</button></div>`).join("")}</details>`}
 
+/* ---------- screenshot reading (rebuilt Nov 24 2026) ---------- */
+/* Background-normalized grayscale: each pixel is compared with its own neighborhood, so text on any color (white on dark
+   mode, white on green buttons, gray on white) becomes dark text on a white page. Also returns each word's ink contrast
+   in the original image, used to tell which market tab is selected. */
+async function prepScan(file){const bm=await createImageBitmap(file),sc=Math.min(3,Math.max(1,1400/bm.width)),W=Math.round(bm.width*sc),H=Math.round(bm.height*sc);
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(bm,0,0,W,H);
+  const raw=document.createElement("canvas");raw.width=W;raw.height=H;raw.getContext("2d").drawImage(c,0,0);
+  const im=x.getImageData(0,0,W,H),d=im.data,g=new Float32Array(W*H);for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.3*d[i]+.59*d[i+1]+.11*d[i+2];
+  /* integral image helper */
+  const integ=f=>{const I=new Float64Array((W+1)*(H+1));for(let y=0;y<H;y++){let row=0;for(let xx=0;xx<W;xx++){row+=f(y*W+xx);I[(y+1)*(W+1)+xx+1]=I[y*(W+1)+xx+1]+row}}
+    return(x0,y0,x1,y1)=>(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0))};
+  const r=Math.max(14,Math.round(W/30)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  /* 1. polarity: where most of the neighborhood is dark (dark mode, a filled button), the text is light, so flip it */
+  const dark=integ(j=>g[j]<128?1:0),o=new Float32Array(W*H);
+  for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const j=y*W+xx,f=dark(cl(xx-r,0,W),cl(y-r,0,H),cl(xx+r+1,0,W),cl(y+r+1,0,H));o[j]=f>.5?255-g[j]:g[j]}
+  /* 2. contrast: each pixel against its own neighborhood's average, so faint gray text and colored text both turn dark */
+  const mean=integ(j=>o[j]);
+  for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const j=y*W+xx,b=mean(cl(xx-r,0,W),cl(y-r,0,H),cl(xx+r+1,0,W),cl(y+r+1,0,H));const v=cl(255-(b-o[j])*2.4,0,255),k=j*4;d[k]=d[k+1]=d[k+2]=v;d[k+3]=255}
+  /* 3. remove big solid shapes (button frames, bars, icons): anything far taller or wider than text */
+  {const B=new Uint8Array(W*H);for(let j=0;j<W*H;j++)B[j]=d[j*4]<128?1:0;const lab=new Int32Array(W*H),comps=[];let n=0;const st=new Int32Array(W*H);
+    for(let j=0;j<W*H;j++){if(!B[j]||lab[j])continue;n++;let sp=0,x0=W,x1=0,y0=H,y1=0,cnt=0;st[sp++]=j;lab[j]=n;
+      while(sp){const q=st[--sp],qx=q%W,qy=(q-qx)/W;cnt++;if(qx<x0)x0=qx;if(qx>x1)x1=qx;if(qy<y0)y0=qy;if(qy>y1)y1=qy;
+        if(qx>0&&B[q-1]&&!lab[q-1]){lab[q-1]=n;st[sp++]=q-1}if(qx<W-1&&B[q+1]&&!lab[q+1]){lab[q+1]=n;st[sp++]=q+1}if(qy>0&&B[q-W]&&!lab[q-W]){lab[q-W]=n;st[sp++]=q-W}if(qy<H-1&&B[q+W]&&!lab[q+W]){lab[q+W]=n;st[sp++]=q+W}}
+      comps[n]={h:y1-y0+1,w:x1-x0+1,cnt}}
+    const hs=comps.filter(c=>c&&c.h>=8&&c.h<=W/8).map(c=>c.h).sort((a,b)=>a-b),mh=hs.length?hs[Math.floor(hs.length*.75)]:40;
+    const kill=comps.map(c=>c&&(c.h>2.6*mh||c.w>W*.45||(c.w>4*mh&&c.h>mh*1.3)));
+    for(let j=0;j<W*H;j++)if(lab[j]&&kill[lab[j]]){const k=j*4;d[k]=d[k+1]=d[k+2]=255}}
+  x.putImageData(im,0,0);
+  const ink=bb=>{const v=[];for(let y=Math.max(0,bb.y0);y<Math.min(H,bb.y1);y+=1)for(let xx=Math.max(0,bb.x0);xx<Math.min(W,bb.x1);xx+=1)v.push(g[y*W+xx]);if(!v.length)return 0;v.sort((a,b)=>a-b);return v[Math.floor(v.length*.95)]-v[Math.floor(v.length*.05)]};
+  return{canvas:c,raw,ink,W,H}}
+let PSM=null;
+async function ocrWords(w,P,mode){if(PSM!==mode){await w.setParameters({tessedit_pageseg_mode:mode,preserve_interword_spaces:"1",tessedit_char_whitelist:""});PSM=mode}
+  const conv=data=>(data.words||[]).map(x=>({text:x.text,conf:x.confidence,x0:x.bbox.x0,y0:x.bbox.y0,x1:x.bbox.x1,y1:x.bbox.y1,ink:P.ink(x.bbox)}));
+  const{data}=await w.recognize(P.canvas);const W=conv(data);
+  /* second pass on the untouched image: words the normalized pass missed (text on a filled button can be lost at the button's
+     edge) are added where nothing was found */
+  try{const{data:d2}=await w.recognize(P.raw);const ov=(a,b)=>Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0))*Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0));
+    conv(d2).forEach(x=>{if(x.conf<60||!String(x.text).trim())return;if(!W.some(y=>ov(x,y)>.3*Math.min((x.x1-x.x0)*(x.y1-x.y0),(y.x1-y.x0)*(y.y1-y.y0))))W.push(x)})}catch(e){}
+  /* second look at every number: each one is read again on its own, digits and signs only (single-line mode). General text
+     recognition often drops a decimal point or a leading digit in prices and lines; this is where those get fixed. */
+  const nums=W.filter(x=>/\d/.test(x.text)&&x.text.length<=7);if(!nums.length)return W;
+  await w.setParameters({tessedit_pageseg_mode:"7",tessedit_char_whitelist:"0123456789.+-¢OU"});PSM=null;
+  const cc=document.createElement("canvas"),cx=cc.getContext("2d");
+  for(const x of nums){const h=Math.max(1,x.y1-x.y0),pad=Math.round(h*.3),sx=Math.max(0,x.x0-pad),sy=Math.max(0,x.y0-pad),sw=Math.min(P.W,x.x1+pad)-sx,sh=Math.min(P.H,x.y1+pad)-sy,k=Math.max(1,64/h),b=Math.round(16*k);
+    /* the number alone, enlarged to a comfortable size on a white margin */
+    cc.width=Math.round(sw*k)+2*b;cc.height=Math.round(sh*k)+2*b;cx.fillStyle="#fff";cx.fillRect(0,0,cc.width,cc.height);cx.imageSmoothingQuality="high";cx.drawImage(P.canvas,sx,sy,sw,sh,b,b,Math.round(sw*k),Math.round(sh*k));
+    try{const{data:d}=await w.recognize(cc);let t=(d.text||"").trim().replace(/\s+/g,"");
+      /* a side letter read with the number: "O27.5", "U4.5" (O can come back as zero) */
+      let lead="";const m=t.match(/^([OUou]|0(?=\d{1,3}\.\d))(.+)$/);if(m&&/^[OUou0]/.test(t)&&/\d/.test(m[2])&&(/[OoUu]/.test(m[1])||/^\d{1,3}\.\d$/.test(m[2]))){lead=m[1]==="0"?"O":m[1].toUpperCase();t=m[2]}
+      if(/^([+-]?\d{1,4}(\.\d)?|\d{1,2}¢?|\d{1,3}\+)$/.test(t)&&(d.confidence>=x.conf-5||!/^[+-]?\d+(\.\d)?¢?$/.test(x.text))){
+        const lead0=(x.text.match(/^[OoUu](?=\d)/)||[""])[0];const dg=v=>String(v).replace(/[^\d.]/g,"");
+        /* two independent reads that agree are trusted; a value only the second read saw keeps the first read's confidence */
+        x.conf=dg(x.text)===dg(t)?Math.max(x.conf,92):Math.min(x.conf,70);x.text=(lead?lead+" ":lead0)+t}}catch(e){}}
+  await w.setParameters({tessedit_char_whitelist:""});return W}
+/* which fields of a leg rest on low-confidence characters */
+function flagUnc(bets,rows){bets.forEach(b=>b.legs.forEach(L=>{const R=rows.find(r=>r.t.trim()===String(L.raw||"").trim())||rows.find(r=>L.raw&&r.t.includes(String(L.raw).split(" / ")[0].trim()));L.unc=[];if(!R)return;
+  const low=v=>{if(v==null)return false;const keys=Object.keys(R.conf).filter(k=>k.replace(/^[ou]/i,"").replace(/¢$/,"")===String(Math.abs(v)).replace(/^0+/,"")||k===String(v)||k==="+"+v||k===String(v).replace(/^/,"")||parseFloat(k)===v);return keys.length&&Math.min(...keys.map(k=>R.conf[k]))<72};
+  if(low(L.line)||L.lineGuess)L.unc.push("line");if(L.fuzzy)L.unc.push("player");if([L.odds,L.over,L.under].some(low))L.unc.push("odds")}))}
+/* read one screenshot: vision model when the user set one up, else on-device OCR with layout reconstruction */
+async function readImage(file,st){const ctx=ctxAll();
+  if(window.SLVision&&SLVision.on()){try{const v=await SLVision.read(file);if(v&&v.lines.length){const bets=SB.parse(v.lines,ctx,{image:1});bets.forEach(b=>b.legs.forEach(L=>{L.unc=v.unc(L);L.via="vision"}));if(bets.length)return bets}}catch(e){console.warn("vision",e);toast("The vision model didn't answer; reading on the device instead")}}
+  const w=await getWorker(st),P=await prepScan(file),statOf=t=>SB.statOf(t);
+  const tryMode=async mode=>{const words=await ocrWords(w,P,mode),rows=SharpLayout.read(words,{width:P.W,statOf});const bets=SB.parse(rows.map(r=>r.t),ctx,{image:1});flagUnc(bets,rows);
+    const conf=words.length?words.reduce((a,x)=>a+x.conf,0)/words.length:0;bets.forEach(b=>{b.ocrConf=Math.round(conf);if(rows.some(r=>r.tabUnclear))b.legs.forEach(L=>{if(L.mk==="prop"&&!L.stat)L.tabNote=1})});return bets};
+  let bets=await tryMode("11");const done=B=>B.reduce((a,b)=>a+b.legs.filter(L=>!(L.missing||[]).length).length,0);
+  if(!done(bets)){const alt=await tryMode("3");if(done(alt)>done(bets))bets=alt}
+  return bets}
 /* ---------- flow ---------- */
 const $=id=>document.getElementById(id);
-function paint(){const box=$("scanRes");if(!box)return;box.innerHTML=S.res?resultsHTML():reviewHTML();const sv=$("scSaved");if(sv)sv.innerHTML=S.res?"":savedHTML();$("scIn").style.display=S.res?"none":""}
+function paint(){const vb=$("scVis");if(vb)vb.innerHTML=visHTML();const box=$("scanRes");if(!box)return;box.innerHTML=S.res?resultsHTML():reviewHTML();const sv=$("scSaved");if(sv)sv.innerHTML=S.res?"":savedHTML();$("scIn").style.display=S.res?"none":""}
 function addFiles(fs){fs=[...fs].filter(f=>/^image\//.test(f.type));if(!fs.length)return;S.files=[...S.files,...fs].slice(0,8);thumbs();}
 function thumbs(){const t=$("thumbs");t.innerHTML=S.files.map((f,i)=>`<div><img src="${URL.createObjectURL(f)}" alt=""><button class="sc-x" data-scrmimg="${i}" aria-label="Remove">×</button></div>`).join("");goBtn()}
 function goBtn(){const g=$("scanGo"),n=S.files.length,txt=($("scText")||{}).value||"";g.disabled=S.busy||(!n&&!txt.trim());g.textContent=S.busy?"Reading…":n&&txt.trim()?`Read ${n} screenshot${n>1?"s":""} and text`:n?`Read ${n} screenshot${n>1?"s":""}`:"Read text"}
@@ -262,7 +364,7 @@ async function read(){if(S.busy)return;S.busy=true;goBtn();const st=$("scanStat"
   st.textContent="Loading player lists…";await prepNFL();const ctx=ctxAll();
   try{if(S.files.length){const w=await getWorker(st);const th=[...document.querySelectorAll("#thumbs div")];
       for(let i=0;i<S.files.length;i++){st.dataset.i=`${i+1} of ${S.files.length}`;st.textContent=`Reading screenshot ${i+1} of ${S.files.length}…`;th[i]&&th[i].classList.add("scanning");stage(1);
-        try{const cv=await prepImage(S.files[i]);stage(2);const{data}=await w.recognize(cv);stage(3);const got=SB.parse((data.lines||[]).map(l=>l.text),ctx,{image:1});bets.push(...got);th[i]&&th[i].classList.replace("scanning",got.length?"done":"err");if(!got.length)fails++}
+        try{stage(2);const got=await readImage(S.files[i],st);stage(3);got.forEach(b=>b.img=i+1);bets.push(...got);th[i]&&th[i].classList.replace("scanning",got.length?"done":"err");if(!got.length)fails++}
         catch(e){fails++;th[i]&&th[i].classList.replace("scanning","err")}}stage(0);delete st.dataset.i}
     const txt=$("scText").value;if(txt.trim())bets.push(...SB.parse(txt,ctx))}
   catch(e){st.innerHTML=`<span class="bad">The screenshot reader couldn't load. Check your connection, or paste the text instead.</span>`;S.busy=false;goBtn();return}
@@ -272,11 +374,14 @@ async function read(){if(S.busy)return;S.busy=true;goBtn();const st=$("scanStat"
 function manual(){const sp=typeof SPORT!=="undefined"?SPORT:"nba";S.res=null;S.bets.push({id:"m"+Date.now(),kind:"single",book:typeof BOOK!=="undefined"?BOOK:"",legs:[{sport:sp,mk:"prop",player:"",cands:[],team:null,teams:[],stat:null,side:"over",line:null,odds:null,missing:[],raw:"entered by hand"}],stake:null,missing:[]});paint()}
 async function analyze(){const st=$("scanStat");st.textContent="Checking players, games and markets…";if(S.bets.some(b=>b.legs.some(L=>L.sport!=="nba")))await prepNFL();
   S.at=Date.now();S.res=S.bets.filter(b=>b.on!==false).map(b=>{try{return analyzeBet(b)}catch(e){console.error(e);return{b,legs:[],R:{leg:b.legs[0],A:{checks:[{ok:false,t:"Something went wrong checking this bet"}],market:{rows:[]}},v:"na",vt:String(e.message)},v:"na"}}});
+  try{tierScan()}catch(e){console.warn("tiers",e)}
   st.textContent="";paint();const r=$("scanRes");if(r)r.scrollIntoView({block:"start",behavior:"smooth"})}
 const parseAm=v=>{const s=String(v||"").trim();if(!s)return null;if(/^\d+(\.\d+)?$/.test(s)&&+s>1&&+s<30&&s.includes("."))return toAm(+s);const n=parseFloat(s.replace(/[^\d.+-]/g,""));return isNaN(n)||Math.abs(n)<100?null:Math.round(n)};
 function edit(t){const lg=t.closest(".sc-leg"),card=t.closest(".sc-card");if(!card)return;const b=S.bets.find(x=>x.id===card.dataset.b);if(!b)return;
   if(t.dataset.scbf){const f=t.dataset.scbf,v=t.value;if(f==="book")b.book=v.trim()||null;if(f==="stake")b.stake=v.trim()?+v.replace(/[^\d.]/g,""):null;if(f==="parlayOdds")b.parlayOdds=parseAm(v);return}
   if(!lg)return;const L=b.legs[+lg.dataset.l],f=t.dataset.scf,v=t.value;
+  /* a field the user typed or picked is no longer uncertain */
+  if(L.unc){const u={line:"line",odds:"odds",over:"odds",under:"odds",player:"player",mk:"market"}[f];if(u)L.unc=L.unc.filter(x=>x!==u)}if(f==="mk")L.tabNote=0;
   if(f==="sport"){L.sport=v||null;paint();return}
   if(f==="player"){L.player=v.trim();L.cands=[];if(t.tagName==="SELECT"){const c=(L.missing||[]);L.missing=c.filter(x=>!/player/.test(x));paint()}return}
   if(f==="teamab"){const ab=v.trim().toUpperCase();const T=ctxAll().teams.filter(x=>x.ab===ab&&(!L.sport||x.sport===L.sport));L.team=T[0]?{ab,sport:T[0].sport,full:T[0].full}:{ab};L.teams=[L.team];return}
@@ -287,11 +392,18 @@ function edit(t){const lg=t.closest(".sc-leg"),card=t.closest(".sc-card");if(!ca
   if(f==="over"||f==="under"){L[f]=parseAm(v);return}}
 function boardPick(b){/* a board row: grade the side Sharpline likes better at the listed prices */
   const L=b.legs[0];if(L.over==null&&L.under==null)return;const tryS=s=>{const leg={...L,side:s,odds:s==="over"?L.over:L.under};return analyzeLeg(leg,b.book)};
-  const a=L.over!=null?tryS("over"):null,c=L.under!=null?tryS("under"):null;return[a,c].filter(Boolean).sort((x,y)=>(y.ev??-9)-(x.ev??-9))[0]}
+  const a=L.over!=null?tryS("over"):null,c=L.under!=null?tryS("under"):null,both=[a,c].filter(Boolean).sort((x,y)=>(y.ev??-9)-(x.ev??-9)),best=both[0];
+  /* neither side beats its price: no side is picked. Showing the "less bad" side would lean Under, because books usually make
+     the Over the shorter price; that is the vig, not a reason to bet. */
+  if(best&&both.every(x=>x.ev!=null&&x.ev<=0)){best.noEdge=true;best.both=both.map(x=>({side:x.leg.side,ev:x.ev,p:x.p,odds:x.odds}));best.v="neu";
+    best.vt=`Neither side beats its price: Over ${evs((both.find(x=>x.leg.side==="over")||{}).ev)}, Under ${evs((both.find(x=>x.leg.side==="under")||{}).ev)} expected return. Pass.`}
+  return best}
 
-document.addEventListener("click",async e=>{const t=e.target.closest("[data-scango],[data-scmanual],[data-scanalyze],[data-scback],[data-scnew],[data-sctrack],[data-sctracksel],[data-scsave],[data-screopen],[data-scdel],[data-scrmleg],[data-scrmimg],[data-scnfprof],[data-scnfm],[data-sclive],[data-scuse],#scDrop");if(!t||e.target.id==="scanFiles")return;
+document.addEventListener("click",async e=>{const t=e.target.closest("[data-scvis],[data-scango],[data-scmanual],[data-scanalyze],[data-scback],[data-scnew],[data-sctrack],[data-sctracksel],[data-scsave],[data-screopen],[data-scdel],[data-scrmleg],[data-scrmimg],[data-scnfprof],[data-scnfm],[data-sclive],[data-scuse],#scDrop");if(!t||e.target.id==="scanFiles")return;
   const d=t.dataset;if(t.id==="scDrop"){if(!e.target.closest("button"))$("scanFiles").click();return}
   e.preventDefault();e.stopPropagation();
+  if(d.scvis){const c=SLVision.get();if(d.scvis==="save"){const k=($("scVisKey")||{}).value||"";if(k.trim().length<20){toast("That doesn't look like an API key");return}SLVision.set({key:k.trim(),on:true});toast("Vision model on")}
+    else if(d.scvis==="del")SLVision.set({});else SLVision.set({...c,on:d.scvis==="on"});paint();return}
   if(d.scango){read();return}if(d.scmanual){manual();return}if(d.scanalyze){analyze();return}
   if(d.scback){S.res=null;paint();return}if(d.scnew){S.res=null;S.bets=[];S.files=[];$("scText").value="";thumbs();$("scanStat").textContent="";paint();return}
   if(d.sctrack){if(trackOne(+d.sctrack)){toast("Tracked with the submitted line and odds");if(typeof renderAll==="function")renderAll();paint()}return}
@@ -312,6 +424,7 @@ document.addEventListener("keydown",e=>{if(e.target.id==="scDrop"&&(e.key==="Ent
 document.addEventListener("change",e=>{const t=e.target;if(t.id==="scanFiles"){addFiles(t.files);t.value="";return}
   if(t.dataset.scon){const b=S.bets.find(x=>x.id===t.dataset.scon);if(b)b.on=t.checked;paint();return}
   if(t.dataset.scsel){S.res[+t.dataset.scsel].sel=t.checked;return}
+  if(t.dataset.scok){const b=S.bets.find(x=>x.id===t.dataset.scok);if(b)b.ok=t.checked;paint();return}
   if(t.closest&&t.closest("#scanRes")&&(t.dataset.scf||t.dataset.scbf))edit(t)},true);
 document.addEventListener("input",e=>{const t=e.target;if(t.id==="scText"){goBtn();return}if(t.closest&&t.closest("#scanRes")&&(t.dataset.scf||t.dataset.scbf)&&t.tagName==="INPUT")edit(t)});
 /* paste a screenshot anywhere while the scanner is open; drag and drop on desktop */
@@ -321,5 +434,5 @@ document.addEventListener("paste",e=>{const sh=$("scanSheet");if(!sh||!sh.classL
 ["dragleave","drop"].forEach(ev=>document.addEventListener(ev,e=>{const z=e.target.closest&&e.target.closest("#scDrop");if(!z)return;e.preventDefault();z.classList.remove("over");if(ev==="drop")addFiles(e.dataTransfer.files)}));
 /* board rows have no side; pick the better one at analysis time */
 const _an=analyzeBet;analyzeBet=function(b){if(b.board){const R=boardPick(b);if(R)return{b,legs:[R],R}}return _an(b)};
-window.Scanner={S,paint,read,analyze,analyzeBet,analyzeLeg,pmCost,ctxAll,open:()=>{$("scanSheet").classList.add("on");paint()}};
+window.Scanner={S,paint,read,readImage,_prep:prepScan,_words:ocrWords,analyze,analyzeBet,analyzeLeg,pmCost,ctxAll,open:()=>{$("scanSheet").classList.add("on");paint()}};
 })();

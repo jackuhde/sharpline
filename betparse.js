@@ -23,12 +23,12 @@ const STATS=[
  ["nba","Pts+Reb+Ast",/pts\s*\+\s*reb\s*\+\s*ast|points\s*\+\s*rebounds\s*\+\s*assists|\bpra\b|\bp\s*\+\s*r\s*\+\s*a\b/i],
  ["nba","Pts+Reb",/pts\s*\+\s*rebs?|points\s*\+\s*rebounds|\bp\s*\+\s*r\b/i],["nba","Pts+Ast",/pts\s*\+\s*asts?|points\s*\+\s*assists|\bp\s*\+\s*a\b/i],
  ["nba","Reb+Ast",/rebs?\s*\+\s*asts?|rebounds\s*\+\s*assists|\br\s*\+\s*a\b/i],
- ["nba","3-Pointers",/threes|three\s*pointers?|3[\s-]*p(t|oint)(er)?s?(\s*made)?|\b3pm\b|made\s*3s?|\b3s\b/i],
+ ["nba","3-Pointers",/threes|three\s*pointers?|3[\s-]*p(t|oint)(er)?s?(\s*made)?|\b3pm\b|made\s*3s?|\b3s\b|\b3\w{0,2}\s+made\b/i],
  ["nba","Rebounds",/rebounds?|\brebs?\b/i],["nba","Assists",/assists?|\basts?\b/i],["nba","Steals",/steals?|\bstl\b/i],["nba","Blocks",/blocks?|\bblk\b/i],
  ["nba","Turnovers",/turnovers?|\btov\b/i],["nba","Points",/points|\bpts\b/i]];
 const YN_STATS=new Set(["td","td1","td2"]);
 const NOT_MODELED={tgt:"Targets",td1:"First touchdown"};
-function statOf(t){for(const[sp,st,re]of STATS)if(re.test(t))return{sport:sp,st};return null}
+function statOf(t){for(const[sp,st,re]of STATS){const m=re.exec(t);if(m)return{sport:sp,st,m:m[0]}}return null}
 
 const PARLAY_RE=/\bparlay\b|\b\d+\s*[- ]?\s*(leg|pick|team)s?\b(?!\s*total)|\bsgp\+?\b|same[\s-]*game|\bteaser\b|\bpower\s*play\b|\bflex\s*play\b/i;
 const SLIP_RE=/\bbet\s*slip\b|\bto\s*win\b|\bpayout\b|\bwager\b|\bbet\s*placed\b|\bpotential\b/i;
@@ -44,7 +44,12 @@ function matchName(t,names){const n=" "+norm(t)+" ";if(n.trim().length<3)return 
   const toks=n.trim().split(" ");const hits=[];
   names.forEach(x=>{const parts=norm(x.p).split(" "),last=parts[parts.length-1];if(last.length<4||!toks.includes(last))return;
     const fi=parts[0];const i=toks.indexOf(last),prev=toks[i-1]||"";const sc=prev===fi?3:prev.length===1&&prev===fi[0]?2:prev&&/^[a-z]$/.test(prev)?-1:1;if(sc>0)hits.push({x,sc})});
-  if(!hits.length)return null;const top=Math.max(...hits.map(h=>h.sc)),c=hits.filter(h=>h.sc===top).map(h=>h.x);
+  if(!hits.length){/* close spelling (a misread letter or two): unique match at 80%+ similarity, marked fuzzy so the field is flagged */
+    const lev=(a,b)=>{const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
+    let fz=[];for(const x of names){const xn=norm(x.p),k=xn.split(" ").length;if(xn.length<10)continue;for(let i=0;i+k<=toks.length;i++){const w=toks.slice(i,i+k).join(" ");const sim=1-lev(w,xn)/Math.max(w.length,xn.length);if(sim>=.75)fz.push({x,sim})}}
+    if(!fz.length)return null;const tb=Math.max(...fz.map(f=>f.sim)),fc=[...new Map(fz.filter(f=>f.sim===tb).map(f=>[f.x.sport+"|"+norm(f.x.p),f.x])).values()];
+    return fc.length===1?{x:fc[0],cands:fc,fuzzy:true}:{x:null,cands:fc}}
+  const top=Math.max(...hits.map(h=>h.sc)),c=hits.filter(h=>h.sc===top).map(h=>h.x);
   const uniq=[...new Map(c.map(x=>[x.sport+"|"+norm(x.p),x])).values()];return uniq.length===1?{x:uniq[0],cands:uniq}:{x:null,cands:uniq}}
 function matchTeams(t,teams){const n=" "+norm(t)+" ",up=" "+t.replace(/[^A-Za-z ]/g," ")+" ",out=[];
   teams.forEach(T=>{const full=norm(T.full),nick=T.nick;if(n.includes(" "+full+" ")||(nick.length>3&&n.includes(" "+nick+" "))||(T.city&&T.city.length>3&&n.includes(" "+T.city+" ")&&false)||up.includes(" "+T.ab+" "))out.push({...T,pos:Math.max(n.indexOf(" "+nick+" "),up.indexOf(" "+T.ab+" "))})});
@@ -52,7 +57,9 @@ function matchTeams(t,teams){const n=" "+norm(t)+" ",up=" "+t.replace(/[^A-Za-z 
 const looksName=s=>/^[A-Z][A-Za-z.'’-]+(\s+[A-Z][A-Za-z.'’-]+){1,2}(\s+(Jr|Sr|II|III|IV)\.?)?$/.test((s||"").trim());
 
 /* one line of text into the things a bet is made of */
-function feats(raw,ctx){const F={raw:raw.trim(),pm:null,conv:false,thr:false};let t=" "+raw.replace(/^\s*@\w+:?\s*/,"")+" ";
+function feats(raw,ctx){const F={raw:raw.trim(),pm:null,conv:false,thr:false};
+  /* social-post furniture: @handles anywhere, and post ages like "· 2h" or "5m ago" */
+  let t=" "+raw.replace(/^\s*@\w+:?\s*/,"").replace(/(^|\s)@\w+/g," ").replace(/[·•\-]\s*\d{1,2}\s?[smhdw]\b|\b\d{1,2}\s?(?:min|hr|h|m|d)s?\s+ago\b/gi," ")+" ";
   /* prediction-market contracts: "YES 62¢", "No 37c", "YES contract at 62 cents", "Yes $0.48" */
   const pmRe=/\b(?:buy\s+)?(yes|no)\b[^\d$\n]{0,22}?(?:\$\s?0?\.(\d{2})\b|(\d{1,2}(?:\.\d)?)\s*(?:¢|c\b|cents?\b))/gi;let m;const pmh=[];
   while((m=pmRe.exec(t)))pmh.push({side:m[1].toLowerCase(),c:+(m[2]||m[3])});
@@ -69,10 +76,12 @@ function feats(raw,ctx){const F={raw:raw.trim(),pm:null,conv:false,thr:false};le
   if(/\b(even|evens|ev)\b/i.test(pre)&&!odds.length)odds.push({v:100,i:t.search(/\beven/i)});F.odds=odds;
   const sides=[];const sRe=/\b(over|under|more|less|higher|lower)\b|\b([ou])\s*(?=\d)/gi;while((m=sRe.exec(t))){const w=(m[1]||m[2]).toLowerCase();sides.push({s:/^(o|over|more|higher)$/.test(w)?"over":"under",i:m.index})}
   F.sides=sides;
+  /* digits that are part of the market's name ("3PT Made", "3-pointers") are not a line */
+  if(F.st&&/\d/.test(F.st.m||""))t=t.replace(F.st.m," ".repeat(F.st.m.length));
   const nums=[];const nRe=/(?<![\w.+-])(\d{1,3}(?:\.\d)?)(?![\d.%¢\w])/g;while((m=nRe.exec(t)))nums.push({v:+m[1],i:m.index});F.nums=nums;
   const sp=[];const spRe=/(?<![\w.])([+-]\d{1,2}(?:\.5)?)(?![\d.])|\b(pk|pick'?em)\b/gi;while((m=spRe.exec(t))){const v=m[2]?0:+m[1];if(Math.abs(v)<=45)sp.push({v,i:m.index})}F.sp=sp;
   F.yn=F.st&&YN_STATS.has(F.st.st);
-  const nm=matchName(t,ctx.names||[]);F.name=nm&&nm.x;F.cands=nm?nm.cands:[];
+  const nm=matchName(t,ctx.names||[]);F.name=nm&&nm.x;F.cands=nm?nm.cands:[];F.fuzzy=!!(nm&&nm.fuzzy);
   F.teams=matchTeams(t,ctx.teams||[]);
   /* a capitalized name we don't know, written right before the selection */
   if(!F.name&&!F.cands.length){const cut=t.split(/\b(?:over|under|more|less|o|u)\b|\d|\banytime\b|\bto score\b|\b(?:yes|no)\b/i)[0].replace(/[^A-Za-z.'’ -]/g," ").trim();
@@ -88,9 +97,13 @@ function newLeg(o){return Object.assign({sport:null,mk:null,player:null,cands:[]
 function splitCombo(line,ctx){for(const[re,par]of[[/\s\+\s|\s&\s|\s\|\s/,1],[/,\s+|;\s+|\s\/\s/,0]]){const parts=line.split(re).map(s=>s.trim()).filter(Boolean);if(parts.length<2)continue;
     const fs=parts.map(p=>feats(p,ctx));if(fs.every(F=>(F.name||F.rawName||F.teams.length||F.st)&&(F.sides.length||F.yn||F.ml||F.sp.length||F.thr)))return{parts,parlay:par}}return null}
 
-function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,teams=[],pend=null;
+function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,secStat=null,teams=[],pend=null;
   const all=lines.join("\n"),book=detectBook(all);
-  const fillBack=(field,val,i)=>{const L=legs[legs.length-1];if(!L||i-L._i>3)return false;
+  /* a value on a later line fills a gap in the bet above, but never across a new player's name */
+  const fillBack=(field,val,i)=>{const L=legs[legs.length-1];if(!L||i-L._i>3||L._closed)return false;
+    if(field==="pm"&&L.mk==="prop"&&(L.side==null||L.alt)&&L.over==null&&L.odds==null&&!L.pm&&val.pm.yes!=null&&val.pm.no!=null){L.side=null;L.over=c2am(val.pm.yes);L.under=c2am(val.pm.no);L.pm={yes:val.pm.yes,no:val.pm.no,qty:val.qty||null};L.missing=[];
+      /* a yes/no contract on a whole number ("25 points") is "25 or more", which is Over 24.5; flagged for the user to confirm */
+      if(Number.isInteger(L.line)){L.line-=.5;L.lineGuess=1}return true}
     if(field==="pm"&&(L.mk==="prop"||L.mk==="ml")&&L.odds==null&&!L.pm){setPM(L,val);L.missing=[];return true}
     if(field==="player"&&!L.player&&L.mk==="prop"){L.player=val.p;L.sport=L.sport||val.sport;L.cands=[val];return true}
     if(field==="stat"&&!L.stat&&L.mk==="prop"){L.stat=val.st;L.sport=L.sport||val.sport;return true}
@@ -100,11 +113,13 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
   flat.forEach((row,i)=>{const raw=row.t;if(!raw.trim()||NOISE_RE.test(raw.trim()))return;const F=feats(raw,ctx);
     const nameObj=F.name?{p:F.name.p,sport:F.name.sport,ab:F.name.ab}:F.rawName?{p:F.rawName,sport:null}:null;
     const nums=F.nums.filter(n=>!F.odds.some(o=>Math.abs(o.i-n.i)<2)&&!F.sp.some(s=>s.i===n.i-1||s.i===n.i));
+    /* a matchup line ("CLE @ PHX", "Lakers vs Grizzlies") is context, not a bet; a lone price on it belongs to the bet above */
+    if(F.teams.length>=2&&/\s(@|vs\.?|at)\s/i.test(raw)&&!F.ml&&!F.sides.length&&!F.sp.length&&!F.tot&&!F.name&&!F.st){teams=F.teams;if(F.odds.length===1)fillBack("odds",F.odds[0].v,i);return}
     /* lines that only set context */
     if(!F.hasSel&&!F.odds.length&&!nums.length){
-      if(nameObj){if(!fillBack("player",nameObj,i)){player=nameObj;player.cands=F.cands;stat=F.st}return}
+      if(nameObj){if(!fillBack("player",nameObj,i)){player=nameObj;player.cands=F.cands;stat=F.st;if(legs.length)legs[legs.length-1]._closed=1}return}
       if(F.cands.length>1&&!F.st){player={p:F.cands[0].p.split(" ").pop(),sport:null,cands:F.cands,amb:true};return}
-      if(F.st){if(!fillBack("stat",F.st,i))stat=F.st;return}
+      if(F.st){if(!fillBack("stat",F.st,i)){stat=F.st;if(!player)secStat=F.st}return}
       if(F.teams.length){teams=F.teams;return}return}
     if(F.pureOdds){if(!fillBack("odds",F.odds[0].v,i))loose.push({v:F.odds[0].v,i,raw});return}
     if(PARLAY_RE.test(raw)&&!F.st&&!nameObj&&!F.teams.length){if(F.odds.length)loose.push({v:F.odds[F.odds.length-1].v,i,raw,par:1});return}
@@ -114,12 +129,14 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
     const st=F.st||(who||F.sides.length?null:null)||(who?null:stat);
     const pst=F.st||(nameObj?null:stat)||(nameObj&&!F.st?null:null);
     if((who||F.st||(player&&F.sides.length&&!F.teams.length))&&!(F.teams.length&&!who&&!F.st&&(F.sp.length||F.ml||F.tot))&&!(F.tt&&!who)){
-      const P=who||player;const S=F.st||(who?(F.st||null):stat);
-      L.mk=F.pm&&!S&&!P?"pm":"prop";L.player=P?P.p:null;L.cands=P?(P.cands||F.cands||[]):[];if(F.cands.length>1&&!F.name){L.cands=F.cands;L.player=null;L.ambName=raw}
+      /* a section or tab market ("Points" above a list of players) applies to rows that name a player and show prices */
+      const P=who||player;const S=F.st||(who?(secStat&&(F.odds.length||F.sides.length)?secStat:null):stat);
+      L.mk=F.pm&&!S&&!P?"pm":"prop";L.player=P?P.p:null;if(who&&F.fuzzy)L.fuzzy=1;L.cands=P?(P.cands||F.cands||[]):[];if(F.cands.length>1&&!F.name){L.cands=F.cands;L.player=null;L.ambName=raw}
       L.stat=S?S.st:null;L.sport=(S&&S.sport)||(P&&P.sport)||null;
       if(L.stat&&YN_STATS.has(L.stat)){L.side="yes";L.line=L.stat==="td2"?1.5:.5;L.odds=F.odds.length?F.odds[0].v:null;if(F.pm)setPM(L,F)}
       else{const ln=nums.length?nums[0].v:null;L.line=ln;L.alt=F.thr;
         if(F.sides.length>=2&&F.odds.length>=2){L.side=null;const o1=F.odds.find(o=>o.i>F.sides[0].i),o2=F.odds.find(o=>o.i>F.sides[1].i);L.over=(F.sides[0].s==="over"?o1:o2||null)?.v??null;L.under=(F.sides[0].s==="over"?o2:o1)?.v??null}
+        else if(F.sides.length>=2&&!F.odds.length&&!F.pm&&new Set(F.sides.map(x=>x.s)).size===2){L.side=null;L.noPrice=1}
         else if(F.pm&&F.pm.yes!=null&&F.pm.no!=null){L.side=null;L.over=c2am(F.pm.yes);L.under=c2am(F.pm.no);L.pm={yes:F.pm.yes,no:F.pm.no,qty:F.qty||null};L.book=book}
         else{L.side=F.sides.length?F.sides[0].s:(F.pm&&F.pm.pick?(F.pm.pick==="yes"?"over":"under"):null);L.odds=F.odds.length?F.odds.find(o=>!F.sides.length||o.i>F.sides[0].i)?.v??F.odds[0].v:null;if(F.pm)setPM(L,F)}}
       if(!who&&player&&!F.st&&stat&&L.stat==null){L.stat=stat.st;L.sport=L.sport||stat.sport}
@@ -143,14 +160,16 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
     if(F.pm&&fillBack("pm",F,i))return;
     if(F.pm){L.mk="pm";setPM(L,F);L.missing.push("the contract's exact question");legs.push(L);return}
     if(F.odds.length)loose.push({v:F.odds[F.odds.length-1].v,i,raw})});
+  /* an unknown name with no market, no side and no price is not a bet (a post's author line, a caption) */
+  for(let k=legs.length-1;k>=0;k--){const L=legs[k];if(L.mk==="prop"&&!L.stat&&!L.side&&L.odds==null&&L.over==null&&L.under==null&&!L.pm&&!(L.cands||[]).length&&!(ctx.names||[]).some(x=>norm(x.p)===norm(L.player||"")))legs.splice(k,1)}
   legs.forEach(L=>{
     if(L.mk==="prop"){if(!L.player)L.missing.push(L.ambName?"which player (several match)":"player");if(!L.stat)L.missing.push("market (stat)");if(L.line==null&&!YN_STATS.has(L.stat))L.missing.push("line");
-      if(!L.side&&L.over==null&&L.under==null)L.missing.push("over or under");if(L.side&&L.odds==null&&!L.pm)L.missing.push("odds");if(!L.side&&(L.over==null||L.under==null)&&L.over!=null)L.missing.push("one side's odds")}
+      if(L.noPrice)L.missing.push("odds");else if(!L.side&&L.over==null&&L.under==null)L.missing.push("over or under");if(L.side&&L.odds==null&&!L.pm)L.missing.push("odds");if(!L.side&&(L.over==null||L.under==null)&&L.over!=null)L.missing.push("one side's odds")}
     if(L.mk==="spread"||L.mk==="total"||L.mk==="teamTotal"){if(L.line==null)L.missing.push("line");if(L.odds==null)L.missing.push("odds");if(L.mk!=="spread"&&!L.side)L.missing.push("over or under")}
     if(L.mk==="ml"&&L.odds==null&&!L.pmNo)L.missing.push("odds");
     if(!L.sport&&L.stat){const s=STATS.find(x=>x[1]===L.stat);if(s)L.sport=s[0]}
     if(!L.sport&&L.cands.length&&new Set(L.cands.map(c=>c.sport)).size===1)L.sport=L.cands[0].sport;
-    if(NOT_MODELED[L.stat])L.notModeled=NOT_MODELED[L.stat];delete L._i});
+    if(NOT_MODELED[L.stat])L.notModeled=NOT_MODELED[L.stat];delete L._i;delete L._closed});
   return{legs,loose,book,all,combo}}
 function setPM(L,F){const pick=F.pm.pick||(L.side==="over"||L.side==="yes"?"yes":"no"),c=pick==="yes"?F.pm.yes:F.pm.no;
   L.pm={pick,cents:c,qty:F.qty||null};if(c!=null)L.odds=c2am(c);if(L.mk==="prop"&&!YN_STATS.has(L.stat))L.side=pick==="yes"?"over":"under";if(YN_STATS.has(L.stat)&&pick==="no")L.side="no"}
