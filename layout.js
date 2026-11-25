@@ -35,21 +35,24 @@ function cells(line){const ws=[...line.ws].sort((a,b)=>a.x0-b.x0),h=med(ws.map(w
   return out.map(c=>({ws:c,...box(c)}))}
 const txt=c=>{let p=null;return c.ws.map(w=>{const t=cleanTok(w.text,p);p=t;return t}).join(" ")};
 const toks=c=>txt(c).split(/\s+/).filter(Boolean);
-const isOdds=c=>toks(c).some(t=>ODDS_RE.test(t)||/^\d{1,2}¢$/.test(t)||/^even$/i.test(t));
+const PCT_RE=/^\d{1,2}(\.\d{1,2})?%$/;
+const teamLbl=c=>/^[A-Z]{2,4}(\s+[+-]\d{1,2}(\.5)?)?$/.test(txt(c));
+const isOdds=c=>toks(c).some(t=>ODDS_RE.test(t)||PCT_RE.test(t)||/^\d{1,2}¢$/.test(t)||/^even$/i.test(t));
 const hasLineOrSide=c=>toks(c).some(t=>LINE_RE.test(t.replace(/^[ou]/i,""))||SIDE_RE.test(t));
 const isSideOnly=c=>toks(c).length&&toks(c).every(t=>SIDE_RE.test(t));
 const nameLike=c=>{const t=txt(c);return/^[A-Z][a-zA-Z.'’-]+(\s+[A-Z][a-zA-Z.'’-]+){1,3}$/.test(t)&&!NUM_RE.test(t)};
 /* 2. a button's two stacked parts become one cell */
 function stack(C){const used=new Set(),out=[];const S=[...C].sort((a,b)=>a.y0-b.y0);
   S.forEach((a,i)=>{if(used.has(a))return;const ha=a.y1-a.y0;
-    const b=S.find((b,j)=>j>i&&!used.has(b)&&b.y0>=a.y1-ha*.3&&b.y0-a.y1<1.1*Math.max(ha,b.y1-b.y0)&&hOverlap(a,b)>=.5*Math.min(a.x1-a.x0,b.x1-b.x0)&&
-      toks(a).length<=3&&toks(b).length<=3&&((hasLineOrSide(a)&&isOdds(b)&&!isOdds(a))||(isSideOnly(b)===false&&isOdds(a)&&hasLineOrSide(b)&&!isOdds(b))));
+    const b=S.find((b,j)=>j>i&&!used.has(b)&&b.y0>=a.y1-ha*.3&&b.y0-a.y1<1.8*Math.max(ha,b.y1-b.y0)&&hOverlap(a,b)>=.5*Math.min(a.x1-a.x0,b.x1-b.x0)&&
+      toks(a).length<=3&&toks(b).length<=3&&(((hasLineOrSide(a)||teamLbl(a))&&isOdds(b)&&!isOdds(a))||(isSideOnly(b)===false&&isOdds(a)&&hasLineOrSide(b)&&!isOdds(b))));
     if(b){used.add(b);const ws=[...a.ws,...b.ws];out.push({ws,...box(ws),stacked:1})}else out.push(a)});
   return out}
 /* 3. two-column card grid: a clear vertical gap with player names on both sides */
 function splitGrid(C,W){if(C.length<6)return[C];let best=null;
   for(let x=W*.3;x<=W*.7;x+=W/100){if(C.some(c=>c.x0<x&&c.x1>x))continue;const L=C.filter(c=>c.x1<=x),R=C.filter(c=>c.x0>=x);
-    if(L.filter(nameLike).length>=2&&R.filter(nameLike).length>=2&&L.length>=3&&R.length>=3){best=x;break}}
+    const pl=c=>nameLike(c)&&!/\b(lines|half|quarter|points|props|popular|markets|spread|total|moneyline|info|game|activity|parlay|search|menu|home)\b/i.test(txt(c));
+    if(L.filter(pl).length>=2&&R.filter(pl).length>=2&&L.length>=3&&R.length>=3){best=x;break}}
   if(best==null)return[C];return[C.filter(c=>c.x1<=best),C.filter(c=>c.x0>=best)]}
 /* 4. rows by vertical overlap */
 function rows(C){const R=[];[...C].sort((a,b)=>a.y0-b.y0||a.x0-b.x0).forEach(c=>{const h=c.y1-c.y0;
@@ -57,9 +60,12 @@ function rows(C){const R=[];[...C].sort((a,b)=>a.y0-b.y0||a.x0-b.x0).forEach(c=>
   R.forEach(r=>r.cs.sort((a,b)=>a.x0-b.x0||a.y0-b.y0));return R.sort((a,b)=>a.y0-b.y0)}
 function read(words,opt){opt=opt||{};const statOf=opt.statOf||(()=>null);
   const W=opt.width||Math.max(1,...words.map(w=>w.x1));
-  words=words.filter(w=>String(w.text||"").trim()&&!(w.conf<25&&!/\d|[A-Za-z]{2}/.test(w.text)));if(!words.length)return[];
+  words=words.filter(w=>String(w.text||"").trim()&&!(w.conf<25&&!/\d|[A-Za-z]{2}/.test(w.text)));
+  /* icons read as text: a star as "7", a chevron as "A", arrows as "»" or "\" (low confidence, or a lone symbol) */
+  words=words.filter(w=>{const t=String(w.text).trim();if(/^[^A-Za-z0-9+@&/$-]+$/.test(t))return false;if(t.length<=2&&w.conf<60&&!/^[+-]?\d+(\.\d)?$/.test(t)&&!SIDE_RE.test(t))return false;
+    if(t.length<=2&&w.conf<50)return false;return true});if(!words.length)return[];
   {const ts=words.flatMap(w=>String(w.text).split(/\s+/));HALF.n=ts.filter(t=>/^[oOuU]?\d{1,3}\.5$/.test(t)).length;HALF.ints=ts.filter(t=>/^[oOuU]?\d{1,3}\.0$/.test(t)).length}
-  let C=lines(words).flatMap(cells);C=stack(C);
+  let C=lines(words).flatMap(cells).filter(c=>!(c.ws.length===1&&/^[A-Za-z]$/.test(String(c.ws[0].text).trim())&&!/^[OUou]$/.test(String(c.ws[0].text).trim())));C=stack(C);
   const out=[];
   splitGrid(C,W).forEach(group=>{let cols=null,pendNum=null;
     rows(group).forEach(r=>{const cs=r.cs,T=cs.map(txt),all=T.join(" ");
@@ -85,7 +91,20 @@ function read(words,opt){opt=opt||{};const statOf=opt.statOf||(()=>null);
           const k=cols.reduce((b,col)=>Math.abs(col.x-xc)<Math.abs(b.x-xc)?col:b,cols[0]);return Math.abs(k.x-xc)<=Math.max(60,1.2*(c.x1-c.x0))?k.side:null});
         out.push(row(cs,null,null,lab));return}
       out.push(row(cs))})});
+  pctPass(out);
   return out.filter(r=>r.t.trim()||r.tabUnclear)}
+/* prediction-market style prices ("29.85%") are the chance the market gives; turned into American odds with the % kept beside
+   them. When both sides of a market are shown with the book's total under them ("101.28%"), a side that doesn't add up was
+   misread: it is rebuilt from the total and the other side (choosing the side whose "Last" price it then matches), and flagged. */
+const c2am=c=>{const p=c/100;return p>=.5?-Math.round(100*p/(1-p)):"+"+Math.round(100*(1-p)/p)};
+function pctPass(out){const P=r=>[...r.t.matchAll(/(?<![:\d.])(\d{1,2}(?:\.\d{1,2})?)%/g)].map(m=>({v:+m[1],s:m[0]}));
+  out.forEach((r,i)=>{if(/activity|volume/i.test(r.t)&&!/[A-Z]{2,4}\s/.test(r.t))return;const ps=P(r);if(!ps.length||/last\s*:/i.test(r.t))return;
+    if(ps.length===2){const nx=out[i+1]&&out[i+1].t||"",tot=[...nx.matchAll(/(?<![:\d.])(\d{2,3}\.\d{1,2})%/g)].map(m=>+m[1]).find(v=>v>=99&&v<=115);
+      const last=[...nx.matchAll(/last\s*:\s*(\d{1,2}(?:\.\d{1,2})?)%/gi)].map(m=>+m[1]);const sum=ps[0].v+ps[1].v;
+      if(tot!=null&&Math.abs(sum-tot)>.05){const fixB=tot-ps[0].v,fixA=tot-ps[1].v;const errB=last.length===2?Math.abs(fixB-last[1]):(r.conf[ps[1].s]??100)-(r.conf[ps[0].s]??100),errA=last.length===2?Math.abs(fixA-last[0]):0;
+        const k=(last.length===2?errB<=errA:errB<=0)?1:0,nv=+(k?fixB:fixA).toFixed(2);if(nv>0&&nv<100){ps[k].fix=nv}}
+      else if(tot==null&&(sum<95||sum>112))ps.forEach(p=>p.unc=1)}
+    ps.forEach(p=>{const v=p.fix??p.v,am=String(c2am(v));r.t=r.t.replace(p.s,`${am} (${v}%)`);r.conf[am]=p.fix!=null||p.unc?60:(r.conf[p.s]??95)})})}
 /* one output row: text left to right, with the confidence of every number */
 function row(cs,suffix,extra,lab){const conf={};
   /* the same line printed on both buttons: a copy that lost its decimal point ("275" next to "27.5") is the same number */

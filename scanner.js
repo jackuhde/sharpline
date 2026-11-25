@@ -328,7 +328,7 @@ async function ocrWords(w,P,mode){if(PSM!==mode){await w.setParameters({tessedit
   /* second look at every number: each one is read again on its own, digits and signs only (single-line mode). General text
      recognition often drops a decimal point or a leading digit in prices and lines; this is where those get fixed. */
   const nums=W.filter(x=>/\d/.test(x.text)&&x.text.length<=7);if(!nums.length)return W;
-  await w.setParameters({tessedit_pageseg_mode:"7",tessedit_char_whitelist:"0123456789.+-¢OU"});PSM=null;
+  await w.setParameters({tessedit_pageseg_mode:"7",tessedit_char_whitelist:"0123456789.+-¢%OU"});PSM=null;
   const cc=document.createElement("canvas"),cx=cc.getContext("2d");
   for(const x of nums){const h=Math.max(1,x.y1-x.y0),pad=Math.round(h*.3),sx=Math.max(0,x.x0-pad),sy=Math.max(0,x.y0-pad),sw=Math.min(P.W,x.x1+pad)-sx,sh=Math.min(P.H,x.y1+pad)-sy,k=Math.max(1,64/h),b=Math.round(16*k);
     /* the number alone, enlarged to a comfortable size on a white margin */
@@ -336,10 +336,13 @@ async function ocrWords(w,P,mode){if(PSM!==mode){await w.setParameters({tessedit
     try{const{data:d}=await w.recognize(cc);let t=(d.text||"").trim().replace(/\s+/g,"");
       /* a side letter read with the number: "O27.5", "U4.5" (O can come back as zero) */
       let lead="";const m=t.match(/^([OUou]|0(?=\d{1,3}\.\d))(.+)$/);if(m&&/^[OUou0]/.test(t)&&/\d/.test(m[2])&&(/[OoUu]/.test(m[1])||/^\d{1,3}\.\d$/.test(m[2]))){lead=m[1]==="0"?"O":m[1].toUpperCase();t=m[2]}
-      if(/^([+-]?\d{1,4}(\.\d)?|\d{1,2}¢?|\d{1,3}\+)$/.test(t)&&(d.confidence>=x.conf-5||!/^[+-]?\d+(\.\d)?¢?$/.test(x.text))){
+      /* a team or word glued to the number ("DEN-7.5") keeps its letters; only the number is re-read */
+      const pre=(x.text.match(/^([A-Z]{2,5})(?=[+-]\d)/)||[,""])[1];
+      if(/%$/.test(x.text)!==/%$/.test(t))t="";
+      if(/^([+-]?\d{1,4}(\.\d)?|\d{1,2}¢?|\d{1,3}\+|\d{1,2}(\.\d{1,2})?%)$/.test(t)&&(d.confidence>=x.conf-5||!/^[+-]?\d+(\.\d{1,2})?[¢%]?$/.test(x.text))){
         const lead0=(x.text.match(/^[OoUu](?=\d)/)||[""])[0];const dg=v=>String(v).replace(/[^\d.]/g,"");
         /* two independent reads that agree are trusted; a value only the second read saw keeps the first read's confidence */
-        x.conf=dg(x.text)===dg(t)?Math.max(x.conf,92):Math.min(x.conf,70);x.text=(lead?lead+" ":lead0)+t}}catch(e){}}
+        x.conf=dg(x.text.slice(pre.length))===dg(t)?Math.max(x.conf,92):Math.min(x.conf,70);x.text=(pre?pre+" ":"")+(lead?lead+" ":lead0)+t}}catch(e){}}
   await w.setParameters({tessedit_char_whitelist:""});return W}
 /* which fields of a leg rest on low-confidence characters */
 function flagUnc(bets,rows){bets.forEach(b=>b.legs.forEach(L=>{const R=rows.find(r=>r.t.trim()===String(L.raw||"").trim())||rows.find(r=>L.raw&&r.t.includes(String(L.raw).split(" / ")[0].trim()));L.unc=[];if(!R)return;

@@ -32,6 +32,8 @@ function statOf(t){for(const[sp,st,re]of STATS){const m=re.exec(t);if(m)return{s
 
 const PARLAY_RE=/\bparlay\b|\b\d+\s*[- ]?\s*(leg|pick|team)s?\b(?!\s*total)|\bsgp\+?\b|same[\s-]*game|\bteaser\b|\bpower\s*play\b|\bflex\s*play\b/i;
 const SLIP_RE=/\bbet\s*slip\b|\bto\s*win\b|\bpayout\b|\bwager\b|\bbet\s*placed\b|\bpotential\b/i;
+const UI_WORDS=new Set("home parlay parlays my bets trades search menu account promos promotions live sports casino popular markets info game lines first half second quarter player props fast featured activity sgp favorites favourites rewards wallet profile settings all upcoming".split(" "));
+const isUI=t=>{const w=t.toLowerCase().replace(/[^a-z ]/g," ").split(/\s+/).filter(Boolean);return w.length>=2&&w.every(x=>UI_WORDS.has(x))};
 const NOISE_RE=/^(@\w+\s*$|\d+\s*[smhd]\s*$|(like|reply|replies|repost|retweet|share|follow|following|views?|bookmark|translate post|show more|cash ?out|tail|fade)\b|[\d.,]+k?\s*(likes|views|replies|reposts|comments)\b)/i;
 const PICKEM=new Set(["PrizePicks","Underdog","Sleeper","Betr","Dabble"]);
 const BOOK_EXTRA=[["sleeper","Sleeper"],["rebet","Rebet"],["thrillzz","Thrillzz"]];
@@ -54,7 +56,7 @@ function matchName(t,names){const n=" "+norm(t)+" ";if(n.trim().length<3)return 
 function matchTeams(t,teams){const n=" "+norm(t)+" ",up=" "+t.replace(/[^A-Za-z ]/g," ")+" ",out=[];
   teams.forEach(T=>{const full=norm(T.full),nick=T.nick;if(n.includes(" "+full+" ")||(nick.length>3&&n.includes(" "+nick+" "))||(T.city&&T.city.length>3&&n.includes(" "+T.city+" ")&&false)||up.includes(" "+T.ab+" "))out.push({...T,pos:Math.max(n.indexOf(" "+nick+" "),up.indexOf(" "+T.ab+" "))})});
   out.sort((a,b)=>a.pos-b.pos);return out}
-const looksName=s=>/^[A-Z][A-Za-z.'’-]+(\s+[A-Z][A-Za-z.'’-]+){1,2}(\s+(Jr|Sr|II|III|IV)\.?)?$/.test((s||"").trim());
+const looksName=s=>/^\p{Lu}[\p{L}.'’-]+(\s+\p{Lu}[\p{L}.'’-]+){1,2}(\s+(Jr|Sr|II|III|IV)\.?)?$/u.test((s||"").trim());
 
 /* one line of text into the things a bet is made of */
 function feats(raw,ctx){const F={raw:raw.trim(),pm:null,conv:false,thr:false};
@@ -84,8 +86,8 @@ function feats(raw,ctx){const F={raw:raw.trim(),pm:null,conv:false,thr:false};
   const nm=matchName(t,ctx.names||[]);F.name=nm&&nm.x;F.cands=nm?nm.cands:[];F.fuzzy=!!(nm&&nm.fuzzy);
   F.teams=matchTeams(t,ctx.teams||[]);
   /* a capitalized name we don't know, written right before the selection */
-  if(!F.name&&!F.cands.length){const cut=t.split(/\b(?:over|under|more|less|o|u)\b|\d|\banytime\b|\bto score\b|\b(?:yes|no)\b/i)[0].replace(/[^A-Za-z.'’ -]/g," ").trim();
-    const w=cut.split(/\s+/).filter(x=>/^[A-Z]/.test(x)).slice(-3).join(" ");if(looksName(w)&&!F.teams.some(T=>w.toLowerCase().includes(T.nick))&&!statOf(w))F.rawName=w}
+  if(!F.name&&!F.cands.length){const cut=t.split(/\b(?:over|under|more|less|o|u)\b|\d|\banytime\b|\bto score\b|\b(?:yes|no)\b/i)[0].replace(/[^\p{L}.'’ -]/gu," ").trim();
+    const w=cut.split(/\s+/).filter(x=>/^\p{Lu}/u.test(x)).slice(-3).join(" ");if(looksName(w)&&!w.split(" ").some(x=>UI_WORDS.has(x.toLowerCase()))&&!F.teams.some(T=>w.toLowerCase().includes(T.nick))&&!statOf(w))F.rawName=w}
   F.hasSel=!!(sides.length||F.yn||F.pm||F.ml||sp.length||F.thr);
   F.pureOdds=odds.length>=1&&!sides.length&&!nums.length&&!F.name&&!F.rawName&&!F.teams.length&&!F.st&&!F.pm&&t.replace(/[+-]\d{3,5}|odds|\$|[^\w]/gi,"").length<3;
   return F}
@@ -109,8 +111,12 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
     if(field==="stat"&&!L.stat&&L.mk==="prop"){L.stat=val.st;L.sport=L.sport||val.sport;return true}
     if(field==="odds"&&L.odds==null&&(L.side||L.mk==="spread"||L.mk==="ml")&&L.mk!=="pm"){L.odds=val;return true}
     if(field==="odds"&&L.side==null&&L.mk==="prop"&&L.over!=null&&L.under==null){L.under=val;return true}return false};
-  let combo=false;const flat=[];lines.forEach(l=>{const s=splitCombo(l,ctx);if(s){if(s.parlay)combo=true;s.parts.forEach(p=>flat.push({t:p,grp:s.parlay}))}else flat.push({t:l})});
-  flat.forEach((row,i)=>{const raw=row.t;if(!raw.trim()||NOISE_RE.test(raw.trim()))return;const F=feats(raw,ctx);
+  let combo=false;const flat=[];lines.forEach(l=>{
+    /* both teams of one market side by side ("DAL +235   DEN -250", "DAL +7.5 -110   DEN -7.5 -110"): two listed prices, not a pick */
+    const cols=l.split(/\s{3,}/).map(x=>x.trim()).filter(Boolean);
+    if(cols.length===2){const fs=cols.map(c=>feats(c,ctx));if(fs.every(F=>F.teams.length===1&&!F.name&&!F.st&&(F.odds.length||F.pm))&&fs[0].teams[0].ab!==fs[1].teams[0].ab){cols.forEach(c=>flat.push({t:c,pair:1}));return}}
+    const s=splitCombo(l,ctx);if(s){if(s.parlay)combo=true;s.parts.forEach(p=>flat.push({t:p,grp:s.parlay}))}else flat.push({t:l})});
+  flat.forEach((row,i)=>{const raw=row.t;if(!raw.trim()||NOISE_RE.test(raw.trim())||isUI(raw))return;const F=feats(raw,ctx);
     const nameObj=F.name?{p:F.name.p,sport:F.name.sport,ab:F.name.ab}:F.rawName?{p:F.rawName,sport:null}:null;
     const nums=F.nums.filter(n=>!F.odds.some(o=>Math.abs(o.i-n.i)<2)&&!F.sp.some(s=>s.i===n.i-1||s.i===n.i));
     /* a matchup line ("CLE @ PHX", "Lakers vs Grizzlies") is context, not a bet; a lone price on it belongs to the bet above */
@@ -145,7 +151,7 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
       /* "Over 25.5 -115" then "Under 25.5 -105" on the next line: one board row with both prices */
       const prev=legs[legs.length-1];
       if(prev&&prev.mk==="prop"&&i-prev._i<=1&&prev.player===L.player&&prev.stat===L.stat&&prev.line===L.line&&prev.side&&L.side&&prev.side!==L.side&&!prev.pm){prev[prev.side]=prev.odds;prev[L.side]=L.odds;prev.side=null;prev.odds=null;prev.raw+=" / "+L.raw;return}
-      legs.push(L);if(row.grp)L.grp=1;if(nameObj){player=nameObj;player.cands=F.cands}if(F.st)stat=F.st;return}
+      legs.push(L);if(row.grp)L.grp=1;if(row.pair)L.pair=1;if(nameObj){player=nameObj;player.cands=F.cands}if(F.st)stat=F.st;return}
     /* game lines */
     const tms=F.teams.length?F.teams:teams;
     if(tms.length||F.tot||F.tt){L.teams=tms.slice(0,2).map(T=>({ab:T.ab,sport:T.sport,full:T.full}));L.sport=tms.length&&tms.every(T=>T.sport===tms[0].sport)?tms[0].sport:null;
@@ -154,12 +160,14 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
       else if((F.teams.length||/\b(spread|handicap|line)\b/i.test(raw))&&F.sp.length&&!F.ml){L.mk="spread";L.team=L.teams[0];L.line=F.sp[0].v;L.odds=F.odds.find(o=>o.i>F.sp[0].i)?.v??null}
       else if((F.teams.length||F.ml)&&(F.ml||F.odds.length||F.pm)){L.mk="ml";L.team=L.teams[0];L.odds=F.odds.length?F.odds[0].v:null;if(F.pm){if(F.pm.pick==="no"){L.missing.push("which team the NO contract is on");L.pmNo=true}setPM(L,F);if(F.pm.pick==="no")L.odds=null}}
       else return;
-      if(!F.teams.length&&teams.length)L.ctxTeams=1;legs.push(L);if(row.grp)L.grp=1;return}
+      if(!F.teams.length&&teams.length)L.ctxTeams=1;if(L.ctxTeams&&L.odds==null&&!L.pm&&L.line==null)return;legs.push(L);if(row.grp)L.grp=1;if(row.pair)L.pair=1;return}
     /* a bare selection whose player or market comes on the next line */
     if(F.sides.length&&nums.length){L.mk="prop";L.side=F.sides[0].s;L.line=nums[0].v;L.odds=F.odds.length?F.odds[0].v:null;L.stat=stat&&!player?stat.st:null;legs.push(L);return}
     if(F.pm&&fillBack("pm",F,i))return;
     if(F.pm){L.mk="pm";setPM(L,F);L.missing.push("the contract's exact question");legs.push(L);return}
     if(F.odds.length)loose.push({v:F.odds[F.odds.length-1].v,i,raw})});
+  /* a row of numbers with no team and no price (an alternate-line picker, a total selector) is not a bet */
+  for(let k=legs.length-1;k>=0;k--){const L=legs[k];if((L.mk==="spread"||L.mk==="ml"||L.mk==="total")&&L.odds==null&&!L.pm&&!feats(L.raw,ctx).teams.length&&(L.raw.match(/[+-]?\d+(\.5)?/g)||[]).length>=3)legs.splice(k,1)}
   /* an unknown name with no market, no side and no price is not a bet (a post's author line, a caption) */
   for(let k=legs.length-1;k>=0;k--){const L=legs[k];if(L.mk==="prop"&&!L.stat&&!L.side&&L.odds==null&&L.over==null&&L.under==null&&!L.pm&&!(L.cands||[]).length&&!(ctx.names||[]).some(x=>norm(x.p)===norm(L.player||"")))legs.splice(k,1)}
   legs.forEach(L=>{
@@ -189,8 +197,9 @@ function parse(input,ctx,opt){opt=opt||{};const lines=Array.isArray(input)?input
   const blocks=[];if(opt.image)blocks.push(lines);else{let cur=[];lines.forEach(l=>{if(!l.trim()){if(cur.length)blocks.push(cur);cur=[]}else cur.push(l)});if(cur.length)blocks.push(cur)}
   const bets=[];const seen=new Map();let n=0;
   blocks.forEach(bl=>{const R=parseBlock(bl,ctx);if(!R.legs.length)return;const M=slipMoney(R.all);
-    const sel=R.legs.filter(L=>L.side!==null||L.mk!=="prop"),board=R.legs.filter(L=>L.side===null&&L.mk==="prop");
-    const pick=PICKEM.has(R.book);const isPar=sel.length>1&&(PARLAY_RE.test(R.all)||R.combo||(SLIP_RE.test(R.all)&&M.stake!=null)||(pick&&M.mult));
+    const sel=R.legs.filter(L=>(L.side!==null||L.mk!=="prop")&&!L.pair),board=R.legs.filter(L=>(L.side===null&&L.mk==="prop")||L.pair);
+    const pick=PICKEM.has(R.book);const parTxt=bl.filter(l=>!isUI(l)).map(l=>/[+-]\d{3}|\bleg/i.test(l)||/^\W*sgp\+?\W*$/i.test(l.trim())?l:l.replace(/\bsgp\+?\b/gi,"")).join("\n");
+    const isPar=sel.length>1&&(PARLAY_RE.test(parTxt)||R.combo||(SLIP_RE.test(R.all)&&M.stake!=null)||(pick&&M.mult));
     const parOdds=(()=>{const p=R.loose.filter(x=>x.par);if(p.length)return p[p.length-1].v;const l=R.loose.filter(x=>!x.par);if(isPar&&l.length)return l[l.length-1].v;
       if(isPar&&R.combo){const last=sel[sel.length-1];if(last.odds!=null&&sel.slice(0,-1).every(L=>L.odds==null)){const v=last.odds;last.odds=null;if(!last.missing.includes("odds"))last.missing.push("odds");return v}}
       if(pick&&M.mult)return decToAm(M.mult);if(isPar&&M.stake&&M.toWin)return decToAm(1+M.toWin/M.stake);return null})();
