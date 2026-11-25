@@ -408,7 +408,18 @@ function panelHTML(b){const legs=b.type==="parlay"?b.legs:[{...b,res:null,name:b
     <div class="tp-legs">${L.map(({l,s})=>`<div class="tp-leg ${s.k}"><div class="tp-lt"><span>${esc(l.key&&l.key[0]==="l"?"":nm(l)+" ")}${esc(l.pick)}</span><b>${s.k==="won"?"✓":s.k==="lost"?"✕":pc(s.p)}</b></div>
       <div class="tp-bar"><i style="width:${s.p==null?0:Math.round(Math.max(.02,s.p)*100)}%"></i></div><small>${esc(s.txt)}${s.rough?" · rough estimate":s.model?" · model only, no live DraftKings price for this market":s.anch!=null?` · from DraftKings' live line ${s.anch}`:""}${s.k==="pre"&&s.p!=null&&!/pregame/i.test(s.txt)?" · pregame estimate":""}</small></div>`).join("")}</div>
     <div class="tp-f">${legs.length>1?(b.sgp?"Same-game legs adjusted with within-game correlations from this season's box scores (NFL). ":"Legs treated as independent. "):""}Live chances use the box score, game clock and DraftKings' live price when it has one at your line. Not yet graded for calibration.</div>`}
-function paintTracker(){document.querySelectorAll("[data-tlive]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tlive);const h=b&&!b.res?chanceHTML(b):"";
+/* the NFL model loads on demand: a tracked NFL bet needs it even when the NFL tab hasn't been opened yet, so the chance
+   doesn't sit at "–" until games start */
+let nflWait=0;
+function needNfl(){if(nflWait||!window.NFL||(NFL.N.stats&&NFL.N.events&&NFL.N.events.length))return;
+  if(!BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))return;
+  nflWait=1;Promise.resolve(NFL.ensure()).catch(()=>{}).then(()=>{nflWait=0;paintTracker()})}
+/* parlay titles saved before Nov 24 used the last word of each name ("III" for Luther Burden III); rebuilt once */
+let titlesFixed=0;
+function fixTitles(){if(titlesFixed)return;titlesFixed=1;let ch=0;BETS.forEach(b=>{if(b.type!=="parlay"||!Array.isArray(b.legs)||!b.legs.every(l=>l.pick))return;
+  const t=b.legs.map(l=>(l.key&&l.key[0]==="l"||!l.name||/@/.test(l.name)?"":lastNm(l.name)+" ")+l.pick).join(" + ");if(/\b(III|II|IV|Jr\.?|Sr\.?) /.test(b.pick||"")&&t!==b.pick){b.pick=t;ch=1}});
+  if(ch&&typeof saveBets==="function"){saveBets();if(typeof renderTrack==="function")try{renderTrack()}catch(e){}}}
+function paintTracker(){try{fixTitles();needNfl()}catch(e){}document.querySelectorAll("[data-tlive]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tlive);const h=b&&!b.res?chanceHTML(b):"";
   if(el._h!==h){el._h=h;el.innerHTML=h;el.style.display=h?"":"none"}});
   document.querySelectorAll("[data-tpanel]").forEach(el=>{const b=BETS.find(x=>String(x.id)===el.dataset.tpanel);let h="";try{h=b&&!b.res?panelHTML(b):""}catch(e){console.warn(e)}
     if(el._h!==h){el._h=h;el.innerHTML=h}})}
