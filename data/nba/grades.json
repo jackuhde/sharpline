@@ -1,27 +1,27 @@
 {
- "updated": "2026-11-24T20:20:29.173Z",
+ "updated": "2026-11-25T19:34:31.157Z",
  "validation": [
   "2026-11-09",
   "2026-11-15"
  ],
  "test": [
   "2026-11-23",
-  "2026-11-23"
+  "2026-11-24"
  ],
  "trainingFrom": "2026-10-25",
  "before": {
   "close": {
-   "markets": 11436,
+   "markets": 11707,
    "sides": {
     "allMarkets": {
      "over": 13.7,
      "under": 86.3,
-     "n": 11436
+     "n": 11707
     },
     "positiveEV": {
      "over": 0,
      "under": 100,
-     "n": 685
+     "n": 688
     },
     "recommended": {
      "over": 0,
@@ -33,9 +33,9 @@
     "S": 0,
     "A": 25,
     "B": 96,
-    "C": 1938,
-    "D": 4140,
-    "F": 5237
+    "C": 1954,
+    "D": 4257,
+    "F": 5375
    },
    "byGrade": {
     "S": {
@@ -60,24 +60,24 @@
      "clv": null
     },
     "C": {
-     "n": 1938,
-     "won": 49.9,
+     "n": 1954,
+     "won": 49.8,
      "predicted": 53.4,
-     "roi": -6.9,
+     "roi": -7,
      "clv": null
     },
     "D": {
-     "n": 4140,
-     "won": 50.7,
+     "n": 4257,
+     "won": 50.6,
      "predicted": 52.9,
-     "roi": -6.6,
+     "roi": -6.9,
      "clv": null
     },
     "F": {
-     "n": 5237,
+     "n": 5375,
      "won": 53.9,
      "predicted": 52.6,
-     "roi": -3,
+     "roi": -3.1,
      "clv": null
     }
    },
@@ -152,31 +152,31 @@
    },
    "byProjectionGap": {
     "average slightly short": {
-     "n": 5134,
-     "won": 51,
+     "n": 5276,
+     "won": 50.8,
      "predicted": 51.5,
-     "roi": -4.3,
+     "roi": -4.8,
      "clv": null
     },
     "average slightly past": {
-     "n": 5147,
-     "won": 54.4,
+     "n": 5254,
+     "won": 54.5,
      "predicted": 54.2,
-     "roi": -3.1,
+     "roi": -2.9,
      "clv": null
     },
     "average well past the line (his side)": {
-     "n": 714,
+     "n": 724,
      "won": 49,
      "predicted": 55.5,
      "roi": -14.9,
      "clv": null
     },
     "average well short": {
-     "n": 441,
-     "won": 43.1,
+     "n": 453,
+     "won": 42.4,
      "predicted": 49.4,
-     "roi": -16.2,
+     "roi": -17.7,
      "clv": null
     }
    },
@@ -201,24 +201,24 @@
     "maxOnePlayer": 4
    },
    "vsMarket": {
-    "brier": 0.247,
-    "brierMarket": 0.2468,
-    "logLoss": 0.6871,
-    "logLossMarket": 0.6866
+    "brier": 0.2471,
+    "brierMarket": 0.2469,
+    "logLoss": 0.6873,
+    "logLossMarket": 0.6868
    }
   },
   "open": {
-   "markets": 7109,
+   "markets": 7274,
    "sides": {
     "allMarkets": {
-     "over": 14.7,
-     "under": 85.3,
-     "n": 7109
+     "over": 14.6,
+     "under": 85.4,
+     "n": 7274
     },
     "positiveEV": {
      "over": 0.3,
      "under": 99.7,
-     "n": 311
+     "n": 312
     },
     "recommended": {
      "over": 0,
@@ -230,9 +230,9 @@
     "S": 0,
     "A": 14,
     "B": 60,
-    "C": 929,
-    "D": 2460,
-    "F": 3646
+    "C": 938,
+    "D": 2531,
+    "F": 3731
    },
    "byGrade": {
     "S": {
@@ -257,24 +257,24 @@
      "clv": -3.6
     },
     "C": {
-     "n": 929,
-     "won": 51.9,
+     "n": 938,
+     "won": 51.7,
      "predicted": 53.3,
-     "roi": -3.1,
+     "roi": -3.5,
      "clv": -5.4
     },
     "D": {
-     "n": 2460,
-     "won": 51.7,
+     "n": 2531,
+     "won": 51.4,
      "predicted": 53,
-     "roi": -4.9,
+     "roi": -5.5,
      "clv": -5.4
     },
     "F": {
-     "n": 3646,
-     "won": 54.7,
+     "n": 3731,
+     "won": 54.9,
      "predicted": 52.9,
-     "roi": -1.9,
+     "roi": -1.7,
      "clv": -5.9
     }
    },
@@ -356,31 +356,31 @@
    },
    "byProjectionGap": {
     "average slightly short": {
-     "n": 3291,
-     "won": 51.2,
+     "n": 3383,
+     "won": 50.9,
      "predicted": 51.4,
-     "roi": -3.9,
+     "roi": -4.4,
      "clv": -5.8
     },
     "average well past the line (his side)": {
-     "n": 360,
+     "n": 362,
      "won": 49.7,
      "predicted": 56.3,
-     "roi": -15,
+     "roi": -15.1,
      "clv": -4.7
     },
     "average well short": {
-     "n": 240,
-     "won": 46.7,
+     "n": 243,
+     "won": 46.5,
      "predicted": 49.1,
-     "roi": -8.7,
-     "clv": -6.7
+     "roi": -9,
+     "clv": -6.6
     },
     "average slightly past": {
-     "n": 3218,
-     "won": 56.5,
+     "n": 3286,
+     "won": 56.7,
      "predicted": 54.6,
-     "roi": -0.1,
+     "roi": 0.2,
      "clv": -5.5
     }
    },
@@ -407,19 +407,19 @@
    "vsMarket": {
     "brier": 0.2463,
     "brierMarket": 0.2466,
-    "logLoss": 0.6856,
+    "logLoss": 0.6857,
     "logLossMarket": 0.6861
    }
   }
  },
  "after": {
   "close": {
-   "markets": 11436,
+   "markets": 11707,
    "sides": {
     "allMarkets": {
      "over": 48.2,
      "under": 51.8,
-     "n": 11436
+     "n": 11707
     },
     "positiveEV": {
      "n": 0
@@ -433,8 +433,8 @@
     "A": 0,
     "B": 0,
     "C": 0,
-    "D": 1481,
-    "F": 9955
+    "D": 1509,
+    "F": 10198
    },
    "byGrade": {
     "S": {
@@ -466,17 +466,17 @@
      "clv": null
     },
     "D": {
-     "n": 1481,
+     "n": 1509,
      "won": 61.5,
      "predicted": 62.3,
-     "roi": -5.6,
+     "roi": -5.7,
      "clv": null
     },
     "F": {
-     "n": 9955,
-     "won": 53,
+     "n": 10198,
+     "won": 52.9,
      "predicted": 52.6,
-     "roi": -5.2,
+     "roi": -5.3,
      "clv": null
     }
    },
@@ -492,31 +492,31 @@
    "byOdds": {},
    "byProjectionGap": {
     "average slightly short": {
-     "n": 4208,
-     "won": 53.1,
+     "n": 4318,
+     "won": 52.7,
      "predicted": 52.9,
-     "roi": -5.3,
+     "roi": -6,
      "clv": null
     },
     "average slightly past": {
-     "n": 6073,
+     "n": 6212,
      "won": 55.1,
      "predicted": 54.4,
-     "roi": -4.4,
+     "roi": -4.3,
      "clv": null
     },
     "average well past the line (his side)": {
-     "n": 827,
-     "won": 53.1,
+     "n": 843,
+     "won": 53.5,
      "predicted": 55.6,
-     "roi": -9.6,
+     "roi": -8.8,
      "clv": null
     },
     "average well short": {
-     "n": 328,
+     "n": 334,
      "won": 50.6,
      "predicted": 52,
-     "roi": -8.6,
+     "roi": -8.7,
      "clv": null
     }
    },
@@ -541,19 +541,19 @@
     "maxOnePlayer": 0
    },
    "vsMarket": {
-    "brier": 0.2468,
-    "brierMarket": 0.2468,
-    "logLoss": 0.6866,
-    "logLossMarket": 0.6866
+    "brier": 0.2469,
+    "brierMarket": 0.2469,
+    "logLoss": 0.6868,
+    "logLossMarket": 0.6868
    }
   },
   "open": {
-   "markets": 7109,
+   "markets": 7274,
    "sides": {
     "allMarkets": {
-     "over": 48.5,
-     "under": 51.5,
-     "n": 7109
+     "over": 48.6,
+     "under": 51.4,
+     "n": 7274
     },
     "positiveEV": {
      "n": 0
@@ -567,8 +567,8 @@
     "A": 0,
     "B": 0,
     "C": 0,
-    "D": 1254,
-    "F": 5855
+    "D": 1273,
+    "F": 6001
    },
    "byGrade": {
     "S": {
@@ -600,17 +600,17 @@
      "clv": null
     },
     "D": {
-     "n": 1254,
-     "won": 62,
-     "predicted": 62.3,
-     "roi": -5,
+     "n": 1273,
+     "won": 62.1,
+     "predicted": 62.4,
+     "roi": -4.9,
      "clv": -6.7
     },
     "F": {
-     "n": 5855,
-     "won": 52.3,
+     "n": 6001,
+     "won": 52.4,
      "predicted": 52.9,
-     "roi": -6.7,
+     "roi": -6.6,
      "clv": -7.9
     }
    },
@@ -626,18 +626,18 @@
    "byOdds": {},
    "byProjectionGap": {
     "average slightly short": {
-     "n": 2645,
-     "won": 51.7,
+     "n": 2706,
+     "won": 51.5,
      "predicted": 53.4,
-     "roi": -8.8,
+     "roi": -9,
      "clv": -8.4
     },
     "average well past the line (his side)": {
-     "n": 425,
-     "won": 53.2,
+     "n": 430,
+     "won": 53.3,
      "predicted": 56.8,
-     "roi": -11.2,
-     "clv": -6.3
+     "roi": -11.1,
+     "clv": -6.4
     },
     "average well short": {
      "n": 175,
@@ -647,10 +647,10 @@
      "clv": -9.9
     },
     "average slightly past": {
-     "n": 3864,
-     "won": 55.8,
+     "n": 3963,
+     "won": 56,
      "predicted": 55.1,
-     "roi": -4.4,
+     "roi": -4,
      "clv": -7.3
     }
    },
@@ -677,14 +677,14 @@
    "vsMarket": {
     "brier": 0.2466,
     "brierMarket": 0.2466,
-    "logLoss": 0.6861,
+    "logLoss": 0.6862,
     "logLossMarket": 0.6861
    }
   }
  },
  "shopping": {
   "note": "DraftKings opening price on props whose line later moved, priced from the later line",
-  "n": 5880,
+  "n": 5955,
   "fitPeriod": {
    "S": {
     "n": 5,
@@ -761,96 +761,96 @@
   },
   "test": {
    "S": {
-    "n": 81,
-    "won": 72.8,
-    "predicted": 63,
-    "roi": 35.7,
+    "n": 104,
+    "won": 67.3,
+    "predicted": 63.4,
+    "roi": 26.1,
     "clv": null
    },
    "A": {
-    "n": 39,
-    "won": 48.7,
+    "n": 45,
+    "won": 48.9,
     "predicted": 59.5,
-    "roi": -10.4,
+    "roi": -9.6,
     "clv": null
    },
    "B": {
-    "n": 43,
-    "won": 65.1,
-    "predicted": 61.2,
-    "roi": 16.5,
+    "n": 59,
+    "won": 61,
+    "predicted": 60.9,
+    "roi": 9.2,
     "clv": null
    },
    "C": {
-    "n": 40,
-    "won": 42.5,
-    "predicted": 57.3,
-    "roi": -22.2,
+    "n": 51,
+    "won": 43.1,
+    "predicted": 57.2,
+    "roi": -21.5,
     "clv": null
    },
    "D": {
-    "n": 88,
-    "won": 42,
-    "predicted": 56.3,
-    "roi": -23.2,
+    "n": 107,
+    "won": 46.7,
+    "predicted": 56.5,
+    "roi": -15.4,
     "clv": null
    }
   },
   "all": {
    "S": {
-    "n": 696,
-    "won": 62.9,
+    "n": 719,
+    "won": 62.4,
     "predicted": 65,
-    "roi": 17.7,
+    "roi": 16.9,
     "clv": null
    },
    "A": {
-    "n": 742,
-    "won": 64.4,
+    "n": 748,
+    "won": 64.3,
     "predicted": 62.1,
-    "roi": 18.9,
+    "roi": 18.7,
     "clv": null
    },
    "B": {
-    "n": 630,
-    "won": 61.4,
-    "predicted": 60.5,
-    "roi": 11.1,
+    "n": 646,
+    "won": 61.1,
+    "predicted": 60.4,
+    "roi": 10.6,
     "clv": null
    },
    "C": {
-    "n": 519,
-    "won": 56.1,
+    "n": 530,
+    "won": 55.8,
     "predicted": 58.4,
-    "roi": 1.7,
+    "roi": 1.3,
     "clv": null
    },
    "D": {
-    "n": 3293,
-    "won": 57.3,
+    "n": 3312,
+    "won": 57.4,
     "predicted": 57.9,
-    "roi": 3.9,
+    "roi": 4,
     "clv": null
    }
   },
   "recommendedSides": {
-   "over": 34.5,
-   "under": 65.5,
-   "n": 2068
+   "over": 34.7,
+   "under": 65.3,
+   "n": 2113
   },
   "recommendedByStat": {
    "Assists": {
-    "n": 127,
-    "won": 71.7,
-    "predicted": 66.9,
-    "roi": 25,
+    "n": 130,
+    "won": 71.5,
+    "predicted": 66.8,
+    "roi": 25.5,
     "clv": null
    },
    "Rebounds": {
-    "n": 231,
-    "won": 64.1,
+    "n": 236,
+    "won": 63.1,
     "predicted": 64.3,
-    "roi": 15.5,
+    "roi": 13.8,
     "clv": null
    },
    "Steals": {
@@ -861,45 +861,45 @@
     "clv": null
    },
    "Pts+Ast": {
-    "n": 296,
-    "won": 63.5,
+    "n": 303,
+    "won": 63.4,
     "predicted": 61.6,
-    "roi": 19.3,
+    "roi": 18.9,
     "clv": null
    },
    "Pts+Reb": {
-    "n": 352,
-    "won": 61.4,
-    "predicted": 61.5,
-    "roi": 14.8,
+    "n": 359,
+    "won": 61,
+    "predicted": 61.4,
+    "roi": 14.1,
     "clv": null
    },
    "Reb+Ast": {
-    "n": 242,
-    "won": 62.8,
+    "n": 245,
+    "won": 62.9,
     "predicted": 63.1,
-    "roi": 14.6,
+    "roi": 14.7,
     "clv": null
    },
    "Pts+Reb+Ast": {
-    "n": 314,
-    "won": 59.9,
+    "n": 320,
+    "won": 59.7,
     "predicted": 61.8,
-    "roi": 12.2,
+    "roi": 11.9,
     "clv": null
    },
    "Points": {
-    "n": 432,
-    "won": 63,
+    "n": 443,
+    "won": 62.5,
     "predicted": 60.7,
-    "roi": 18.3,
+    "roi": 17.5,
     "clv": null
    },
    "3-Pointers": {
-    "n": 60,
+    "n": 63,
     "won": 66.7,
-    "predicted": 71.4,
-    "roi": 8.3,
+    "predicted": 71.5,
+    "roi": 8.1,
     "clv": null
    },
    "Blocks": {
