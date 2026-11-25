@@ -106,6 +106,13 @@ async function loadAllProps(){const pre=N.events.filter(e=>e.state==="pre");let 
 
 /* ---------- the model on one prop ---------- */
 const gameOf=eid=>N.events.find(e=>e.id===eid);
+/* a tracked bet's game may be in a different week than the one on screen (the history file's week lags the schedule early in
+   the week, and the NFL tab can be on any week): look the game up on its own instead of giving up */
+N.xEv={};
+async function extraEv(eid){if(N.xEv[eid]!==undefined)return;N.xEv[eid]=null;const j=await getJSON(`${SB}/summary?event=${eid}`).catch(()=>null);
+  if(!j||!j.header||!(j.header.competitions||[])[0]){delete N.xEv[eid];return}const c={...j.header.competitions[0]};if(!(c.odds||[]).length&&(j.pickcenter||[])[0])c.odds=[j.pickcenter[0]];
+  try{N.xEv[eid]=parseEvent({id:j.header.id||eid,date:c.date,competitions:[c]})}catch(e){delete N.xEv[eid];return}window.LiveUI&&LiveUI.paintTracker()}
+const evAny=eid=>gameOf(eid)||(N.liveEv&&N.liveEv[eid])||N.xEv[eid]||(extraEv(eid),null);
 function teamSide(e,tid){return e.home.id===tid?"home":e.away.id===tid?"away":null}
 function ctxFor(e,id){const a=ath(id);if(!a||!e)return null;const side=teamSide(e,a[2]);if(!side)return null;const opp=side==="home"?e.away.id:e.home.id;
   const sp=e.odds&&e.odds.spread!=null?(side==="home"?e.odds.spread:-e.odds.spread):null;return{opp,spread:sp,total:e.odds?e.odds.total:null,home:side==="home"?1:0,side}}
@@ -213,7 +220,7 @@ const live={
     return{p:side(pOver(rem,line-cur,Math.max(.5,cv*mu*Math.sqrt(fl)))),proj:cur+rem}}};
 /* ---------- live chance for tracked NFL bets (used by the tracker's live panel) ---------- */
 function fracLeft(B){if(!B||!B.period)return 1;if(B.period>4)return Math.max(0,(B.clockSec||0)/600)*.15;return Math.max(0,((4-B.period)*900+(B.clockSec||0))/3600)}
-betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=gameOf(sp.ev)||N.liveEv&&N.liveEv[sp.ev];const B=N.box[sp.ev];
+betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=evAny(sp.ev);const B=N.box[sp.ev];
   if(!B){summary(sp.ev,20000).then(()=>window.LiveUI&&LiveUI.paintTracker());return e&&e.state==="pre"?{st:"pre"}:null}
   /* keep the box score fresh: refetch in the background when it's over 20 seconds old */
   if(Date.now()-(B.ts||0)>20000&&!betChance.busy[sp.ev]){betChance.busy[sp.ev]=1;Promise.all([summary(sp.ev,20000),Date.now()-(N.sbTs||0)>20000?loadWeek(true):null]).catch(()=>{}).finally(()=>{delete betChance.busy[sp.ev];window.LiveUI&&LiveUI.paintTracker()})}
@@ -240,7 +247,7 @@ function roughNfl(sp,cur,fl,clock,score){const mu0=Math.max(.5,sp.line),played=1
   const need=sp.line-cur;let pO;if(need<0)pO=1;else if(mu0<6){pO=1-M.poisCdf(Math.floor(need),rem)}else pO=1-M.Phi((need-rem)/Math.max(.5,.5*mu0*Math.sqrt(Math.max(.01,fl))));
   return{st:"live",p:sp.side==="u"?1-pO:pO,src:"rough",clock,score,now:`${cur} now, about ${r1(cur+rem)} projected (from the line and his pace)`}}
 /* pregame chance for a bet with none (added by hand): the prop model at your line, or DraftKings' game line */
-function preBet(sp){if(!sp||sp.sport!=="nfl"||!N.stats)return null;const e=gameOf(sp.ev);if(!e)return null;
+function preBet(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=evAny(sp.ev);if(!e)return null;
   if(sp.kind==="prop"){const st0=sp.stat==="td2"?"td":sp.stat;const c=ctxFor(e,sp.ath)||{};const L=M.STATS[st0]?live.preChance(sp,e,c):null;
     if(!L){/* no history: start from the line itself, near the middle of the outcomes */const r=roughNfl(sp,0,1,"","");return{p:r.p,src:"the line itself (no player data)"}}
     return{p:sp.side==="u"?1-L.pO:L.pO,src:"Sharpline's pregame model"}}
