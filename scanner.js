@@ -269,7 +269,7 @@ function recordOf(r,b){const x=r.A.sport==="nfl"?NFL.scanBet(r.leg,r.A,r.odds,b.
 function trackOne(i){const o=S.res[i];if(!o||o.tracked)return false;const b=o.b;
   if(b.kind!=="parlay"){const x=recordOf(o.R,b);if(!x){toast("Can't track this one: game or odds not verified");return false}BETS.unshift(x)}
   else{const legs=o.legs.map(r=>recordOf(r,{...b,stake:null}));if(legs.some(x=>!x)||o.parAm==null){toast("Every leg needs a verified game, and the parlay needs odds");return false}
-    BETS.unshift({id:Date.now(),type:"parlay",sgp:!!o.sameGame,date:legs[0].date,key:"x"+Date.now(),name:`${legs.length}-leg ${o.sameGame?"same-game ":""}parlay`,pick:legs.map(l=>(l.name&&!/@/.test(l.name)?l.name.split(" ").pop()+" ":"")+l.pick).join(" + "),
+    BETS.unshift({id:Date.now(),type:"parlay",sgp:!!o.sameGame,date:legs[0].date,key:"x"+Date.now(),name:`${legs.length}-leg ${o.sameGame?"same-game ":""}parlay`,pick:legs.map(l=>(l.name&&!/@/.test(l.name)?(window.lastNm?lastNm(l.name):l.name.split(" ").pop())+" ":"")+l.pick).join(" + "),
       game:[...new Set(legs.map(l=>l.game))].join(", "),mkt:"Parlay",odds:Math.round(o.parAm),oddsOrig:Math.round(o.parAm),userOdds:b.parlayOdds!=null,p:o.p??null,stake:b.stake??UNIT,book:b.book||BOOK,res:null,spec:{kind:"parlay"},
       legs:legs.map(l=>({key:l.key,name:l.name,pick:l.pick,game:l.game,mkt:l.mkt,odds:l.odds,p:l.p,spec:l.spec,ev:l.ev,evid:l.evid,home:l.home,away:l.away,tm:l.tm,ath:l.ath,date:l.date,res:null,sport:l.sport,scan:l.scan})),
       sport:legs.every(l=>l.sport==="nfl")?"nfl":undefined,scan:{odds:b.parlayOdds??null,book:b.book||null,stake:b.stake??null,ts:S.at}})}
