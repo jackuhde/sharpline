@@ -24,6 +24,7 @@ const hOverlap=(a,b)=>Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0));
 function cleanTok(t,prev){t=String(t||"").replace(/[–—−~]/g,"-").replace(/[|]/g,"");if(/^[uU]{2}$/.test(t))t="U";if(/^[oO0]{2}$/.test(t))t="O";
   if(/^[+-][\dOolI]{3,4}$/.test(t))t=t[0]+t.slice(1).replace(/[Oo]/g,"0").replace(/[lI]/g,"1");
   if(/^\d{1,3}[,]5$/.test(t))t=t.replace(",",".");
+  {const m=t.match(/^(over|under|more|less|higher|lower)(\d{1,3}(?:\.\d)?)$/i);if(m)t=m[1]+" "+m[2]}
   if(/^[oOuU]?[\dlI]{1,3}\.5$/.test(t)&&/[lI]/.test(t.replace(/^[oOuU]/,""))&&/\d|[lI]{2}/.test(t)){const m=t.match(/^([oOuU]?)(.*)$/);t=(m[1]?m[1].toUpperCase()+" ":"")+m[2].replace(/[lI]/g,"1")}
   if(prev&&/^(yes|no)$/i.test(prev)&&/^\d{1,2}[¢cCeé€]$/.test(t))t=t.replace(/[^\d]$/,"¢");
   return t}
@@ -85,12 +86,15 @@ function read(words,opt){opt=opt||{};const statOf=opt.statOf||(()=>null);
       /* 6. tab bar: three or more markets on one row with no numbers */
       const sts=cs.filter(c=>!NUM_RE.test(txt(c))&&statOf(txt(c)));
       if(sts.length>=3&&!cs.some(c=>NUM_RE.test(txt(c)))){const ink=sts.map(c=>Math.max(...c.ws.map(w=>w.ink||0)));const s=[...ink].sort((a,b)=>b-a);
-        if(s[0]>0&&s[0]>=1.3*s[1]){const sel=sts[ink.indexOf(s[0])];out.push({t:txt(sel),conf:{},tab:1})}else out.push({t:"",conf:{},tabUnclear:1});return}
+        if(s[0]>0&&s[0]>=1.3*s[1]){const sel=sts[ink.indexOf(s[0])];out.push({t:txt(sel),conf:{},tab:1})}else out.push({t:"",conf:{},tabUnclear:1,cands:sts.map(c=>statOf(txt(c))&&txt(c))});return}
       /* label numbers under a header column with that column's side */
       if(cols&&!cs.some(c=>toks(c).some(t=>SIDE_RE.test(t)))&&cs.some(isOdds)){const lab=cs.map(c=>{if(!NUM_RE.test(txt(c))||nameLike(c))return null;const xc=(c.x0+c.x1)/2;
           const k=cols.reduce((b,col)=>Math.abs(col.x-xc)<Math.abs(b.x-xc)?col:b,cols[0]);return Math.abs(k.x-xc)<=Math.max(60,1.2*(c.x1-c.x0))?k.side:null});
         out.push(row(cs,null,null,lab));return}
       out.push(row(cs))})});
+  /* tabs with no clear highlight: the market named again below them (a section header such as "POINTS") is the selected one */
+  out.forEach((r,i)=>{if(!r.tabUnclear)return;const key=t=>{const m=statOf(t);return m&&(m.st||m)};const C=new Map(r.cands.map(c=>[JSON.stringify(key(c)),c]));
+    for(const o of out.slice(i+1)){if(o.tab||o.tabUnclear)continue;const k=JSON.stringify(key(o.t.replace(/\b(sgp|same game)\b/gi,"").trim()));if(k&&k!=="null"&&k!=="false"&&C.has(k)){r.t=C.get(k);r.tab=1;delete r.tabUnclear;break}}});
   pctPass(out);
   return out.filter(r=>r.t.trim()||r.tabUnclear)}
 /* prediction-market style prices ("29.85%") are the chance the market gives; turned into American odds with the % kept beside

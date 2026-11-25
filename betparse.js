@@ -125,7 +125,7 @@ function parseBlock(lines,ctx){const legs=[],loose=[];let player=null,stat=null,
     if(!F.hasSel&&!F.odds.length&&!nums.length){
       if(nameObj){if(!fillBack("player",nameObj,i)){player=nameObj;player.cands=F.cands;stat=F.st;if(legs.length)legs[legs.length-1]._closed=1}return}
       if(F.cands.length>1&&!F.st){player={p:F.cands[0].p.split(" ").pop(),sport:null,cands:F.cands,amb:true};return}
-      if(F.st){if(!fillBack("stat",F.st,i)){stat=F.st;if(!player)secStat=F.st}return}
+      if(F.st){if(!fillBack("stat",F.st,i)){stat=F.st;if(!player||!legs.length)secStat=F.st}return}
       if(F.teams.length){teams=F.teams;return}return}
     if(F.pureOdds){if(!fillBack("odds",F.odds[0].v,i))loose.push({v:F.odds[0].v,i,raw});return}
     if(PARLAY_RE.test(raw)&&!F.st&&!nameObj&&!F.teams.length){if(F.odds.length)loose.push({v:F.odds[F.odds.length-1].v,i,raw,par:1});return}
@@ -193,7 +193,7 @@ const dec=a=>a>0?1+a/100:1+100/Math.abs(a);
 const decToAm=d=>d>=2?Math.round((d-1)*100):-Math.round(100/(d-1));
 
 /* blocks: each screenshot is one block; pasted text splits on blank lines (separate posts / messages) */
-function parse(input,ctx,opt){opt=opt||{};const lines=Array.isArray(input)?input.map(x=>typeof x==="string"?x:x.t):String(input||"").split(/\r?\n/);
+function parse(input,ctx,opt){opt=opt||{};const lines=(Array.isArray(input)?input.map(x=>typeof x==="string"?x:x.t):String(input||"").split(/\r?\n/)).map(l=>l.replace(/\b(over|under|more|less|higher|lower)(?=\d)/gi,"$1 "));
   const blocks=[];if(opt.image)blocks.push(lines);else{let cur=[];lines.forEach(l=>{if(!l.trim()){if(cur.length)blocks.push(cur);cur=[]}else cur.push(l)});if(cur.length)blocks.push(cur)}
   const bets=[];const seen=new Map();let n=0;
   blocks.forEach(bl=>{const R=parseBlock(bl,ctx);if(!R.legs.length)return;const M=slipMoney(R.all);
