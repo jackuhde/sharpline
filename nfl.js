@@ -162,7 +162,10 @@ function parlay(b){if(!b)return;if(window.TR2&&TR2.addLegObj)TR2.addLegObj(b)}
 /* ---------- grading NFL bets from box scores ---------- */
 async function summary(eid,maxAge){const B=N.box[eid];if(B&&Date.now()-B.ts<(maxAge||30000))return B;const j=await getJSON(`${SB}/summary?event=${eid}`).catch(()=>null);if(!j)return B||null;
   const players={};((j.boxscore||{}).players||[]).forEach(t=>(t.statistics||[]).forEach(cat=>{const keys=cat.keys||[];(cat.athletes||[]).forEach(a=>{const id=a.athlete&&a.athlete.id;if(!id)return;
-    const v=players[id]||(players[id]={t:t.team.id,n:a.athlete.displayName,v:Object.fromEntries(N.stats.cols.map(c=>[c,0])),tkl:0,ast:0,sacks:0});const s=a.stats||[],at=k=>parseFloat(String(s[keys.indexOf(k)]||"0").split(/[/-]/)[0])||0;
+    const v=players[id]||(players[id]={t:t.team.id,n:a.athlete.displayName,v:Object.fromEntries(N.stats.cols.map(c=>[c,0])),tkl:0,ast:0,sacks:0});const s=a.stats||[],at=k=>{const r=String(s[keys.indexOf(k)]??"0").trim();
+      /* "2/3" and "1-7" carry two numbers (made/attempts, sacks-yards): take the first. A plain value keeps its minus sign:
+         a runner with -6 yards has -6, not 0 */
+      const f=/\//.test(k)?r.split("/")[0]:/-/.test(k)?r.replace(/^(-?[\d.]+)-.*$/,"$1"):r;return parseFloat(f)||0};
     if(cat.name==="passing"){const ca=String(s[keys.indexOf("completions/passingAttempts")]||"0/0").split("/");v.v.cmp=+ca[0]||0;v.v.att=+ca[1]||0;v.v.pYds=at("passingYards");v.v.pTD=at("passingTouchdowns");v.v.int=at("interceptions")}
     if(cat.name==="rushing"){v.v.car=at("rushingAttempts");v.v.rYds=at("rushingYards");v.v.rTD=at("rushingTouchdowns");v.v.rLng=at("longRushing")}
     if(cat.name==="receiving"){v.v.rec=at("receptions");v.v.recYds=at("receivingYards");v.v.recTD=at("receivingTouchdowns");v.v.recLng=at("longReception");v.v.tgt=at("receivingTargets")}
@@ -446,7 +449,18 @@ function scanNames(){if(!N.stats)return[];return Object.entries(N.stats.ath).fil
 function scanTeams(){if(!N.stats)return[];return Object.entries(N.stats.teams).map(([id,t])=>({full:t[1],ab:t[0],nick:String(t[4]||"").toLowerCase().replace(/[^a-z]/g,"")||t[0].toLowerCase(),sport:"nfl",id}))}
 function invPhi(p){let lo=-8,hi=8;for(let i=0;i<60;i++){const m=(lo+hi)/2;M.Phi(m)<p?lo=m:hi=m}return(lo+hi)/2}
 const gameState=e=>e.state==="pre"?{ok:true,t:`Scheduled ${new Date(e.date).toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`}:e.state==="in"?{ok:null,t:`Underway: ${e.detail||"in progress"}. Pregame numbers no longer apply`}:{ok:false,t:`Final${e.detail?": "+e.detail:""}. This bet is already decided`};
-function eventOfTeam(tid){return N.events.find(x=>x.home.id===tid||x.away.id===tid)||null}
+function eventOfTeam(tid){const all=N.events.filter(x=>x.home.id===tid||x.away.id===tid);return all.find(x=>x.state!=="post")||null}
+/* bets tracked while the app was on the previous week were tied to that week's (finished) game. A bet can't be on a game that
+   ended before it was tracked, so those legs are moved to the team's game this week and their graded result, if the old
+   game set one, is cleared. */
+function repairBets(){if(typeof BETS==="undefined"||!N.events.length)return;let ch=0;
+  const fix=(o,sp,made)=>{if(!sp||sp.sport!=="nfl"||!sp.ev||!made)return;const old=N.events.find(e=>e.id===sp.ev);if(old)return;
+    const tip=Date.parse(o.tip||"")||(o.date?Date.parse(o.date+"T23:59:00")+6*3600e3:0);if(!(tip&&made>tip+4*3600e3))return;
+    const tid=sp.kind==="prop"?(ath(sp.ath)||[])[2]:sp.team||(N.events.find(e=>e.home.name===o.home||e.away.name===o.away)||{home:{}}).home.id;const e=tid&&eventOfTeam(tid);if(!e)return;
+    sp.ev=e.id;o.evid=e.id;o.tip=e.date;o.date=localDate(e.date);o.game=`${e.away.ab} @ ${e.home.ab}`;o.home=e.home.name;o.away=e.away.name;if(o.res&&o.auto){o.res=null;o.gnote=null;o.auto=0}ch=1;b0.fixed=1};
+  let b0;BETS.forEach(b=>{if(b.res&&!b.auto)return;b0=b;const made=b.scanTs||(b.id>1e12?b.id:0);if(b.spec)fix(b,b.spec,made);(b.legs||[]).forEach(l=>fix(l,l.spec,made));
+    if(b.fixed){delete b.fixed;if(b.res&&b.auto){b.res=null;b.auto=0;b.gnote=null}if(b.legs){const d=b.legs.map(l=>l.tip).filter(Boolean).sort()[0];if(d){b.tip=b.tip&&b.spec?b.tip:d;b.date=localDate(d)}}}});
+  if(ch){saveBets();if(window.renderTrack)renderTrack();if(window.LiveUI)LiveUI.paintTracker()}}
 function scanProp(leg){const A={sport:"nfl",checks:[],market:{rows:[]},an:null};const SBp=window.SharpBets;
   if(!leg.player&&!leg.athId){A.cands=(leg.cands||[]).filter(c=>c.sport==="nfl");A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NFL players match. Pick one in review`:"No player name in the submission"});return A}
   let id=leg.athId;if(!id){const m=SBp.matchName(leg.player||"",scanNames());if(!m||!m.x){A.cands=m?m.cands:[];A.checks.push({ok:false,t:A.cands.length>1?`${A.cands.length} NFL players match "${leg.player||leg.ambName}". Pick one`:`No NFL player called "${leg.player}" on ESPN's rosters`});return A}id=m.x.id}
@@ -503,7 +517,12 @@ function scanBet(leg,A,odds,stake,book){/* tracker record that keeps the submitt
 function setPx(eid,id,st,dkL,side,odds,L,bk){const k=pxKey(eid,id,st,dkL);const cur=N.px[k]||{};N.px[k]={...cur,[side==='under'?'u':'o']:odds,L:L!=null&&L!==dkL?L:undefined,bk:bk||'Scanned',ts:Date.now()};savePx();paint();return k}
 function openMarket(name){N.f.q=name||"";N.f.g="all";saveF();if(typeof setSport==="function"&&typeof SPORT!=="undefined"&&SPORT!=="nfl")setSport("nfl");N.view="props";if(typeof go==="function")go("props");paint()}
 /* ---------- render + events ---------- */
-async function ensure(){if(!N.stats)await loadStatic();if(!N.stats)return;if(N.week==null)N.week=N.stats.week;try{await loadWeek();N.netErr=null}catch(err){N.netErr="Couldn't reach ESPN for this week's games ("+(err&&err.message||"network error")+")."}loadInj().then(()=>paint()).catch(()=>{});
+/* The history file's week is the week ESPN showed when it was built, and ESPN keeps showing the finished week until midweek:
+   on Tuesday Nov 24 it said week 11 while week 12 started the next night. The week on screen at launch (and every bet the
+   scanner matches to a game) comes from ESPN's live scoreboard instead, which reports the current week. */
+async function curWeek(){if(N.weekSet)return;const j=await getJSON(`${SB}/scoreboard`,12000).catch(()=>null);if(!j||!j.week||!j.season)return;
+  N.weekSet=1;const w=+j.week.number,t=+j.season.type;if(!w||!t)return;if(N.week===N.curWeek||N.week==null){N.week=w;N.stype=t===1?N.stype:t}N.curWeek=w}
+async function ensure(){if(!N.stats)await loadStatic();if(!N.stats)return;if(N.week==null)N.week=N.stats.week;await curWeek();try{await loadWeek();N.netErr=null;repairBets()}catch(err){N.netErr="Couldn't reach ESPN for this week's games ("+(err&&err.message||"network error")+")."}loadInj().then(()=>paint()).catch(()=>{});
   const pre=N.events.filter(e=>e.state==="pre"&&!N.props[e.id]);if(pre.length&&!N.allBusy){N.allBusy=1;loadAllProps().then(()=>{N.allBusy=0;paint()})}}
 let paintT=0;async function paint(){if(!N.on)return;clearTimeout(paintT);const v=N.view,id=VIEWS[v];if(!id)return;const el=document.getElementById(id);if(!el)return;
   if(!N.stats){el.innerHTML=`<div class="empty"><b>${N.err?h(N.err):"Loading NFL…"}</b>${N.err?"Refresh to try again.":""}</div>`;return}
@@ -535,6 +554,6 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,SHORT,relEVs:()=>NREL_EVS,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
+window.NFL={N,SHORT,repairBets,eventOfTeam,relEVs:()=>NREL_EVS,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
   _p:{N,M,RK,T,ath,h,am,pc,pc1,evs,r1,ago,evalProp,evalTD,gradeNfl,ctxFor,LBL,SHORT,STAT_ORDER,btNote,trusted,oddsSheet,nflAvatar,logo,priceOf,NFL_STANDIN,computeRelNfl,rel:()=>({R:NREL,n:NREL_N}),ensure,loadProps,getJSON}};
 })();
