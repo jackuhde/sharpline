@@ -134,13 +134,18 @@ function project(L,id,w){const ck=w+"|"+id;const C=D.cache[L.id+"|"+JSON.stringi
   /* spread of outcomes: his own game-to-game fantasy points in this scoring, shrunk toward the position's typical spread */
   const fps=games.map(x=>fpGame(x.v,pos,sc)),avg=fps.reduce((a,b)=>a+b,0)/fps.length,sd=Math.sqrt(fps.reduce((a,b)=>a+(b-avg)**2,0)/Math.max(1,fps.length-1));
   let cv=avg>0?(Math.min(games.length,10)*(sd/avg)+5*PRIORCV[pos])/(Math.min(games.length,10)+5):PRIORCV[pos];cv=clamp(cv,.25,1.2);
-  out.seasonAvg=avg;out.last=fps.slice(-3);out.n=games.length;
+  out.seasonAvg=avg;out.last=fps.slice(-3);out.n=games.length;let confPen=0;
   /* injury report */
-  let confPen=0;const inj=injOf(id);if(inj&&cur){out.inj=inj;
+  const inj=injOf(id);if(inj&&cur){out.inj=inj;
     if(inj.lv==="out"){m=0;out.factors.unshift(`${inj.st}${inj.txt?": "+inj.txt:""}. Projected 0`)}
     else if(inj.lv==="doubt"){m*=.25;cv=Math.max(cv,1);confPen=30;out.factors.unshift(`Doubtful${inj.txt?": "+inj.txt:""}. Counted as about a 25% chance to play (estimate)`)}
     else if(inj.lv==="quest"){confPen=15;out.factors.unshift(`Questionable${inj.txt?": "+inj.txt:""}. Projected as if he plays; check before kickoff`)}}
   else if(inj&&inj.lv==="out"&&/reserve|^ir/i.test(inj.st)){m=0;out.factors.unshift(`${inj.st}: projected 0 until he's activated`)}
+  /* role check: how many of his team's last 3 games he actually played in this role (backups, benched or returning players) */
+  const tg=(D.I.T[t]||[]).filter(x=>N().stats.games.some(z=>z.id===x.gid)).slice(-3);
+  if(tg.length>=3&&!(out.inj&&out.inj.lv==="out")){const since=tg[0].d,role=x=>pos==="QB"?x.v.att>=10:pos==="K"?(x.v.fgA+x.v.xpM)>0:(x.v.car+x.v.tgt+x.v.rec)>0||(x.x&&x.x.snap>=.2);
+    const played=hist.filter(x=>x.d>=since&&role(x)).length,rate=Math.min(1,played/3);
+    if(rate<1){m*=rate;confPen+=rate===0?40:20;out.factors.unshift(rate===0?`Hasn't played ${pos==="QB"?"as the starter ":""}in any of his team's last 3 games: projected 0 until that changes`:`Played ${pos==="QB"?"as the starter ":""}in ${played} of his team's last 3 games: projection scaled to ${Math.round(rate*100)}% (estimate)`)}}
   out.mean=Math.max(0,m);out.cvp=cv;out.floor=lnq(out.mean,cv,-1.2816);out.ceil=lnq(out.mean,cv,1.2816);
   /* weather and game script */
   if(wx){out.wx=wx;if((wx.wind||0)>=15||(wx.rain||0)>=1||(wx.temp!=null&&wx.temp<=25))out.factors.push(`Weather: ${wx.temp!=null?wx.temp+"°F, ":""}wind ${wx.wind||0} mph${wx.rain?`, ${wx.rain} mm rain`:""} (forecast)`)}
@@ -198,7 +203,7 @@ function oppTxt(p){if(!p)return"";if(p.bye)return"Bye";if(p.none&&!p.opp)return"
 function mu(L,p){if(!p||!p.opp||p.pos==="DST")return null;const R=allowed(L)[p.opp+"|"+p.pos];if(!R)return null;return{r:R.r,n:R.n,v:R.v,lg:R.lg,lbl:R.r<=8?"Easy":R.r>=R.n-7?"Hard":"Average"}}
 const bar=(p,max)=>{const w=x=>clamp(x/max*100,0,100);return`<div class="ff-bar" title="Floor ${f1(p.floor)} · projection ${f1(p.mean)} · ceiling ${f1(p.ceil)}"><i style="left:${w(Math.max(0,p.floor))}%;width:${Math.max(1,w(p.ceil)-w(Math.max(0,p.floor)))}%"></i><b style="left:${w(p.mean)}%"></b></div>`};
 function pRow(L,id,w,extra){const p=project(L,id,w),own=teamOf(L,id);
-  return`<div class="ff-pr" data-ffx="${esc(id)}"><div class="ff-pn"><b>${esc(nameOf(id))}</b> ${injTag(id)}<small>${esc(p.pos)} · ${esc(tAb(p.t))} · ${oppTxt(p)}${own!=null&&own!==L.me?` · ${esc(L.rosters[own].name)}`:""}</small></div>
+  return`<div class="ff-pr" data-ffx="${esc(id)}"><div class="ff-pn"><b>${esc(nameOf(id))}${injTag(id)}</b><small>${esc(p.pos)} · ${esc(tAb(p.t))} · ${oppTxt(p)}${own!=null&&own!==L.me?` · ${esc(L.rosters[own].name)}`:""}</small></div>
     ${p.bye?`<div class="ff-pv dim">Bye</div>`:p.actual!=null?`<div class="ff-pv"><b>${f1(p.actual)}</b><small>actual</small></div>`:p.none?`<div class="ff-pv dim" title="${esc(p.none)}">n/a</div>`:`<div class="ff-pv"><b>${f1(p.mean)}</b><small>${f1(p.floor)}–${f1(p.ceil)}</small></div>`}${extra||""}</div>`}
 function detail(L,id,w){const p=project(L,id,w),m=mu(L,p),st=p.stats||{},S_=[];
   if(p.pos==="QB")S_.push(`${Math.round(st.pYds||0)} pass yds`,`${f1(st.pTD)} pass TD`,`${f1(st.int)} INT`,`${Math.round(st.rYds||0)} rush yds`,`${f1(st.rTD)} rush TD`);
@@ -378,7 +383,7 @@ function tRank(L,w){const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.push
   return`<div class="ff-card"><div class="seg wide">${types.map(([k,t])=>`<button class="${f.type===k?"on":""}" data-ffrt="${k}">${t}</button>`).join("")}</div>
     <div class="chiprow">${["ALL",...POS].map(p=>`<button class="chip s ${f.pos===p?"on":""}" data-ffrp="${p}">${p==="ALL"?"All":p}</button>`).join("")}</div>
     <p class="hint">${f.type==="ros"?`Projected points, weeks ${weeks[0]} to ${weeks.at(-1)}, byes included`:f.type==="floor"?"Estimated 10th-percentile outcome this week: the safest options":f.type==="ceil"?"Estimated 90th-percentile outcome this week: the biggest upside":"Projected points this week"}, in your league's scoring.</p>
-    <div class="ff-rl">${a.map((x,i)=>{const own=teamOf(L,x.id);return`<div class="ff-rr" data-ffopen="${esc(x.id)}"><span class="ff-rn">${i+1}</span><span class="ff-pn"><b>${esc(nameOf(x.id))}</b> ${injTag(x.id)}<small>${posOf(x.id)} · ${esc(tAb(teamIdOf(x.id)))}${own!=null?` · ${own===L.me?"your team":esc(L.rosters[own].name)}`:""}</small></span><b>${f1(x.v)}</b></div>${S.open===x.id?detail(L,x.id,w):""}`}).join("")}</div></div>`}
+    <div class="ff-rl">${a.map((x,i)=>{const own=teamOf(L,x.id);return`<div class="ff-rr" data-ffopen="${esc(x.id)}"><span class="ff-rn">${i+1}</span><span class="ff-pn"><b>${esc(nameOf(x.id))}${injTag(x.id)}</b><small>${posOf(x.id)} · ${esc(tAb(teamIdOf(x.id)))}${own!=null?` · ${own===L.me?"your team":esc(L.rosters[own].name)}`:""}</small></span><b>${f1(x.v)}</b></div>${S.open===x.id?detail(L,x.id,w):""}`}).join("")}</div></div>`}
 
 /* ---------- events ---------- */
 const rer=()=>{save();render()};
