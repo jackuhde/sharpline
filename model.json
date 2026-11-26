@@ -1,15 +1,15 @@
 {
- "updated": "2026-11-25T19:34:23.169Z",
- "games": 261,
- "lines": 21744,
- "through": "2026-11-24",
+ "updated": "2026-11-26T19:16:10.770Z",
+ "games": 270,
+ "lines": 22588,
+ "through": "2026-11-25",
  "split": "2026-11-10",
  "catK": {
   "Points": 0,
-  "Assists": 0.067,
+  "Assists": 0.075,
   "Rebounds": 0,
   "3-Pointers": 0,
-  "Steals": 0.297,
+  "Steals": 0.285,
   "Blocks": 0,
   "Pts+Ast": 0,
   "Pts+Reb": 0,
@@ -21,66 +21,66 @@
    "n": 3,
    "hit": 0.333,
    "roi": -0.346,
-   "raw": -0.629
+   "raw": -0.656
   },
   "Assists": {
    "n": 0,
    "hit": null,
    "roi": null,
-   "raw": 0.29
+   "raw": 0.32
   },
   "Rebounds": {
    "n": 1,
    "hit": 0,
    "roi": -1,
-   "raw": -1.506
+   "raw": -1.416
   },
   "3-Pointers": {
    "n": 0,
    "hit": null,
    "roi": null,
-   "raw": -2.465
+   "raw": -2.239
   },
   "Steals": {
    "n": 0,
    "hit": null,
    "roi": null,
-   "raw": 3.022
+   "raw": 2.894
   },
   "Blocks": {
    "n": 0,
    "hit": null,
    "roi": null,
-   "raw": -4.967
+   "raw": -5.005
   },
   "Pts+Ast": {
    "n": 1,
    "hit": 0,
    "roi": -1,
-   "raw": -1.872
+   "raw": -1.756
   },
   "Pts+Reb": {
    "n": 2,
    "hit": 0.5,
    "roi": -0.061,
-   "raw": -0.344
+   "raw": -0.254
   },
   "Reb+Ast": {
    "n": 1,
    "hit": 0,
    "roi": -1,
-   "raw": -1.51
+   "raw": -1.443
   },
   "Pts+Reb+Ast": {
    "n": 2,
    "hit": 0.5,
    "roi": -0.076,
-   "raw": -1.543
+   "raw": -1.425
   }
  },
  "calib": {
   "all": {
-   "n": 17161,
+   "n": 18005,
    "brier": 0.2467,
    "brierMkt": 0.2467,
    "logloss": 0.6865,
@@ -88,307 +88,307 @@
   },
   "byStat": {
    "Points": {
-    "n": 2398,
-    "brier": 0.2496,
-    "brierMkt": 0.2496,
-    "logloss": 0.6924,
-    "loglossMkt": 0.6924
+    "n": 2529,
+    "brier": 0.2497,
+    "brierMkt": 0.2497,
+    "logloss": 0.6925,
+    "loglossMkt": 0.6925
    },
    "Assists": {
-    "n": 1764,
+    "n": 1857,
     "brier": 0.2461,
     "brierMkt": 0.2461,
-    "logloss": 0.6854,
-    "loglossMkt": 0.6854
+    "logloss": 0.6853,
+    "loglossMkt": 0.6853
    },
    "Rebounds": {
-    "n": 2237,
+    "n": 2352,
     "brier": 0.2459,
     "brierMkt": 0.2459,
-    "logloss": 0.6848,
-    "loglossMkt": 0.6848
+    "logloss": 0.6849,
+    "loglossMkt": 0.6849
    },
    "3-Pointers": {
-    "n": 1921,
-    "brier": 0.2446,
-    "brierMkt": 0.2446,
-    "logloss": 0.682,
-    "loglossMkt": 0.682
+    "n": 2019,
+    "brier": 0.2442,
+    "brierMkt": 0.2442,
+    "logloss": 0.6814,
+    "loglossMkt": 0.6814
    },
    "Steals": {
-    "n": 721,
-    "brier": 0.2239,
-    "brierMkt": 0.224,
-    "logloss": 0.6398,
-    "loglossMkt": 0.6401
+    "n": 726,
+    "brier": 0.2245,
+    "brierMkt": 0.2246,
+    "logloss": 0.6411,
+    "loglossMkt": 0.6414
    },
    "Blocks": {
-    "n": 321,
-    "brier": 0.2339,
-    "brierMkt": 0.2339,
-    "logloss": 0.6604,
-    "loglossMkt": 0.6604
+    "n": 325,
+    "brier": 0.2335,
+    "brierMkt": 0.2335,
+    "logloss": 0.6597,
+    "loglossMkt": 0.6597
    },
    "Pts+Ast": {
-    "n": 1838,
+    "n": 1933,
     "brier": 0.2492,
     "brierMkt": 0.2492,
-    "logloss": 0.6916,
-    "loglossMkt": 0.6916
+    "logloss": 0.6915,
+    "loglossMkt": 0.6915
    },
    "Pts+Reb": {
-    "n": 2261,
+    "n": 2376,
     "brier": 0.2492,
     "brierMkt": 0.2492,
     "logloss": 0.6915,
     "loglossMkt": 0.6915
    },
    "Reb+Ast": {
-    "n": 1817,
-    "brier": 0.2496,
-    "brierMkt": 0.2496,
-    "logloss": 0.6924,
-    "loglossMkt": 0.6924
+    "n": 1910,
+    "brier": 0.2494,
+    "brierMkt": 0.2494,
+    "logloss": 0.692,
+    "loglossMkt": 0.692
    },
    "Pts+Reb+Ast": {
-    "n": 1883,
+    "n": 1978,
     "brier": 0.2495,
     "brierMkt": 0.2495,
-    "logloss": 0.6922,
-    "loglossMkt": 0.6922
+    "logloss": 0.6921,
+    "loglossMkt": 0.6921
    }
   },
   "bins": [
    {
     "lo": 0.45,
     "hi": 0.5,
-    "n": 54,
-    "pred": 0.4941,
-    "act": 0.537
+    "n": 58,
+    "pred": 0.4942,
+    "act": 0.569
    },
    {
     "lo": 0.5,
     "hi": 0.52,
-    "n": 7167,
+    "n": 7523,
     "pred": 0.5096,
-    "act": 0.5037
+    "act": 0.5031
    },
    {
     "lo": 0.52,
     "hi": 0.54,
-    "n": 4403,
-    "pred": 0.5271,
-    "act": 0.5417
+    "n": 4645,
+    "pred": 0.5272,
+    "act": 0.5427
    },
    {
     "lo": 0.54,
     "hi": 0.56,
-    "n": 1846,
-    "pred": 0.5494,
-    "act": 0.5477
+    "n": 1947,
+    "pred": 0.5493,
+    "act": 0.5521
    },
    {
     "lo": 0.56,
     "hi": 0.58,
-    "n": 1265,
+    "n": 1321,
     "pred": 0.5698,
-    "act": 0.5652
+    "act": 0.5678
    },
    {
     "lo": 0.58,
     "hi": 0.6,
-    "n": 804,
+    "n": 839,
     "pred": 0.5892,
-    "act": 0.5846
+    "act": 0.5888
    },
    {
     "lo": 0.6,
     "hi": 0.65,
-    "n": 1133,
-    "pred": 0.6212,
-    "act": 0.6284
+    "n": 1173,
+    "pred": 0.6211,
+    "act": 0.6223
    },
    {
     "lo": 0.65,
     "hi": 1,
-    "n": 489,
-    "pred": 0.674,
-    "act": 0.6687
+    "n": 499,
+    "pred": 0.6738,
+    "act": 0.6713
    }
   ],
   "evBands": [
    {
     "lo": -1,
     "hi": 0,
-    "n": 17161,
+    "n": 18005,
     "expRoi": -0.0568,
-    "roi": -0.0552
+    "roi": -0.0539
    }
   ]
  },
  "mktCal": {
   "Points": {
-   "n": 3043,
-   "overGap": -0.0213,
-   "underGap": 0.0213,
-   "se": 0.0091,
+   "n": 3174,
+   "overGap": -0.0218,
+   "underGap": 0.0218,
+   "se": 0.0089,
    "validated": true
   },
   "Assists": {
-   "n": 2219,
-   "overGap": -0.0006,
-   "underGap": 0.0006,
-   "se": 0.0105,
+   "n": 2312,
+   "overGap": -0.0004,
+   "underGap": 0.0004,
+   "se": 0.0103,
    "validated": true
   },
   "Rebounds": {
-   "n": 2835,
-   "overGap": -0.0087,
-   "underGap": 0.0087,
-   "se": 0.0093,
+   "n": 2950,
+   "overGap": -0.0078,
+   "underGap": 0.0078,
+   "se": 0.0092,
    "validated": true
   },
   "3-Pointers": {
-   "n": 2453,
-   "overGap": 0.0092,
-   "underGap": -0.0092,
-   "se": 0.0099,
+   "n": 2551,
+   "overGap": 0.006,
+   "underGap": -0.006,
+   "se": 0.0097,
    "validated": true
   },
   "Steals": {
-   "n": 921,
-   "overGap": -0.0519,
-   "underGap": 0.0519,
+   "n": 926,
+   "overGap": -0.0533,
+   "underGap": 0.0533,
    "se": 0.0159,
    "validated": false
   },
   "Blocks": {
-   "n": 433,
-   "overGap": -0.0344,
-   "underGap": 0.0344,
-   "se": 0.0233,
+   "n": 437,
+   "overGap": -0.0359,
+   "underGap": 0.0359,
+   "se": 0.0232,
    "validated": false
   },
   "Pts+Ast": {
-   "n": 2311,
-   "overGap": -0.0191,
-   "underGap": 0.0191,
-   "se": 0.0104,
+   "n": 2406,
+   "overGap": -0.0184,
+   "underGap": 0.0184,
+   "se": 0.0102,
    "validated": true
   },
   "Pts+Reb": {
-   "n": 2867,
-   "overGap": -0.0264,
-   "underGap": 0.0264,
-   "se": 0.0093,
+   "n": 2982,
+   "overGap": -0.0265,
+   "underGap": 0.0265,
+   "se": 0.0092,
    "validated": true
   },
   "Reb+Ast": {
-   "n": 2275,
-   "overGap": -0.0093,
-   "underGap": 0.0093,
-   "se": 0.0105,
+   "n": 2368,
+   "overGap": -0.0087,
+   "underGap": 0.0087,
+   "se": 0.0102,
    "validated": true
   },
   "Pts+Reb+Ast": {
-   "n": 2387,
-   "overGap": -0.0304,
-   "underGap": 0.0304,
-   "se": 0.0102,
+   "n": 2482,
+   "overGap": -0.0275,
+   "underGap": 0.0275,
+   "se": 0.01,
    "validated": true
   }
  },
  "center": {
   "Points": {
-   "gapS": -0.0349,
-   "gap10": -0.023,
-   "hot": -0.0245,
-   "bench": 0.3526,
-   "minTr": 0.0278,
-   "b2b": 0.1748
+   "gapS": -0.0336,
+   "gap10": -0.0198,
+   "hot": -0.0238,
+   "bench": 0.3541,
+   "minTr": 0.0298,
+   "b2b": 0.1676
   },
   "Assists": {
-   "gapS": 0.0256,
-   "gap10": 0.0384,
-   "hot": -0.0228,
-   "bench": 0.2276,
-   "minTr": 0.021,
-   "b2b": 0.1645
+   "gapS": 0.0272,
+   "gap10": 0.0416,
+   "hot": -0.0216,
+   "bench": 0.2279,
+   "minTr": 0.0225,
+   "b2b": 0.1579
   },
   "Rebounds": {
-   "gapS": 0.0164,
-   "gap10": 0.0212,
-   "hot": -0.0168,
-   "bench": 0.3143,
-   "minTr": 0.0248,
-   "b2b": 0.1743
+   "gapS": 0.0163,
+   "gap10": 0.0206,
+   "hot": -0.0175,
+   "bench": 0.3142,
+   "minTr": 0.0269,
+   "b2b": 0.1675
   },
   "3-Pointers": {
-   "gapS": 0.0554,
-   "gap10": 0.066,
-   "hot": -0.0246,
-   "bench": 0.2845,
-   "minTr": 0.0267,
-   "b2b": 0.1712
+   "gapS": 0.056,
+   "gap10": 0.0677,
+   "hot": -0.0238,
+   "bench": 0.2854,
+   "minTr": 0.0282,
+   "b2b": 0.1646
   },
   "Steals": {
-   "gapS": 0.1364,
-   "gap10": 0.1319,
-   "hot": -0.0077,
-   "bench": 0.0782,
-   "minTr": 0.0147,
-   "b2b": 0.1672
+   "gapS": 0.1365,
+   "gap10": 0.1315,
+   "hot": -0.0079,
+   "bench": 0.0778,
+   "minTr": 0.0152,
+   "b2b": 0.1663
   },
   "Blocks": {
-   "gapS": 0.1422,
-   "gap10": 0.1395,
-   "hot": -0.0235,
-   "bench": 0.1871,
-   "minTr": 0.0167,
-   "b2b": 0.1524
+   "gapS": 0.1425,
+   "gap10": 0.1397,
+   "hot": -0.023,
+   "bench": 0.1854,
+   "minTr": 0.0169,
+   "b2b": 0.151
   },
   "Pts+Ast": {
-   "gapS": -0.0626,
-   "gap10": -0.0478,
+   "gapS": -0.063,
+   "gap10": -0.0462,
    "hot": -0.0293,
-   "bench": 0.2363,
-   "minTr": 0.0209,
-   "b2b": 0.1683
+   "bench": 0.2365,
+   "minTr": 0.0228,
+   "b2b": 0.1617
   },
   "Pts+Reb": {
-   "gapS": -0.0559,
-   "gap10": -0.0446,
-   "hot": -0.0241,
-   "bench": 0.3171,
-   "minTr": 0.0243,
-   "b2b": 0.1751
+   "gapS": -0.0556,
+   "gap10": -0.0431,
+   "hot": -0.0239,
+   "bench": 0.3169,
+   "minTr": 0.0264,
+   "b2b": 0.1683
   },
   "Reb+Ast": {
-   "gapS": -0.0108,
-   "gap10": -0.0017,
-   "hot": -0.0165,
+   "gapS": -0.0109,
+   "gap10": -0.0012,
+   "hot": -0.0163,
    "bench": 0.2242,
-   "minTr": 0.0207,
-   "b2b": 0.1679
+   "minTr": 0.0225,
+   "b2b": 0.1613
   },
   "Pts+Reb+Ast": {
-   "gapS": -0.0753,
-   "gap10": -0.0622,
-   "hot": -0.032,
-   "bench": 0.243,
-   "minTr": 0.022,
-   "b2b": 0.1739
+   "gapS": -0.0751,
+   "gap10": -0.0604,
+   "hot": -0.0313,
+   "bench": 0.2425,
+   "minTr": 0.0238,
+   "b2b": 0.1672
   }
  },
  "weights": {
   "b0": 0,
   "mkt": 1,
-  "gapS": 0.0677,
-  "gap10": 0.0248,
-  "hot": -0.1075,
-  "bench": -0.0429,
-  "minTr": 0.1135,
-  "b2b": 0.0267
+  "gapS": 0.0847,
+  "gap10": 0.0109,
+  "hot": -0.1238,
+  "bench": -0.0521,
+  "minTr": 0.0874,
+  "b2b": 0.0263
  },
  "test": [
   {
@@ -435,7 +435,7 @@
   },
   {
    "split": "week of 2026-11-23, fit on earlier weeks only",
-   "lines": 1241,
+   "lines": 2085,
    "ev2": {
     "n": 0,
     "hit": null,
@@ -475,7 +475,7 @@
    },
    "underShare": null
   },
-  "favorsOverRaw": 0.507,
+  "favorsOverRaw": 0.51,
   "byWeek": [
    {
     "from": "2026-10-25",
@@ -509,9 +509,9 @@
    },
    {
     "from": "2026-11-23",
-    "n": 1241,
-    "overWon": 0.528,
-    "overPriced": 0.498
+    "n": 2085,
+    "overWon": 0.51,
+    "overPriced": 0.497
    }
   ]
  },
@@ -522,15 +522,15 @@
    "gap5"
   ],
   "weights": {
-   "gapS": 0.0535,
-   "gap10": 0.0283,
-   "gap5": 0.0104
+   "gapS": 0.0568,
+   "gap10": 0.0265,
+   "gap5": 0.0109
   },
   "intercept": "none",
   "lambda": 200,
-  "sdResidual": 0.2325,
+  "sdResidual": 0.2308,
   "r2": 0.017,
-  "n": 21744,
+  "n": 22588,
   "fullMoveHoursBeforeTip": 8,
   "note": "chance = DraftKings' current no-vig chance moved by the predicted move still to come (fades to 0 by tip); validated in data/nba/review.json"
  },
@@ -542,7 +542,7 @@
   "D": -0.05
  },
  "overs": {
-  "n": 21744,
+  "n": 22588,
   "hit": 0.479,
   "fair": 0.495
  }
