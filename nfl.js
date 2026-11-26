@@ -555,6 +555,6 @@ document.addEventListener("change",e=>{if(e.target.id==="nfst"){N.f.st=e.target.
 /* grade any open NFL bets shortly after load and every few minutes */
 setTimeout(()=>{if(BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},4000);
 setInterval(()=>{if(!document.hidden&&BETS.some(b=>!b.res&&(b.sport==="nfl"||(b.legs||[]).some(l=>l.spec&&l.spec.sport==="nfl"))))gradeAll()},180000);
-window.NFL={N,SHORT,repairBets,eventOfTeam,relEVs:()=>NREL_EVS,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
+window.NFL={N,SHORT,loadInj,loadProps,getJSON,SB,parseEvent,repairBets,eventOfTeam,relEVs:()=>NREL_EVS,preBet,gradeNfl,_live:live,setPx,scanNames,scanTeams,scanQuote,scanBet,openMarket,openProfileId:(id,key)=>openProfile(id,key),show,setOn,paint,ensure,betChance,gradeAll,ocrCtx,applyScan,openProfile,allProps,loadStatic,_eval:{evalProp,gradeSpec,statVal},
   _p:{N,M,RK,T,ath,h,am,pc,pc1,evs,r1,ago,evalProp,evalTD,gradeNfl,ctxFor,LBL,SHORT,STAT_ORDER,btNote,trusted,oddsSheet,nflAvatar,logo,priceOf,NFL_STANDIN,computeRelNfl,rel:()=>({R:NREL,n:NREL_N}),ensure,loadProps,getJSON}};
 })();

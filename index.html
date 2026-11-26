@@ -591,6 +591,62 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(7
 .sheet{position:fixed;inset:0;z-index:60;display:none}
 .addbtn.mine-btn{border-color:rgba(232,184,75,.45);color:var(--acc2)}
 .sheet.on{display:block}
+/* ---------- fantasy football (Nov 26 2026) ---------- */
+#v-ff .ff-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.ff-lgs,.ff-wk,.ff-f{display:flex;flex-direction:column;gap:4px;font:800 10.5px Archivo;letter-spacing:.6px;text-transform:uppercase;color:var(--mute)}
+.ff-lgs,.ff-wk{flex-direction:row;align-items:center;gap:6px}
+#v-ff select,#v-ff input.ff-in,#v-ff .ff-f input,#v-ff .ff-srch input,#v-ff .ff-tn{font:600 14px Archivo;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:8px 10px;min-width:0}
+#v-ff .ff-tabs{margin:4px 0 12px}
+.ff-card{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.ff-card h3{font:900 18px Archivo;margin:0 0 6px;letter-spacing:-.3px}.ff-card h3.pos{color:var(--over)}.ff-card h3.neg{color:var(--under)}.ff-card h3.md{color:var(--acc2)}
+.ff-card summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.ff-card summary::-webkit-details-marker{display:none}.ff-card summary h3{margin:0}.ff-card summary small{color:var(--mute);font-weight:700}
+.ff-card details summary{font:800 12.5px Archivo;color:var(--acc2);margin:10px 0 4px}
+.ff-sub{font:800 11px Archivo;letter-spacing:1.4px;text-transform:uppercase;color:var(--acc2);margin:14px 0 8px}
+.ff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:8px 0}.ff-grid .w2{grid-column:span 2}
+.ff-f span{text-transform:none;letter-spacing:0;font:700 12px Archivo}
+.ff-pr{display:flex;align-items:center;gap:10px;padding:8px 0;flex:1;min-width:0}.ff-pr.dim{color:var(--dim);font-weight:700;font-size:13px}
+.ff-pn{flex:1;min-width:0;display:flex;flex-direction:column}.ff-pn b{font:800 14.5px Archivo;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ff-pn small{color:var(--mute);font:700 11.5px Archivo;margin-top:1px}
+.ff-pv{display:flex;flex-direction:column;align-items:flex-end;min-width:54px}.ff-pv b{font:800 16px 'JetBrains Mono',monospace}.ff-pv small{font:700 10.5px Archivo;color:var(--mute)}.ff-pv.dim{color:var(--dim);font-weight:800}
+.ff-slot{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}.ff-slot:first-of-type{border-top:0}
+.ff-sl{width:58px;flex:none;font:900 10.5px Archivo;letter-spacing:.5px;color:var(--acc2)}
+.ff-bn{font:800 11px Archivo;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute);margin:12px 0 2px}
+.ff-ck input{width:20px;height:20px;accent-color:var(--acc)}
+.ff-tot{margin:10px 0 0;text-align:right;color:var(--mute);font-weight:700}.ff-tot b{color:var(--ink);font-family:'JetBrains Mono',monospace}
+.ff-mode{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px}.ff-mode>span{font:800 12px Archivo;color:var(--mute)}.ff-mode .seg{flex-wrap:wrap;flex:1 1 auto}.ff-mode .seg button{white-space:normal}
+.ff-inj{display:inline-block;font:900 9.5px Archivo;padding:2px 5px;border-radius:5px;vertical-align:2px;margin-left:4px;background:rgba(236,143,60,.18);color:var(--gold)}.ff-inj.out{background:rgba(240,88,94,.18);color:var(--under)}
+.ff-bar{position:relative;height:6px;border-radius:4px;background:var(--s3);margin:2px 0 8px}.ff-bar i{position:absolute;top:0;bottom:0;border-radius:4px;background:rgba(212,175,55,.35)}.ff-bar b{position:absolute;top:-3px;width:4px;height:12px;border-radius:2px;background:var(--acc);margin-left:-2px}
+.ff-prw{border-top:1px solid var(--line);cursor:pointer}.ff-prw:first-of-type{border-top:0}.ff-prw .ff-pr{padding-bottom:4px}
+.ff-rk{display:none}
+.ff-cf{font:800 11px Archivo;min-width:58px;text-align:right}
+.ff-c.hi{color:var(--over)}.ff-c.md{color:var(--acc2)}.ff-c.lo{color:var(--under)}
+.pos{color:var(--over)}.neg{color:var(--under)}#v-ff .dim{color:var(--dim)}
+.ff-det{background:var(--s2);border:1px solid var(--line);border-radius:14px;padding:12px;margin:4px 0 10px;cursor:default}
+.ff-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}.ff-kv span{color:var(--mute);font-weight:700}.ff-kv b{font-weight:800;text-align:right}
+.ff-stl{margin-top:10px;font:700 13px Archivo}.ff-stl span{color:var(--mute)}
+.ff-fac{margin:10px 0 0;padding-left:18px;color:var(--mute);font-size:12.5px;line-height:1.45}
+.ff-warn{background:rgba(236,143,60,.12);border:1px solid rgba(236,143,60,.3);border-radius:12px;padding:9px 11px;font-size:13px;margin:8px 0}
+.ff-why p{margin:6px 0;font-size:14px;line-height:1.45}
+.ff-cmp{border:1px solid var(--line2);border-radius:14px;padding:10px 12px;margin-top:10px}.ff-cmp.win{border-color:rgba(60,207,142,.5);background:rgba(60,207,142,.05)}
+.ff-cmph{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;margin-bottom:6px}.ff-cmph small{color:var(--mute);font-weight:700}
+.ff-srch{position:relative;margin-top:8px}.ff-srch input{width:100%;box-sizing:border-box}
+.ff-res{display:flex;flex-direction:column;gap:2px;margin-top:4px}.ff-ri{text-align:left;padding:8px 10px;border-radius:10px;background:var(--s2);border:1px solid var(--line);font-size:13.5px}.ff-ri small{color:var(--mute)}.ff-ri:disabled{opacity:.5}
+.ff-team{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0}.ff-team.me{border-color:rgba(212,175,55,.45)}
+.ff-th{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px}.ff-th small{color:var(--mute);font-weight:700;margin-left:auto}.ff-tn{font-weight:800!important;max-width:170px}
+.ff-me{font:900 10px Archivo;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:var(--acc);color:#14120c}
+.ff-x{width:30px;height:30px;border-radius:9px;color:var(--mute);background:var(--s2);border:1px solid var(--line)}
+.ff-ev{display:grid;grid-template-columns:42px 1fr 54px;gap:8px;align-items:center;margin:6px 0;font-size:13px}.ff-ev span{text-align:right;font:800 13px 'JetBrains Mono',monospace}
+.ff-evb{position:relative;height:8px;background:var(--s3);border-radius:4px}.ff-evb:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line2)}.ff-evb i{position:absolute;top:0;bottom:0;border-radius:4px}.ff-evb i.up{background:var(--over)}.ff-evb i.dn{background:var(--under)}
+.ff-tip{font-size:13.5px;margin:6px 0;padding-left:10px;border-left:2px solid var(--acc)}
+.ff-chips{display:flex;flex-wrap:wrap;gap:6px}.ff-chips .chip small{opacity:.7}
+.ff-wkr{display:grid;grid-template-columns:1fr auto 56px;gap:8px;font-size:13px;padding:4px 0;border-top:1px solid var(--line)}.ff-wkr b{text-align:right}
+.ff-tt{font-size:13px}.ff-ttr{display:grid;grid-template-columns:1fr 54px 54px auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.ff-ttr.hd{color:var(--mute);font:800 10.5px Archivo;letter-spacing:.6px;text-transform:uppercase;border-top:0}.ff-ttr small{display:block;color:var(--mute)}
+.ff-wv{font-size:12.5px;color:var(--mute);margin:-2px 0 8px}
+.ff-rr{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}.ff-rr:first-child{border-top:0}.ff-rr>b{font:800 15px 'JetBrains Mono',monospace}
+.ff-rn{width:28px;font:800 12px 'JetBrains Mono',monospace;color:var(--mute)}
+.ff-src{font-size:11.5px;color:var(--dim);line-height:1.5;margin:6px 4px 0}
+#v-ff .hint{color:var(--mute);font-size:13px;line-height:1.45;margin:4px 0 8px}
+#v-ff .lnk{color:var(--acc2);font:800 12px Archivo}
+
 .leg-mk{display:flex;gap:6px;align-items:center;margin:2px 0 4px 22px;font-size:12px;color:var(--mute)}.leg-mk select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:3px 6px}
 .sc-unc{margin-top:6px;padding:6px 8px;border-radius:8px;background:rgba(234,179,8,.14);color:var(--ink);font-size:12.5px}.sc-card.needs{outline:2px solid rgba(234,179,8,.6)}.sc-ok{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;font-weight:700}.sc-tier{margin-left:6px;color:var(--mute);font-size:11.5px}.sc-vis{margin:8px 0;font-size:13px}.sc-vis input{width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--line2);border-radius:10px;background:var(--bg);color:var(--ink)}
 .grade.rel{outline:2px dashed currentColor;outline-offset:1px}
@@ -929,6 +985,10 @@ html,body{overscroll-behavior-y:none}
       <p>Tap "+ Track" on any bet you place, then settle it after the game. You'll see your real results and how accurate Sharpline's estimates are. Saved on this phone only.</p></div>
     <div id="trackBox"></div>
   </section>
+  <section class="view" id="v-ff">
+    <div class="ph"><div class="eyebrow">Fantasy football</div><h1>Fantasy</h1><p>Start/sit, projections, trades, waivers and rankings, all in your league's scoring.</p></div>
+    <div id="ffBody"></div>
+  </section>
   <p class="foot">Estimates are mine, built from published odds, and lines move. Check every price at your book before betting. Bet only what you can afford to lose.</p>
 </div>
 
@@ -966,6 +1026,7 @@ html,body{overscroll-behavior-y:none}
   <button data-v="lines"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"/></svg>Lines</button>
   <button data-v="live"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a12 12 0 0 0 0 17M20.5 3.5a12 12 0 0 1 0 17"/></svg>Live</button>
   <button data-v="track"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg>Tracker<span class="badge" id="badge" style="display:none">0</span></button>
+  <button data-v="ff"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9.5" ry="5.6" transform="rotate(-40 12 12)"/><path d="M9.6 14.4l4.8-4.8M10.3 11.6l2.1 2.1M11.8 10.1l2.1 2.1"/></svg>Fantasy</button>
 </nav>
 <div class="toast" id="toast"></div>
 <script src="ocrparse.js?v=1795900001"></script>
@@ -975,12 +1036,13 @@ html,body{overscroll-behavior-y:none}
 <script src="profile.js?v=1796000001"></script>
 <script src="follow.js?v=1795200003"></script>
 <script src="sync.js?v=1795800001"></script>
+<script src="fantasy.js?v=1796200002"></script>
 <script src="tracker2.js?v=1795900012"></script>
 <script src="recs.js?v=1796100001"></script>
 <script src="gamemodel.js?v=1795900004"></script>
 <script src="corr.js?v=1795900002"></script>
 <script src="livegame.js?v=1795900007"></script>
-<script src="nfl.js?v=1796000007"></script>
+<script src="nfl.js?v=1796000008"></script>
 <script src="nfl-profile.js?v=1796000002"></script>
 <script src="betparse.js?v=1795900005"></script>
 <script src="layout.js?v=1795900006"></script>
@@ -2091,6 +2153,7 @@ function closeOdds(){document.getElementById("oddsSheet").classList.remove("on")
 let CURV="top";
 function go(v){CURV=v;document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   document.querySelectorAll(".view").forEach(x=>{const on=x.id==="v-"+v;if(on&&!x.classList.contains("on")){x.classList.remove("v-in");void x.offsetWidth;x.classList.add("v-in")}x.classList.toggle("on",on)});window.scrollTo({top:0});
+  if(v==="ff"){if(window.FF)FF.show();return}
   if(SPORT==="nfl"){if(window.NFL)NFL.show(v);return}
   if(v==="live"&&window.LiveUI){LiveUI.start();LiveUI.render();LiveUI.poll(true)}}
 /* ---------- sport: NBA or NFL. Filters, tab and tracker are kept when switching ---------- */
