@@ -80,8 +80,19 @@ function filterBar(){const c=(k,v,l)=>`<button class="chip ${F[k]===v?"on":""}" 
     <div class="chiprow">${c("res","all","Any result")}${c("res","open","Pending")}${c("res","W","Won")}${c("res","L","Lost")}<span class="tf-sp"></span>${c("when","d7","7 days")}${c("when","d30","30 days")}${c("when","all","All time")}</div><div class="chiprow">${c("sport","all","All sports (overall)")}${c("sport","nba","NBA")}${c("sport","nfl","NFL")}</div></div>`}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-tf]");if(!t)return;const[k,v]=t.dataset.tf.split("|");F[k]=v;LSs("sl_tfilt",F);renderTrack()});
 
+/* fix a pending NFL prop leg saved under the wrong market (e.g. XP made instead of FG made): same player, line, side and odds */
+const KMK=["fgM","xpM","kPts"],OMK=["pYds","pTD","cmp","att","int","pRYds","rYds","car","rLng","rRecYds","recYds","rec","recLng","td"],DMK=["tkl","ast","tklAst","sacks"];
+function legMkt(b,l,i){const sp=l.spec;if(!sp||sp.sport!=="nfl"||sp.kind!=="prop"||l.res||!window.NFL)return"";const S=NFL.SHORT;
+  const list=KMK.includes(sp.stat)?KMK:DMK.includes(sp.stat)?DMK:OMK;
+  return`<label class="leg-mk">Market <select data-legmk="${h(String(b.id))}|${i}">${list.map(k=>`<option value="${k}" ${k===sp.stat?"selected":""}>${h(S[k]||k)}</option>`).join("")}</select></label>`}
+document.addEventListener("change",e=>{const t=e.target.closest("[data-legmk]");if(!t)return;const[bid,i]=t.dataset.legmk.split("|");const b=BETS.find(x=>String(x.id)===bid);if(!b)return;
+  const l=b.legs[+i],sp=l&&l.spec,st=t.value;if(!sp||sp.stat===st)return;const S=NFL.SHORT;sp.stat=st;
+  if(st==="td"){sp.line=.5;sp.side="o";l.pick="Anytime TD"}else l.pick=`${sp.side==="u"?"Under":"Over"} ${sp.line} ${S[st]||st}`;
+  l.mkt=S[st]||st;l.key=String(l.key||"").replace(/\|[A-Za-z0-9]+\|([\d.]+)$/,"|"+st+"|$1");delete l.p;delete l.ev;l.edited=Date.now();
+  b.pick=b.legs.map(x=>(x.key&&x.key[0]==="l"||!x.name?"":(window.lastNm?lastNm(x.name):x.name.split(" ").pop())+" ")+x.pick).join(" + ");
+  saveBets();renderTrack();if(window.LiveUI)LiveUI.paintTracker();toast(`Changed to ${l.pick}`)});
 function legsHTML(b){if(b.type!=="parlay")return"";const icon=r=>r==="W"?'<i class="lg w">✓</i>':r==="L"?'<i class="lg l">✕</i>':r==="P"||r==="V"?'<i class="lg p">–</i>':'<i class="lg o">•</i>';
-  return`<div class="legs">${b.legs.map(l=>`<div>${icon(l.res)}<span>${h(l.key[0]==="l"?"":l.name+" · ")}${h(l.pick)}</span><small>${sgnAm(l.odds)}${l.gnote?" · "+h(l.gnote):""}</small></div>`).join("")}
+  return`<div class="legs">${b.legs.map((l,i)=>`<div>${icon(l.res)}<span>${h(l.key[0]==="l"?"":l.name+" · ")}${h(l.pick)}</span><small>${sgnAm(l.odds)}${l.gnote?" · "+h(l.gnote):""}</small>${legMkt(b,l,i)}</div>`).join("")}
     <div class="legs-s">${b.legs.filter(l=>l.res==="W").length} won · ${b.legs.filter(l=>l.res==="L").length} lost${b.legs.some(l=>l.res==="P"||l.res==="V")?` · ${b.legs.filter(l=>l.res==="P"||l.res==="V").length} push/void`:""}${b.legs.some(l=>!l.res)?` · ${b.legs.filter(l=>!l.res).length} pending`:""} · pays ${money(b.stake*(amToDec(b.odds)-1))} on ${money(+b.stake)}</div></div>`}
 
 /* ---------- your bets: performance (settled at the odds you got) ---------- */

@@ -109,9 +109,10 @@ const gameOf=eid=>N.events.find(e=>e.id===eid);
 /* a tracked bet's game may be in a different week than the one on screen (the history file's week lags the schedule early in
    the week, and the NFL tab can be on any week): look the game up on its own instead of giving up */
 N.xEv={};
-async function extraEv(eid){if(N.xEv[eid]!==undefined)return;N.xEv[eid]=null;const j=await getJSON(`${SB}/summary?event=${eid}`).catch(()=>null);
-  if(!j||!j.header||!(j.header.competitions||[])[0]){delete N.xEv[eid];return}const c={...j.header.competitions[0]};if(!(c.odds||[]).length&&(j.pickcenter||[])[0])c.odds=[j.pickcenter[0]];
-  try{N.xEv[eid]=parseEvent({id:j.header.id||eid,date:c.date,competitions:[c]})}catch(e){delete N.xEv[eid];return}window.LiveUI&&LiveUI.paintTracker()}
+N.xFail={};
+async function extraEv(eid){if(N.xEv[eid]!==undefined||Date.now()-(N.xFail[eid]||0)<30000)return;N.xEv[eid]=null;const j=await getJSON(`${SB}/summary?event=${eid}`).catch(()=>null);
+  if(!j||!j.header||!(j.header.competitions||[])[0]){delete N.xEv[eid];N.xFail[eid]=Date.now();return}const c={...j.header.competitions[0]};if(!(c.odds||[]).length&&(j.pickcenter||[])[0])c.odds=[j.pickcenter[0]];
+  try{N.xEv[eid]=parseEvent({id:j.header.id||eid,date:c.date,competitions:[c]})}catch(e){delete N.xEv[eid];N.xFail[eid]=Date.now();return}window.LiveUI&&LiveUI.paintTracker()}
 const evAny=eid=>gameOf(eid)||(N.liveEv&&N.liveEv[eid])||N.xEv[eid]||(extraEv(eid),null);
 function teamSide(e,tid){return e.home.id===tid?"home":e.away.id===tid?"away":null}
 function ctxFor(e,id){const a=ath(id);if(!a||!e)return null;const side=teamSide(e,a[2]);if(!side)return null;const opp=side==="home"?e.away.id:e.home.id;
@@ -223,8 +224,8 @@ const live={
     return{p:side(pOver(rem,line-cur,Math.max(.5,cv*mu*Math.sqrt(fl)))),proj:cur+rem}}};
 /* ---------- live chance for tracked NFL bets (used by the tracker's live panel) ---------- */
 function fracLeft(B){if(!B||!B.period)return 1;if(B.period>4)return Math.max(0,(B.clockSec||0)/600)*.15;return Math.max(0,((4-B.period)*900+(B.clockSec||0))/3600)}
-betChance.busy={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=evAny(sp.ev);const B=N.box[sp.ev];
-  if(!B){summary(sp.ev,20000).then(()=>window.LiveUI&&LiveUI.paintTracker());return e&&e.state==="pre"?{st:"pre"}:null}
+betChance.busy={};betChance.fail={};function betChance(sp){if(!sp||sp.sport!=="nfl")return null;if(!N.stats){loadStatic().then(()=>window.LiveUI&&LiveUI.paintTracker());return null}const e=evAny(sp.ev);const B=N.box[sp.ev];
+  if(!B){if(!betChance.busy[sp.ev]&&Date.now()-(betChance.fail[sp.ev]||0)>20000){betChance.busy[sp.ev]=1;summary(sp.ev,20000).then(r=>{delete betChance.busy[sp.ev];if(r)window.LiveUI&&LiveUI.paintTracker();else betChance.fail[sp.ev]=Date.now()})}return e&&e.state==="pre"?{st:"pre"}:null}
   /* keep the box score fresh: refetch in the background when it's over 20 seconds old */
   if(Date.now()-(B.ts||0)>20000&&!betChance.busy[sp.ev]){betChance.busy[sp.ev]=1;Promise.all([summary(sp.ev,20000),Date.now()-(N.sbTs||0)>20000?loadWeek(true):null]).catch(()=>{}).finally(()=>{delete betChance.busy[sp.ev];window.LiveUI&&LiveUI.paintTracker()})}
   if(B.state==="pre")return{st:"pre"};if(B.completed)return{st:"post"};const H=B.comp.find(c=>c.home),A=B.comp.find(c=>!c.home);
