@@ -33,8 +33,49 @@ const save=()=>LSv("sl_ff",S),lg=()=>S.lgs.find(l=>l.id===S.cur)||null;
 const mine=L=>L.rosters[L.me]||{ids:[]};
 function teamOf(L,id){const i=L.rosters.findIndex(r=>r.ids.includes(id));return i<0?null:i}
 
+
+/* ---------- ESPN league import (paste the league's link) ----------
+   Reads ESPN's fantasy API for one league: settings, scoring, roster slots, playoffs, every team's roster, and ESPN's own
+   weekly projections in that league's scoring. Works for leagues set to be viewable to the public; ESPN refuses private
+   leagues without the owner's login cookies, which Sharpline never asks for. Stat ids follow ESPN's API (as catalogued by
+   the open-source espn-api project). */
+const EBASE="https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl";
+const ESLOT={0:"QB",2:"RB",4:"WR",6:"TE",23:"FLEX",3:"FLEX",5:"FLEX",7:"SFLEX",16:"DST",17:"K",20:"BN"};
+function espnId(link){const s=String(link||"").trim();const m=s.match(/leagueId=(\d+)/i)||s.match(/leagues\/(\d+)/)||s.match(/^(\d{3,})$/);const y=s.match(/seasonId=(\d{4})/i);return m?{id:m[1],season:y?+y[1]:null}:null}
+async function espnGet(id,season,q,hdr){let r;try{r=await fetch(`${EBASE}/seasons/${season}/segments/0/leagues/${id}?${q}`,{headers:hdr||{},credentials:"omit",cache:"no-store"})}
+  catch(e){throw new Error("ESPN didn't answer from this browser (blocked or offline). Try again on a different connection.")}
+  if(r.status===401||r.status===403)throw new Error("This ESPN league is private. Its commissioner can turn on \"Make league viewable to public\" in ESPN's league settings (Basic Settings); then paste the link again. Sharpline never asks for your ESPN login.");
+  if(r.status===404)throw new Error("ESPN has no league with that id for "+season+". Copy the link from your league's page in the ESPN app or site.");
+  if(!r.ok)throw new Error("ESPN returned an error ("+r.status+").");return r.json()}
+const pid=p=>p<0?"D:"+(-16000-p):String(p);
+function espnScoring(items){const sc={...SC0},seen=new Set(),miss=[];const g=id=>{const x=items.find(i=>i.statId===id);return x?x.points:null};
+  const set=(k,ids)=>{for(const id of ids){const v=g(id);if(v!=null){sc[k]=v;ids.forEach(i=>seen.add(i));return}}if(!["b300p","b100r","b100rec","lngTD","teRec","twoPt"].includes(k))sc[k]=0;ids.forEach(i=>seen.add(i))};
+  set("pYd",[3]);set("pTD",[4]);set("int",[20]);set("rYd",[24]);set("rTD",[25]);set("recYd",[42]);set("recTD",[43]);set("rec",[53,41]);set("fum",[72]);
+  set("twoPt",[19,26,44,62]);set("b300p",[17]);set("b100r",[37]);set("b100rec",[56]);set("lngTD",[35,45,15]);set("xp",[86]);set("dSack",[99]);set("dInt",[95]);set("dFR",[96]);set("dTD",[94,103,104,101,102,105]);
+  /* field goals by distance: weighted by how often made field goals come from each range (about 45% under 40, 33% 40-49, 22% 50+; estimate) */
+  const f0=g(80),f4=g(77),f5=g(74),f=g(83);sc.fg=f!=null?f:[f0,f4,f5].some(v=>v!=null)?+((f0||0)*.45+(f4||f0||0)*.33+(f5||f4||f0||0)*.22).toFixed(2):3;[74,77,80,83].forEach(i=>seen.add(i));
+  const te=items.find(i=>(i.statId===53||i.statId===41)&&i.pointsOverrides&&i.pointsOverrides["6"]!=null);if(te)sc.teRec=+(te.pointsOverrides["6"]-sc.rec).toFixed(2);
+  const pa=[[0,89],[6,90],[13,91],[17,92],[21,121],[27,122],[34,123],[45,124],[99,125]].map(([lim,id])=>{seen.add(id);const v=g(id);return v==null?null:lim+":"+v}).filter(Boolean);if(pa.length)sc.pa=pa.join(",");
+  items.forEach(i=>{if(!seen.has(i.statId)&&i.points)miss.push(i.statId)});return{sc,miss,fgTiers:[f0,f4,f5]}}
+function espnProj(entry,season){const st=((entry.playerPoolEntry||{}).player||entry.player||{}).stats||[];const out={},act={};
+  st.forEach(x=>{if(x.seasonId!==season||!x.scoringPeriodId||(x.statSplitTypeId!=null&&x.statSplitTypeId!==1))return;if(x.statSourceId===1)out[x.scoringPeriodId]=x.appliedTotal;else if(x.statSourceId===0)act[x.scoringPeriodId]=x.appliedTotal});return{proj:out,act}}
+async function importESPN(link,into){const k=espnId(link);if(!k)throw new Error("That doesn't look like an ESPN league link. It should contain leagueId=…");
+  const season=k.season||D.season;const j=await espnGet(k.id,season,"view=mSettings&view=mTeam&view=mRoster");const st=j.settings||{};
+  const {sc,miss,fgTiers}=espnScoring(((st.scoringSettings||{}).scoringItems)||[]);
+  const ro={QB:0,RB:0,WR:0,TE:0,FLEX:0,SFLEX:0,K:0,DST:0,BN:0};const odd=[];Object.entries((st.rosterSettings||{}).lineupSlotCounts||{}).forEach(([sid,n])=>{if(!n)return;const s=ESLOT[sid];if(s)ro[s]+=n;else if(+sid!==21)odd.push(sid)});
+  const sch=st.scheduleSettings||{},pt=sch.playoffTeamCount||4,len=sch.playoffMatchupPeriodLength||1;
+  const L=into||newLeague();L.name=st.name||"ESPN league";L.teams=st.size||(j.teams||[]).length||L.teams;L.sc=sc;L.preset=presetOf(sc);L.ro=ro;
+  L.po={teams:pt,start:clamp((sch.matchupPeriodCount||14)+1,1,18),weeks:clamp(Math.ceil(Math.log2(Math.max(2,pt)))*len,1,6)};
+  const keepMe=into&&into.rosters[into.me]?into.rosters[into.me].espnTeam:null;const ep={};
+  L.rosters=(j.teams||[]).map(t=>({name:t.name||[t.location,t.nickname].filter(Boolean).join(" ")||t.abbrev||"Team "+t.id,espnTeam:t.id,ids:((t.roster||{}).entries||[]).map(e=>{const id=pid(e.playerId);ep[id]=espnProj(e,season);return id})}));
+  L.me=Math.max(0,L.rosters.findIndex(r=>r.espnTeam===keepMe));
+  L.src={type:"espn",id:k.id,season,ts:Date.now(),miss,odd,fgTiers};L.espn=ep;
+  /* ESPN's projections for players nobody rosters (waiver wire), in this league's scoring; skipped quietly if ESPN refuses */
+  try{const flt={players:{filterStatus:{value:["FREEAGENT","WAIVERS"]},limit:250,sortPercOwned:{sortPriority:1,sortAsc:false}}};
+    const fa=await espnGet(k.id,season,"view=kona_player_info&scoringPeriodId="+D.cur,{"x-fantasy-filter":JSON.stringify(flt)});(fa.players||[]).forEach(p=>{ep[pid(p.id)]=espnProj(p,season)});L.src.fa=(fa.players||[]).length}catch(e){L.src.fa=0}
+  D.cache={};D.rosCache={};D.cal={};return L}
 /* ---------- data ---------- */
-const D={I:null,DEF:null,sched:{},inj:{},ready:false,err:null,pool:[],cache:{},rosCache:{},allowed:{}};
+const D={I:null,DEF:null,sched:{},inj:{},ready:false,err:null,pool:[],cache:{},rosCache:{},allowed:{},cal:{}};
 const N=()=>window.NFL&&NFL.N;
 async function load(){const n=N();if(!n)throw new Error("NFL data module didn't load");if(!n.stats)await NFL.loadStatic();if(!n.stats)throw new Error("Couldn't load this season's NFL stats");
   try{await NFL.ensure()}catch(e){}
@@ -146,6 +187,10 @@ function project(L,id,w){const ck=w+"|"+id;const C=D.cache[L.id+"|"+JSON.stringi
   if(tg.length>=3&&!(out.inj&&out.inj.lv==="out")){const since=tg[0].d,role=x=>pos==="QB"?x.v.att>=10:pos==="K"?(x.v.fgA+x.v.xpM)>0:(x.v.car+x.v.tgt+x.v.rec)>0||(x.x&&x.x.snap>=.2);
     const played=hist.filter(x=>x.d>=since&&role(x)).length,rate=Math.min(1,played/3);
     if(rate<1){m*=rate;confPen+=rate===0?40:20;out.factors.unshift(rate===0?`Hasn't played ${pos==="QB"?"as the starter ":""}in any of his team's last 3 games: projected 0 until that changes`:`Played ${pos==="QB"?"as the starter ":""}in ${played} of his team's last 3 games: projection scaled to ${Math.round(rate*100)}% (estimate)`)}}
+  /* past misses: what this model projected for him before each of his last 8 games vs what he scored (shrunk, capped) */
+  const cal=calib(L,id,pos);if(cal&&m>0){m*=cal.f;if(Math.abs(cal.f-1)>=.02)out.factors.push(`Track record: scored ${Math.round(cal.r*100)}% of what this model projected before his last ${cal.n} games, so ${cal.f>1?"raised":"lowered"} ${Math.abs(Math.round((cal.f-1)*100))}%`);out.cal=cal}
+  /* your app's projection: ESPN's own number for this week, in your league's scoring, blended in when the league was imported */
+  const ep=L.espn&&L.espn[id]&&L.espn[id].proj&&L.espn[id].proj[w];if(ep!=null&&!(out.inj&&out.inj.lv==="out")){out.sl=m;out.espn=ep;const wt=.4;m=(1-wt)*m+wt*ep;out.factors.push(`Blended: 60% Sharpline (${f1(out.sl)}), 40% ESPN's projection (${f1(ep)})`)}
   out.mean=Math.max(0,m);out.cvp=cv;out.floor=lnq(out.mean,cv,-1.2816);out.ceil=lnq(out.mean,cv,1.2816);
   /* weather and game script */
   if(wx){out.wx=wx;if((wx.wind||0)>=15||(wx.rain||0)>=1||(wx.temp!=null&&wx.temp<=25))out.factors.push(`Weather: ${wx.temp!=null?wx.temp+"°F, ":""}wind ${wx.wind||0} mph${wx.rain?`, ${wx.rain} mm rain`:""} (forecast)`)}
@@ -170,6 +215,15 @@ function projDST(L,id,w,G,out){const t=id.slice(2),sc=L.sc,A=DEFG||{},mineG=(A[t
   out.cvp=.75;out.floor=Math.max(-5,out.mean-1.28*Math.max(3,out.mean*.75));out.ceil=out.mean+1.28*Math.max(3,out.mean*.75);
   out.parts=[`${mineG.length} games: blends this defense's recent sacks, takeaways and points allowed with what ${tAb(G.opp)}'s offense has given up`,G.total!=null?`opponent implied ${r1(pa)} points from the spread and total`:"no posted total yet: points allowed from recent games"];
   out.conf=G.total!=null?62:52;return out}
+
+/* how a player has done against this model's own pregame numbers, recomputed from past games (only data from before each game) */
+function calib(L,id,pos){const key=JSON.stringify(L.sc);const C=D.cal[key]=D.cal[key]||{};if(C[id]!==undefined)return C[id];
+  const hist=D.I.P[id]||[];const games=pos==="QB"?hist.filter(x=>x.v.att>=10):hist;if(games.length<5)return C[id]=null;let sp=0,sa=0,n=0;
+  games.slice(-8).forEach(x=>{const before=games.filter(y=>y.d<x.d);if(before.length<3)return;const ctx={opp:x.opp,before:x.d};const pr=st=>{const r=M.project(D.I,id,st,ctx,D.DEF);return r&&r.m!=null?r.m:0};
+    let p;if(pos==="K")p=pr("fgM")*L.sc.fg+pr("xpM")*L.sc.xp;else{const td=pr("td");p=pr("pYds")*L.sc.pYd*(pos==="QB"?1:0)+pr("pTD")*L.sc.pTD*(pos==="QB"?1:0)+pr("rYds")*L.sc.rYd+(pos==="QB"?td*L.sc.rTD:0)+
+      (pos==="QB"?0:pr("rec")*(L.sc.rec+(pos==="TE"?L.sc.teRec:0))+pr("recYds")*L.sc.recYd+td*(pos==="RB"?(.72*L.sc.rTD+.28*L.sc.recTD):L.sc.recTD))}
+    if(p>0){sp+=p;sa+=fpGame(x.v,pos,L.sc);n++}});
+  if(n<3||sp<=0)return C[id]=null;const r=sa/sp,f=clamp(1+(r-1)*n/(n+10),.88,1.12);return C[id]={r,f,n}}
 /* rest of season, week by week, through the end of the league's playoffs */
 function ros(L,id,weeks){const ck=id+"|"+weeks.join(",");const C=D.rosCache[L.id+"|"+JSON.stringify(L.sc)]=D.rosCache[L.id+"|"+JSON.stringify(L.sc)]||{};if(C[ck])return C[ck];
   const per=weeks.map(w=>{const p=project(L,id,w);return{w,m:p.bye||p.none&&!p.n?0:p.mean,bye:!!p.bye,final:p.final}});
@@ -212,6 +266,7 @@ function detail(L,id,w){const p=project(L,id,w),m=mu(L,p),st=p.stats||{},S_=[];
   const u=p.u,us=p.us;
   return`<div class="ff-det">${p.none?`<p class="ff-warn">${esc(p.none)}</p>`:""}
     <div class="ff-kv"><span>Projected</span><b>${p.bye?"Bye":f1(p.mean)+" pts"}</b><span>Range (estimated)</span><b>${f1(p.floor)} to ${f1(p.ceil)}</b><span>Confidence</span><b class="ff-c ${confCls(p.conf)}">${confLbl(p.conf)}</b>
+    ${p.espn!=null?`<span>Sharpline / ESPN</span><b>${f1(p.sl)} / ${f1(p.espn)}</b>`:""}${p.cal?`<span>Vs past projections</span><b>${Math.round(p.cal.r*100)}% of projected, last ${p.cal.n} games</b>`:""}
     ${p.seasonAvg!=null?`<span>Actual this season</span><b>${f1(p.seasonAvg)}/g in ${p.n} g</b>`:""}${p.last&&p.last.length?`<span>Actual last ${p.last.length}</span><b>${p.last.map(f1).join(", ")}</b>`:""}
     ${m?`<span>Matchup</span><b>${m.lbl}: ${esc(tAb(p.opp))} allows ${f1(m.v)} to ${p.pos}s (${m.r}${["st","nd","rd"][m.r-1]||"th"} most of ${m.n})</b>`:""}
     ${p.imp!=null?`<span>Game script</span><b>${p.spread<0?`Favored by ${-p.spread}`:p.spread>0?`${p.spread}-point underdog`:"Pick'em"}, implied ${f1(p.imp)} pts</b>`:p.opp?`<span>Game script</span><b>No line posted yet</b>`:""}
@@ -235,13 +290,13 @@ async function render(){const el=$("ffBody");if(!el)return;
   const head=`<div class="ff-top">${S.lgs.length?`<label class="ff-lgs">League <select data-fflg>${S.lgs.map(l=>`<option value="${l.id}" ${l.id===S.cur?"selected":""}>${esc(l.name)}</option>`).join("")}</select></label>`:""}
     <button class="addbtn" data-ffnew="1">+ New league</button>${L?weekSel():""}</div>
     ${L?`<div class="seg wide ff-tabs">${TABS.map(([k,t])=>`<button class="${S.tab===k?"on":""}" data-fftab="${k}">${t}</button>`).join("")}</div>`:""}`;
-  if(!L){el.innerHTML=head+`<div class="ff-card"><h3>Create your league</h3><p class="hint">Every projection, ranking, start/sit call and trade grade uses your league's scoring and roster settings. Set them up first.</p><button class="go2" data-ffnew="1">Create a league</button></div>`;return}
+  if(!L){el.innerHTML=head+`<div class="ff-card"><h3>Create your league</h3><p class="hint">Every projection, ranking, start/sit call and trade grade uses your league's scoring and roster settings. Set them up first.</p><button class="go2" data-ffnew="1">Create a league by hand</button></div>`+importBox(null);return}
   const w=S.w||D.cur;await week(w);if(S.tab==="trade"||S.tab==="waiver"||S.tab==="rank"||S.tab==="league")await weeksFor(L);
   if(L.sc.dSack!=null)await defGames();buildPool(L);
   const miss=[];for(let i=D.cur;i<=(S.tab==="start"||S.tab==="proj"?w:lastWeek(L));i++)if(!D.sched[i]||!D.sched[i].length)miss.push(i);
   const warn=miss.length?`<p class="ff-warn">Couldn't load the NFL schedule for week${miss.length>1?"s":""} ${miss.join(", ")} from ESPN, so those weeks have no projections. Check your connection and reopen this page.</p>`:"";
   const body={start:tStart,proj:tProj,league:tLeague,trade:tTrade,waiver:tWaiver,rank:tRank}[S.tab]||tLeague;
-  el.innerHTML=head+warn+body(L,w)+`<p class="ff-src">Actual stats: ESPN box scores (updated ${esc(new Date(N().stats.updated).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))}), nflverse snap and target shares, ESPN injury report. Projections: Sharpline's NFL model in your league's scoring, anchored to DraftKings player prop lines when posted. Floors, ceilings and injury adjustments are estimates. Not modelled (no free source): route participation, red-zone usage, two-point conversions, touchdown length.</p>`}
+  el.innerHTML=head+warn+body(L,w)+`<p class="ff-src">Actual stats: ESPN box scores (updated ${esc(new Date(N().stats.updated).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))}), nflverse snap and target shares, ESPN injury report. Projections: Sharpline's NFL model in your league's scoring, anchored to DraftKings player prop lines when posted, corrected for each player's record against the model's past projections, and blended 40% with ESPN's projection when your league is imported from ESPN. Floors, ceilings and injury adjustments are estimates. Not modelled (no free source): route participation, red-zone usage, two-point conversions, touchdown length.</p>`}
 
 function tStart(L,w){const R=mine(L);if(!R.ids.length)return`<div class="empty">Add players to your team in My League first.</div>`;
   const lu=lineup(L,R.ids,w);const sel=(S.ss.sel||[]).filter(id=>R.ids.includes(id));
@@ -284,6 +339,11 @@ function tProj(L,w){const f=S.pj;const ids=D.pool.filter(id=>(f.pos==="ALL"||pos
     <p class="hint">Week ${w} projections in your scoring. Bar: estimated floor to ceiling, dot: projection. Tap a player for the stat line, matchup, workload, weather and every factor.</p>
     ${P.slice(0,f.q?40:60).map(p=>`<div class="ff-prw" data-ffopen="${esc(p.id)}"><span class="ff-rk">${p.pos}${rk[p.id]}</span>${pRow(L,p.id,w,`<div class="ff-cf ff-c ${confCls(p.conf)}">${confLbl(p.conf)}</div>`)}${bar(p,max)}${S.open===p.id?detail(L,p.id,w):""}</div>`).join("")||`<div class="empty">No projections for this filter.</div>`}</div>`}
 
+function importBox(L){const src=L&&L.src;
+  return`<div class="ff-card"><h3>${src?"Linked to ESPN":"Import from ESPN"}</h3>${src?`<p class="hint">League ${esc(src.id)} · ${src.season} · imported ${esc(new Date(src.ts).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))}. Refresh after trades, waiver moves or lineup news; it reloads rosters, settings and ESPN's projections.${src.miss&&src.miss.length?` Scoring rules ESPN uses that Sharpline can't project: stat ${src.miss.join(", ")}.`:""}${src.odd&&src.odd.length?" Some roster slots weren't recognised.":""}${src.fgTiers&&src.fgTiers.some(v=>v!=null)?` Field goals by distance (${src.fgTiers.map(v=>v==null?"–":v).join(" / ")}) are averaged to ${L.sc.fg} per kick (estimate).`:""}</p>
+      <button class="addbtn" data-ffimp="refresh">Refresh from ESPN</button>`:`<p class="hint">Paste your league's link from the ESPN app or site (it contains <b>leagueId=</b>). Sharpline copies your scoring, roster slots, playoffs and every team's roster. The league must be viewable to the public; Sharpline never asks for your ESPN login.</p>
+      <div class="ff-imp"><input class="ff-in" id="ffLink" placeholder="https://fantasy.espn.com/football/league?leagueId=…" autocomplete="off" inputmode="url"><button class="addbtn" data-ffimp="new">Import</button></div>`}
+    <p class="ff-warn" id="ffImpMsg" hidden></p></div>`}
 function tLeague(L,w){const ro=L.ro,sc=L.sc,num=(k,v,step,lbl,o)=>`<label class="ff-f"><span>${lbl}</span><input type="number" step="${step}" data-ffset="${o}.${k}" value="${v}"></label>`;
   const R=mine(L);
   const set=`<details class="ff-card" ${L.rosters[L.me].ids.length?"":"open"}><summary><h3>League settings</h3><small>${L.teams} teams · ${({standard:"Standard",half:"Half-PPR",ppr:"PPR",custom:"Custom"})[L.preset]} · ${SLOTS(L).length} starters</small></summary>
@@ -303,7 +363,7 @@ function tLeague(L,w){const ro=L.ro,sc=L.sc,num=(k,v,step,lbl,o)=>`<label class=
     ${L.rosters.map((r,i)=>`<div class="ff-team ${i===L.me?"me":""}"><div class="ff-th"><input class="ff-tn" data-fftn="${i}" value="${esc(r.name)}">${i===L.me?`<span class="ff-me">You</span>`:`<button class="lnk" data-ffme="${i}">This is me</button> <button class="lnk" data-ffrmt="${i}">Remove</button>`}<small>${r.ids.length}/${SLOTS(L).length+(+ro.BN||0)} players</small></div>
       ${r.ids.map(id=>`<div class="ff-slot">${pRow(L,id,w,`<button class="ff-x" data-ffrm="${i}|${esc(id)}" aria-label="Remove">✕</button>`)}</div>`).join("")}${search("r"+i,"Add a player to "+r.name)}</div>`).join("")}
     ${L.rosters.length<L.teams?`<button class="addbtn" data-ffaddt="1">+ Add another team</button>`:""}</div>`;
-  return set+(R.ids.length?evalCard(L,weeks):"")+teams}
+  return importBox(L)+set+(R.ids.length?evalCard(L,weeks):"")+teams}
 function evalCard(L,weeks){const R=mine(L);const val=id=>ros(L,id,weeks).wk;const rp=replacement(L,weeks[0],val);const lu=lineup(L,R.ids,null,val);
   const byPos={};lu.start.forEach(s=>{if(!s.id)return;const p=posOf(s.id);(byPos[p]=byPos[p]||[]).push(s.v)});
   const rows=POS.filter(p=>byPos[p]).map(p=>{const a=byPos[p],avg=a.reduce((x,y)=>x+y,0)/a.length,d=avg-rp.starterAvg[p];return{p,avg,d,pct:rp.starterAvg[p]?d/rp.starterAvg[p]:0}}).sort((a,b)=>b.pct-a.pct);
@@ -387,8 +447,14 @@ function tRank(L,w){const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.push
 
 /* ---------- events ---------- */
 const rer=()=>{save();render()};
-function onClick(e){const t=e.target.closest("[data-fftab],[data-ffnew],[data-ffpre],[data-ffdel],[data-ffaddt],[data-ffme],[data-ffrmt],[data-ffrm],[data-ffadd],[data-ffmode],[data-ffpp],[data-ffwp],[data-ffrp],[data-ffrt],[data-fftr],[data-fftclr],[data-fftsave],[data-fftload],[data-fftdel],[data-ffopen]");
+function onClick(e){const t=e.target.closest("[data-ffimp],[data-fftab],[data-ffnew],[data-ffpre],[data-ffdel],[data-ffaddt],[data-ffme],[data-ffrmt],[data-ffrm],[data-ffadd],[data-ffmode],[data-ffpp],[data-ffwp],[data-ffrp],[data-ffrt],[data-fftr],[data-fftclr],[data-fftsave],[data-fftload],[data-fftdel],[data-ffopen]");
   if(!t||!t.closest("#v-ff"))return;const d=t.dataset,L=lg();
+  if(d.ffimp){const msg=$("ffImpMsg"),L0=lg();const link=d.ffimp==="refresh"&&L0&&L0.src?`leagueId=${L0.src.id}&seasonId=${L0.src.season}`:(($("ffLink")||{}).value||"");
+    if(msg){msg.hidden=false;msg.textContent="Importing from ESPN…"}t.disabled=true;
+    (async()=>{try{if(!D.ready)await loading;const into=d.ffimp==="refresh"?L0:(L0&&!L0.src&&!L0.rosters.some(r=>r.ids.length)?L0:null);const L=await importESPN(link,into);
+      if(!S.lgs.includes(L))S.lgs.push(L);S.cur=L.id;S.tab="league";save();await render();if(window.toast)toast(`Imported ${L.name}: ${L.rosters.length} teams`);
+      const m2=$("ffImpMsg");if(m2&&d.ffimp==="new"){m2.hidden=false;m2.textContent="Imported. Tap \u201cThis is me\u201d on your team."}}
+    catch(err){const m2=$("ffImpMsg");if(m2){m2.hidden=false;m2.textContent=err.message}t.disabled=false}})();return}
   if(d.fftab){S.tab=d.fftab;S.open=null;return rer()}
   if(d.ffnew){const l=newLeague();l.name=`League ${S.lgs.length+1}`;if(!S.lgs.length)l.name="My league";S.lgs.push(l);S.cur=l.id;S.tab="league";return rer()}
   if(!L)return;
@@ -413,7 +479,7 @@ function onChange(e){const t=e.target;if(!t.closest||!t.closest("#v-ff"))return;
   if(d.ffset){const[o,k]=d.ffset.includes(".")?d.ffset.split("."):[null,d.ffset];let v=t.type==="number"?parseFloat(t.value):t.value;if(t.type==="number"&&isNaN(v))return;
     if(o==="lg"||!o){if(k==="teams")v=clamp(Math.round(v),2,32);L[k]=v}else if(o==="sc"){L.sc[k]=v;L.preset=presetOf(L.sc)}
     else if(o==="ro")L.ro[k]=clamp(Math.round(v),0,10);else if(o==="po")L.po[k]=clamp(Math.round(v),k==="start"?D.cur:1,k==="start"?18:16);
-    D.cache={};D.rosCache={};return rer()}
+    D.cache={};D.rosCache={};D.cal={};return rer()}
   if(d.fftn!=null){L.rosters[+d.fftn].name=t.value||"Team";return rer()}
   if(d.fftto!=null){S.tr.to=+t.value;S.tr.get=[];return rer()}
   if(d.ffss!=null){const a=S.ss.sel=(S.ss.sel||[]);const id=d.ffss;t.checked?a.includes(id)||a.push(id):a.splice(a.indexOf(id),1);return rer()}}
