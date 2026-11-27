@@ -28,8 +28,13 @@ function presetOf(sc){const strip=o=>JSON.stringify(Object.keys(SC0).filter(k=>k
   return sc.rec===0?"standard":sc.rec===.5?"half":sc.rec===1?"ppr":"custom"}
 const newLeague=()=>({id:"L"+Date.now(),name:"My league",teams:10,preset:"half",sc:{...SC0},ro:{...RO0},po:{teams:4,start:15,weeks:3},
   rosters:[{name:"My team",ids:[]}],me:0});
-let S=LG("sl_ff",{lgs:[],cur:null,tab:"league",trades:[],ss:{mode:"bal",sel:[]},w:null,rk:{pos:"ALL",type:"week"},wv:{pos:"ALL"},pj:{pos:"ALL",q:""},tr:{to:1,give:[],get:[]}});
+let S=LG("sl_ff",{lgs:[],cur:null,tab:"start",trades:[],ss:{mode:"bal",sel:[]},w:null,rk:{pos:"ALL",type:"week"},wv:{pos:"ALL"},pj:{pos:"ALL",q:""},tr:{to:1,give:[],get:[]}});
 const save=()=>LSv("sl_ff",S),lg=()=>S.lgs.find(l=>l.id===S.cur)||null;
+/* Quick Analysis: no league needed. A standard 12-team lineup (QB, 2 RB, 2 WR, TE, FLEX, K, D/ST) in the chosen format. */
+const FMT={standard:"Standard",half:"Half-PPR",ppr:"PPR",custom:"Custom"},QC={};
+function quickL(){const f=S.qf||"half";return QC[f]||(QC[f]={id:"Q-"+f,name:"Quick Analysis",quick:1,teams:12,preset:f,sc:{...SC0,...PRESET[f]},ro:{QB:1,RB:2,WR:2,TE:1,FLEX:1,SFLEX:0,K:1,DST:1,BN:6},po:{teams:6,start:15,weeks:3},rosters:[{name:"",ids:[]}],me:0})}
+const AL=()=>S.mode==="league"&&lg()?lg():quickL();
+const fmtName=L=>L.quick?`${FMT[L.preset]} (Quick Analysis)`:`${L.name}: ${FMT[L.preset]||"Custom"} scoring`;
 const mine=L=>L.rosters[L.me]||{ids:[]};
 function teamOf(L,id){const i=L.rosters.findIndex(r=>r.ids.includes(id));return i<0?null:i}
 
@@ -75,7 +80,7 @@ async function importESPN(link,into){const k=espnId(link);if(!k)throw new Error(
     const fa=await espnGet(k.id,season,"view=kona_player_info&scoringPeriodId="+D.cur,{"x-fantasy-filter":JSON.stringify(flt)});(fa.players||[]).forEach(p=>{ep[pid(p.id)]=espnProj(p,season)});L.src.fa=(fa.players||[]).length}catch(e){L.src.fa=0}
   D.cache={};D.rosCache={};D.cal={};return L}
 /* ---------- data ---------- */
-const D={I:null,DEF:null,sched:{},inj:{},ready:false,err:null,pool:[],cache:{},rosCache:{},allowed:{},cal:{}};
+const D={I:null,DEF:null,sched:{},inj:{},ready:false,err:null,pool:[],cache:{},rosCache:{},allowed:{},cal:{},pp:{},sr:{},age:{},news:{}};
 const N=()=>window.NFL&&NFL.N;
 async function load(){const n=N();if(!n)throw new Error("NFL data module didn't load");if(!n.stats)await NFL.loadStatic();if(!n.stats)throw new Error("Couldn't load this season's NFL stats");
   try{await NFL.ensure()}catch(e){}
@@ -217,12 +222,16 @@ function projDST(L,id,w,G,out){const t=id.slice(2),sc=L.sc,A=DEFG||{},mineG=(A[t
   out.conf=G.total!=null?62:52;return out}
 
 /* how a player has done against this model's own pregame numbers, recomputed from past games (only data from before each game) */
+/* every game he played: actual points, and what the model would have projected beforehand using only earlier games */
+function pastProj(L,id,pos){const key=JSON.stringify(L.sc);const C=D.pp[key]=D.pp[key]||{};if(C[id])return C[id];
+  const hist=D.I.P[id]||[];const games=pos==="QB"?hist.filter(x=>x.v.att>=10):hist;
+  return C[id]=hist.map(x=>{let p=null;const before=games.filter(y=>y.d<x.d);if(before.length>=3&&(pos!=="QB"||x.v.att>=10)){const ctx={opp:x.opp,before:x.d};const pr=st=>{const r=M.project(D.I,id,st,ctx,D.DEF);return r&&r.m!=null?r.m:0};
+    if(pos==="K")p=pr("fgM")*L.sc.fg+pr("xpM")*L.sc.xp;else{const td=pr("td");p=pr("pYds")*L.sc.pYd*(pos==="QB"?1:0)+pr("pTD")*L.sc.pTD*(pos==="QB"?1:0)+pr("rYds")*L.sc.rYd+(pos==="QB"?td*L.sc.rTD:0)+
+      (pos==="QB"?0:pr("rec")*(L.sc.rec+(pos==="TE"?L.sc.teRec:0))+pr("recYds")*L.sc.recYd+td*(pos==="RB"?(.72*L.sc.rTD+.28*L.sc.recTD):L.sc.recTD))}}
+    return{x,w:x.w,act:fpGame(x.v,pos,L.sc),proj:p}})}
 function calib(L,id,pos){const key=JSON.stringify(L.sc);const C=D.cal[key]=D.cal[key]||{};if(C[id]!==undefined)return C[id];
   const hist=D.I.P[id]||[];const games=pos==="QB"?hist.filter(x=>x.v.att>=10):hist;if(games.length<5)return C[id]=null;let sp=0,sa=0,n=0;
-  games.slice(-8).forEach(x=>{const before=games.filter(y=>y.d<x.d);if(before.length<3)return;const ctx={opp:x.opp,before:x.d};const pr=st=>{const r=M.project(D.I,id,st,ctx,D.DEF);return r&&r.m!=null?r.m:0};
-    let p;if(pos==="K")p=pr("fgM")*L.sc.fg+pr("xpM")*L.sc.xp;else{const td=pr("td");p=pr("pYds")*L.sc.pYd*(pos==="QB"?1:0)+pr("pTD")*L.sc.pTD*(pos==="QB"?1:0)+pr("rYds")*L.sc.rYd+(pos==="QB"?td*L.sc.rTD:0)+
-      (pos==="QB"?0:pr("rec")*(L.sc.rec+(pos==="TE"?L.sc.teRec:0))+pr("recYds")*L.sc.recYd+td*(pos==="RB"?(.72*L.sc.rTD+.28*L.sc.recTD):L.sc.recTD))}
-    if(p>0){sp+=p;sa+=fpGame(x.v,pos,L.sc);n++}});
+  pastProj(L,id,pos).filter(r=>r.proj>0).slice(-8).forEach(r=>{sp+=r.proj;sa+=r.act;n++});
   if(n<3||sp<=0)return C[id]=null;const r=sa/sp,f=clamp(1+(r-1)*n/(n+10),.88,1.12);return C[id]={r,f,n}}
 /* rest of season, week by week, through the end of the league's playoffs */
 function ros(L,id,weeks){const ck=id+"|"+weeks.join(",");const C=D.rosCache[L.id+"|"+JSON.stringify(L.sc)]=D.rosCache[L.id+"|"+JSON.stringify(L.sc)]||{};if(C[ck])return C[ck];
@@ -274,6 +283,7 @@ function detail(L,id,w){const p=project(L,id,w),m=mu(L,p),st=p.stats||{},S_=[];
     ${p.wx?`<span>Weather</span><b>${p.wx.temp!=null?p.wx.temp+"°F · ":""}wind ${p.wx.wind||0} mph${p.wx.rain?` · ${p.wx.rain} mm rain`:""} (forecast)</b>`:p.dome?`<span>Weather</span><b>Indoors</b>`:""}
     ${D.inj[id]?`<span>Injury report</span><b>${esc(D.inj[id].st)}${D.inj[id].txt?": "+esc(D.inj[id].txt):""}</b>`:`<span>Injury report</span><b>Not listed</b>`}</div>
     ${!p.bye&&!p.none?`<div class="ff-stl"><span>Projected stats</span> ${S_.filter(Boolean).join(" · ")}</div>`:""}
+    <button class="addbtn" data-ffprof="${esc(id)}">Full profile</button>
     ${(p.factors||[]).concat(p.parts||[]).length?`<ul class="ff-fac">${(p.factors||[]).concat(p.parts||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`}
 function search(ctx,ph){return`<div class="ff-srch"><input data-ffq="${ctx}" placeholder="${esc(ph||"Add a player or D/ST")}" autocomplete="off"><div class="ff-res" id="ffres-${ctx}"></div></div>`}
 function searchRes(L,ctx,q){const nq=q.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();if(nq.length<2)return"";
@@ -282,31 +292,43 @@ function searchRes(L,ctx,q){const nq=q.toLowerCase().normalize("NFD").replace(/[
   return cand.map(id=>{const o=teamOf(L,id);return`<button class="ff-ri" data-ffadd="${ctx}|${esc(id)}" ${o!=null&&ctx.startsWith("r")?"disabled":""}><b>${esc(nameOf(id))}</b> <small>${posOf(id)} · ${esc(tAb(teamIdOf(id)))}${o!=null?` · on ${esc(L.rosters[o].name)}`:""}</small></button>`}).join("")}
 
 /* ---------- tabs ---------- */
-const TABS=[["start","Start / Sit"],["proj","Projections"],["league","My League"],["trade","Trade"],["waiver","Waivers"],["rank","Rankings"]];
+const TABS=[["start","Start / Sit"],["trade","Trade"],["prof","Players"],["proj","Projections"],["rank","Rankings"],["waiver","Waivers"],["league","My League"]];
+function modeBar(){const L=lg(),lm=S.mode==="league"&&L,f=S.qf||"half";
+  return`<div class="ff-mode2"><div class="seg"><button class="${lm?"":"on"}" data-ffam="quick">Quick Analysis</button><button class="${lm?"on":""}" data-ffam="league" ${L?"":"disabled"}>League Analysis</button></div>
+    ${lm?`<span class="ff-fmt">${esc(L.name)} · ${FMT[L.preset]||"Custom"} scoring, your lineup and roster</span>`:`<div class="seg">${["standard","half","ppr"].map(k=>`<button class="${f===k?"on":""}" data-ffqf="${k}">${FMT[k]}</button>`).join("")}</div><span class="ff-fmt">${L?"":"No league needed. "}Scoring: ${FMT[f]}, standard 12-team lineup</span>`}</div>`}
 function weekSel(){const w=S.w||D.cur;const opts=[];for(let i=D.cur;i<=18;i++)opts.push(i);return`<label class="ff-wk">Week <select data-ffw>${opts.map(i=>`<option ${i===w?"selected":""} value="${i}">${i}${i===D.cur?" (this week)":""}</option>`).join("")}</select></label>`}
 async function render(){const el=$("ffBody");if(!el)return;
   if(!D.ready){el.innerHTML=`<div class="empty">${D.err?esc(D.err):"Loading this season's NFL data…"}</div>`;return}
-  const L=lg();
+  const L=lg();if(S.mode==="league"&&!L)S.mode="quick";const A=AL();
   const head=`<div class="ff-top">${S.lgs.length?`<label class="ff-lgs">League <select data-fflg>${S.lgs.map(l=>`<option value="${l.id}" ${l.id===S.cur?"selected":""}>${esc(l.name)}</option>`).join("")}</select></label>`:""}
-    <button class="addbtn" data-ffnew="1">+ New league</button>${L?weekSel():""}</div>
-    ${L?`<div class="seg wide ff-tabs">${TABS.map(([k,t])=>`<button class="${S.tab===k?"on":""}" data-fftab="${k}">${t}</button>`).join("")}</div>`:""}`;
-  if(!L){el.innerHTML=head+`<div class="ff-card"><h3>Create your league</h3><p class="hint">Every projection, ranking, start/sit call and trade grade uses your league's scoring and roster settings. Set them up first.</p><button class="go2" data-ffnew="1">Create a league by hand</button></div>`+importBox(null);return}
-  const w=S.w||D.cur;await week(w);if(S.tab==="trade"||S.tab==="waiver"||S.tab==="rank"||S.tab==="league")await weeksFor(L);
-  if(L.sc.dSack!=null)await defGames();buildPool(L);
-  const miss=[];for(let i=D.cur;i<=(S.tab==="start"||S.tab==="proj"?w:lastWeek(L));i++)if(!D.sched[i]||!D.sched[i].length)miss.push(i);
+    ${weekSel()}</div><div class="seg wide ff-tabs">${TABS.map(([k,t])=>`<button class="${S.tab===k?"on":""}" data-fftab="${k}">${t}</button>`).join("")}</div>`;
+  const needL=S.tab==="league"||S.tab==="waiver";const X=needL?L:A;const w=S.w||D.cur;
+  if(needL&&!L){el.innerHTML=head+(S.tab==="waiver"?`<div class="ff-card"><h3>Waivers need your league</h3><p class="hint">The waiver wire depends on who is already rostered in your league. Import your ESPN league or create one in My League. Start/Sit, Trade, Players, Projections and Rankings work without one.</p></div>`:"")+
+    `<div class="ff-card"><h3>Your league (optional)</h3><p class="hint">Start/Sit, Trade, Players, Projections and Rankings already work in Quick Analysis. Adding your league lets them use your exact scoring, lineup and roster.</p><button class="go2" data-ffnew="1">Create a league by hand</button></div>`+importBox(null);return}
+  await week(w);if(S.tab!=="start"&&S.tab!=="proj")await weeksFor(X);
+  await defGames();buildPool(X);
+  const miss=[];for(let i=D.cur;i<=(S.tab==="start"||S.tab==="proj"?w:lastWeek(X));i++)if(!D.sched[i]||!D.sched[i].length)miss.push(i);
   const warn=miss.length?`<p class="ff-warn">Couldn't load the NFL schedule for week${miss.length>1?"s":""} ${miss.join(", ")} from ESPN, so those weeks have no projections. Check your connection and reopen this page.</p>`:"";
-  const body={start:tStart,proj:tProj,league:tLeague,trade:tTrade,waiver:tWaiver,rank:tRank}[S.tab]||tLeague;
-  el.innerHTML=head+warn+body(L,w)+`<p class="ff-src">Actual stats: ESPN box scores (updated ${esc(new Date(N().stats.updated).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))}), nflverse snap and target shares, ESPN injury report. Projections: Sharpline's NFL model in your league's scoring, anchored to DraftKings player prop lines when posted, corrected for each player's record against the model's past projections, and blended 40% with ESPN's projection when your league is imported from ESPN. Floors, ceilings and injury adjustments are estimates. Not modelled (no free source): route participation, red-zone usage, two-point conversions, touchdown length.</p>`}
+  const body={start:tStart,proj:tProj,league:tLeague,trade:tTrade,waiver:tWaiver,rank:tRank,prof:tProf}[S.tab]||tStart;
+  el.innerHTML=head+(needL?"":modeBar())+warn+body(X,w)+`<p class="ff-src">Actual stats: ESPN box scores (updated ${esc(new Date(N().stats.updated).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))}), nflverse snap and target shares, ESPN injury report and player news. Projections: Sharpline's NFL model in the scoring shown, anchored to DraftKings player prop lines when posted, corrected for each player's record against the model's past projections, and blended 40% with ESPN's projection when your league is imported from ESPN. Floors, ceilings, trade values and injury adjustments are estimates. Not available from any free source Sharpline uses: route participation, red-zone opportunities, two-point conversions, touchdown length.</p>`}
 
-function tStart(L,w){const R=mine(L);if(!R.ids.length)return`<div class="empty">Add players to your team in My League first.</div>`;
-  const lu=lineup(L,R.ids,w);const sel=(S.ss.sel||[]).filter(id=>R.ids.includes(id));
-  const mode=S.ss.mode||"bal";
-  const lineupHTML=`<div class="ff-card"><h3>Best lineup for week ${w}</h3><p class="hint">Highest projected total from your roster, filled slot by slot. Tap players below to compare any of them head to head.</p>
-    ${lu.start.map(s=>`<div class="ff-slot"><span class="ff-sl">${s.slot==="SFLEX"?"SUPERFLEX":s.slot}</span>${s.id?pRow(L,s.id,w,`<label class="ff-ck"><input type="checkbox" data-ffss="${esc(s.id)}" ${sel.includes(s.id)?"checked":""}></label>`):`<div class="ff-pr dim">Empty: no eligible player on your roster</div>`}</div>`).join("")}
-    <div class="ff-bn">Bench</div>${lu.bench.map(id=>`<div class="ff-slot"><span class="ff-sl">BN</span>${pRow(L,id,w,`<label class="ff-ck"><input type="checkbox" data-ffss="${esc(id)}" ${sel.includes(id)?"checked":""}></label>`)}</div>`).join("")||`<p class="hint">No bench players.</p>`}
-    <p class="ff-tot">Projected starters: <b>${f1(lu.tot)}</b> pts</p></div>`;
-  let cmp="";if(sel.length>=2)cmp=compare(L,sel,w,mode,lu);else cmp=`<div class="ff-card"><h3>Start / Sit</h3><p class="hint">Check two or more players above to compare them.</p></div>`;
-  return`<div class="ff-card ff-mode"><span>Your week:</span><div class="seg">${[["safe","Favored: play safe"],["bal","Balanced"],["up","Underdog: need upside"]].map(([k,t])=>`<button class="${mode===k?"on":""}" data-ffmode="${k}">${t}</button>`).join("")}</div></div>`+cmp+lineupHTML}
+function tStart(A,w){const lm=!A.quick,R=lm?mine(A):{ids:[]};const sel=(S.ssq=(S.ssq||[]).filter(id=>D.pool.includes(id)));const mode=S.ss.mode||"bal";
+  const picker=`<div class="ff-card"><h3>Who should I start?</h3><p class="hint">Search any players${lm&&R.ids.length?", or tick them in your lineup below":""}. Different positions are fine (for a FLEX or SUPERFLEX spot).</p>
+    <div class="ff-chips">${sel.map((id,i)=>`<button class="chip s on" data-ffssx="${esc(id)}">${"ABCD"[i]}: ${esc(nameOf(id))} <small>${posOf(id)} ✕</small></button>`).join("")}</div>
+    ${sel.length<4?search("ss",!sel.length?"Search Player A":sel.length===1?"Search Player B":"Add another player (optional)"):""}</div>`;
+  const modeCard=`<div class="ff-card ff-mode"><span>Your week:</span><div class="seg">${[["safe","Favored: play safe"],["bal","Balanced"],["up","Underdog: need upside"]].map(([k,t])=>`<button class="${mode===k?"on":""}" data-ffmode="${k}">${t}</button>`).join("")}</div></div>`;
+  let lu=null,lineupHTML="";
+  if(lm&&R.ids.length){lu=lineup(A,R.ids,w);lineupHTML=`<div class="ff-card"><h3>Your best lineup, week ${w}</h3><p class="hint">Highest projected total from your roster, slot by slot. Tick players to compare them above.</p>
+    ${lu.start.map(s=>`<div class="ff-slot"><span class="ff-sl">${s.slot==="SFLEX"?"SUPERFLEX":s.slot}</span>${s.id?pRow(A,s.id,w,`<label class="ff-ck"><input type="checkbox" data-ffss="${esc(s.id)}" ${sel.includes(s.id)?"checked":""}></label>`):`<div class="ff-pr dim">Empty: no eligible player on your roster</div>`}</div>`).join("")}
+    <div class="ff-bn">Bench</div>${lu.bench.map(id=>`<div class="ff-slot"><span class="ff-sl">BN</span>${pRow(A,id,w,`<label class="ff-ck"><input type="checkbox" data-ffss="${esc(id)}" ${sel.includes(id)?"checked":""}></label>`)}</div>`).join("")||`<p class="hint">No bench players.</p>`}
+    <p class="ff-tot">Projected starters: <b>${f1(lu.tot)}</b> pts</p></div>`}
+  else if(lm)lineupHTML=`<p class="hint">Add your roster in My League to see your best lineup and how each player fits it.</p>`;
+  const cmp=sel.length>=2?compare(A,sel,w,mode,lu)+(lu?fitCard(A,sel,w,R.ids):""):"";
+  return picker+(sel.length>=2?modeCard:"")+cmp+lineupHTML}
+/* League Analysis: your whole lineup's projected total with each candidate available */
+function fitCard(A,sel,w,ids){const rows=sel.map(c=>{const pool=ids.filter(x=>!sel.includes(x)).concat([c]);const lu=lineup(A,pool,w);const sl=lu.start.find(s=>s.id===c);return{c,tot:lu.tot,slot:sl?sl.slot:null,own:ids.includes(c)}}).sort((a,b)=>b.tot-a.tot);
+  return`<div class="ff-card"><h3>Fit in your lineup</h3><p class="hint">Your best lineup's projected total with each player available (and the others out), in your league's slots.</p>
+    ${rows.map((r,i)=>`<div class="ff-wkr"><span>${esc(nameOf(r.c))}${r.own?"":" <small>(not on your roster)</small>"}</span><span>${r.slot?(r.slot==="SFLEX"?"SUPERFLEX":r.slot):"would sit"}</span><b class="${i===0?"pos":""}">${f1(r.tot)}</b></div>`).join("")}</div>`}
 function compare(L,ids,w,mode,lu){const k={safe:-.45,bal:0,up:.45}[mode];const P=ids.map(id=>project(L,id,w));
   const sd=p=>Math.max(1,(p.ceil-p.floor)/2.563);
   /* decision score: projection, moved by spread of outcomes for your situation, minus a reliability penalty for shaky roles */
@@ -320,13 +342,15 @@ function compare(L,ids,w,mode,lu){const k={safe:-.45,bal:0,up:.45}[mode];const P
     else why.push(`${esc(nameOf(top.id))} projects higher (${f1(top.mean)} vs ${f1(best.mean)}), but ${mode==="up"?`${esc(nameOf(best.id))}'s ceiling is ${f1(best.ceil)} vs ${f1(top.ceil)}, and you need a big score this week`:mode==="safe"?`${esc(nameOf(best.id))}'s floor is ${f1(best.floor)} vs ${f1(top.floor)}, and a steady score is what wins you a week you're favored in`:`${esc(nameOf(top.id))}'s projection comes with more risk (${top.inj?"injury listing, ":""}${confLbl(top.conf).toLowerCase()} confidence)`}.`);
     const mb=mu(L,best),ms=mu(L,second);if(mb&&ms&&mb.r!==ms.r)why.push(`Matchup: ${esc(nameOf(best.id))} faces the ${mb.r}${["st","nd","rd"][mb.r-1]||"th"} most generous defense to ${best.pos}s, ${esc(nameOf(second.id))} the ${ms.r}${["st","nd","rd"][ms.r-1]||"th"}.`);
     if(best.u&&second.u&&best.u.snap!=null&&second.u.snap!=null&&Math.abs(best.u.snap-second.u.snap)>=.1)why.push(`Workload: ${Math.round(best.u.snap*100)}% of snaps lately vs ${Math.round(second.u.snap*100)}%.`);
+    if(best.cvp&&second.cvp&&Math.abs(best.cvp-second.cvp)>=.12)why.push(`Consistency: ${esc(nameOf(best.cvp<second.cvp?best.id:second.id))} has the steadier week-to-week scoring (floor ${f1((best.cvp<second.cvp?best:second).floor)} vs ${f1((best.cvp<second.cvp?second:best).floor)}).`);
+    [best,second].forEach(p=>{if(p.wx&&((p.wx.wind||0)>=15||(p.wx.rain||0)>=1))why.push(`Conditions: ${esc(nameOf(p.id))}'s game has a forecast of wind ${p.wx.wind||0} mph${p.wx.rain?` and ${p.wx.rain} mm of rain`:""}.`)});
     if(second.inj)why.push(`${esc(nameOf(second.id))} is listed ${esc(second.inj.st)}.`);
     if(Math.abs(score(best)-score(second))<.75)why.unshift("Close call.");}
   /* lineup context: is a bench player better than the ones you compared? */
   const ctxNote=lu?(()=>{const bench=lu.bench.filter(id=>!ids.includes(id)&&ids.some(x=>elig(slotOf(lu,x)||posOf(x),posOf(id))));const b=bench.map(id=>project(L,id,w)).sort((a,b)=>b.mean-a.mean)[0];
     return b&&b.mean>best.mean?`<p class="ff-warn">${esc(nameOf(b.id))} on your bench projects ${f1(b.mean)}, more than any player you compared. He may be the better start.</p>`:""})():"";
   const max=Math.max(...P.map(p=>p.ceil||0),10);
-  return`<div class="ff-card"><h3>Start ${esc(nameOf(best.id))}</h3>${sameSlot?"":`<p class="hint">Comparing across positions: make sure the slot you're filling (FLEX or SUPERFLEX) allows all of them.</p>`}
+  return`<div class="ff-card"><h3>Start ${esc(nameOf(best.id))}</h3><p class="ff-fmt">Week ${w} · ${esc(fmtName(L))}</p>${sameSlot?"":`<p class="hint">Comparing across positions: make sure the slot you're filling (FLEX or SUPERFLEX) allows all of them.</p>`}
     <div class="ff-why">${why.map(x=>`<p>${x}</p>`).join("")}</div>${ctxNote}
     ${ranked.map((p,i)=>`<div class="ff-cmp ${i===0?"win":""}"><div class="ff-cmph"><b>${i===0?"Start":"Sit"} · ${esc(nameOf(p.id))}</b> ${injTag(p.id)}<small>${p.pos} · ${oppTxt(p)}</small></div>${p.bye||p.none?`<p class="hint">${p.bye?"Bye week":esc(p.none)}</p>`:bar(p,max)}${detail(L,p.id,w)}</div>`).join("")}</div>`}
 const slotOf=(lu,id)=>{const s=lu.start.find(x=>x.id===id);return s?s.slot:null};
@@ -378,7 +402,7 @@ function evalCard(L,weeks){const R=mine(L);const val=id=>ros(L,id,weeks).wk;cons
     ${rows.map(r=>`<div class="ff-ev"><b>${r.p}</b><div class="ff-evb"><i class="${r.d>=0?"up":"dn"}" style="width:${Math.min(50,Math.abs(r.pct)*100)}%;${r.d>=0?"left:50%":"right:50%"}"></i></div><span class="${r.d>=0?"pos":"neg"}">${r.d>=0?"+":""}${f1(r.d)}</span></div>`).join("")}
     ${strong&&weak&&strong!==weak?`<p>Strongest: <b>${strong.p}</b>. Weakest: <b>${weak.p}</b>.</p>`:""}${tips.map(t=>`<p class="ff-tip">${t}</p>`).join("")}</div>`}
 
-function tTrade(L,w){const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.push(i);const T=S.tr,others=L.rosters.map((r,i)=>i).filter(i=>i!==L.me);if(T.to===L.me||!L.rosters[T.to])T.to=others[0]??-1;
+function tTrade(L,w){if(L.quick)return tTradeQ(L);const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.push(i);const T=S.tr,others=L.rosters.map((r,i)=>i).filter(i=>i!==L.me);if(T.to===L.me||!L.rosters[T.to])T.to=others[0]??-1;
   const R=mine(L),P=T.to>=0?L.rosters[T.to]:null;
   const pick=(ids,side)=>ids.map(id=>`<button class="chip s ${T[side].includes(id)?"on":""}" data-fftr="${side}|${esc(id)}">${esc(nameOf(id))} <small>${posOf(id)}</small></button>`).join("");
   let res="";if(T.give.length||T.get.length)res=tradeEval(L,weeks,T.give,T.get,T.to);
@@ -387,7 +411,7 @@ function tTrade(L,w){const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.pus
     <div class="ff-sub">You give</div><div class="ff-chips">${pick(R.ids,"give")||`<p class="hint">Your roster is empty.</p>`}</div>
     <div class="ff-sub">You receive</div><div class="ff-chips">${P&&P.ids.length?pick(P.ids,"get"):""}${T.get.filter(id=>!P||!P.ids.includes(id)).map(id=>`<button class="chip s on" data-fftr="get|${esc(id)}">${esc(nameOf(id))} <small>${posOf(id)}</small></button>`).join("")}</div>
     ${!P||!P.ids.length?search("tget","Find a player you'd receive"):""}
-    ${T.give.length||T.get.length?`<button class="addbtn" data-fftclr="1">Clear</button>`:""}</div>${res}${savedTrades(L)}`}
+    ${T.give.length||T.get.length?`<button class="addbtn" data-fftclr="1">Clear</button>`:""}</div>${res}${T.give.length&&T.get.length?tradeQ(L,weeks,T.give,T.get,1):""}${savedTrades(L)}`}
 function tradeEval(L,weeks,give,get,to){const val=(id,w)=>project(L,id,w).mean||0;const po=weeks.filter(x=>x>=L.po.start);
   const team=(ids)=>{let reg=0,pl=0;weeks.forEach(w=>{const t=lineup(L,ids,w,id=>{const p=project(L,id,w);return p.bye?0:p.mean||0}).tot;if(w>=L.po.start)pl+=t;else reg+=t});return{reg,pl,tot:reg+pl}};
   const myB=mine(L).ids,myA=myB.filter(id=>!give.includes(id)).concat(get);
@@ -415,6 +439,112 @@ function tradeEval(L,weeks,give,get,to){const val=(id,w)=>project(L,id,w).mean||
     <span>Positions</span><b>${Object.entries(posD).map(([p,d])=>`${p} ${d>0?"+":""}${d}`).join(" · ")}</b></div>
     <details><summary>Week by week (your lineup)</summary>${weeks.map(w2=>{const a=lineup(L,myB,w2).tot,b=lineup(L,myA,w2).tot;return`<div class="ff-wkr"><span>Week ${w2}${w2>=L.po.start?" (playoffs)":""}</span><span>${f1(a)} → ${f1(b)}</span><b class="${b-a>=0?"pos":"neg"}">${b-a>=0?"+":""}${f1(b-a)}</b></div>`}).join("")}</details>
     <button class="addbtn" data-fftsave="1">Save this trade</button></div>`}
+
+/* ---------- Quick Analysis trade: standardized value, no league needed ----------
+   Each player is worth his projected points ABOVE REPLACEMENT per week (the best player a 12-team league leaves on waivers at
+   his position), times the weeks left through the fantasy playoffs. That is what makes a running back worth more than the same
+   points from a deeper position, and a 2-for-1 not automatically a win for the side getting two players. Then small adjustments
+   (estimates, shown on screen) for consistency, the injury report and a rising or falling workload. Age is shown, not priced:
+   this is a rest-of-season value. */
+function pVal(A,id,weeks,rp){const pos=posOf(id),r=ros(A,id,weeks),wk=r.wk,rep=rp.rep[pos]||0;
+  let fps=[];if(pos==="DST")fps=((DEFG||{})[id.slice(2)]||[]).map(x=>dstPts(x,A.sc));else fps=(D.I.P[id]||[]).map(x=>fpGame(x.v,pos,A.sc));
+  const avg=fps.length?fps.reduce((a,b)=>a+b,0)/fps.length:0,sd=fps.length>1?Math.sqrt(fps.reduce((a,b)=>a+(b-avg)**2,0)/(fps.length-1)):0,cv=avg>0?sd/avg:1;
+  const cons=clamp(1-.25*(cv-.55),.88,1.06);const inj=D.inj[id];const injF=!inj?1:inj.lv==="quest"?.97:inj.lv==="doubt"?.92:inj.lv==="out"?(/reserve|^ir/i.test(inj.st)?1:.9):1;
+  const u3=usage(id,3),us=usage(id,99);let trend=0;if(u3&&us){const t3=u3.car+u3.tgt,ts=us.car+us.tgt;if(ts>2)trend=clamp((t3-ts)/ts,-.4,.4)}const trF=clamp(1+.15*trend,.94,1.06);
+  const rk=allowed(A);const opp=weeks.map(w=>{const G=gameFor(w,teamIdOf(id));return G?rk[G.opp+"|"+pos]:null}).filter(Boolean);const sched=opp.length?opp.reduce((a,x)=>a+x.r,0)/opp.length:null;
+  const vor=Math.max(0,wk-rep);return{id,pos,wk,tot:r.tot,rep,vor,value:vor*weeks.length*cons*injF*trF,cv,cons,injF,trend,sched,n:fps.length,avg,age:D.age[id]}}
+function tTradeQ(A){const weeks=[];for(let i=D.cur;i<=lastWeek(A);i++)weeks.push(i);const T=S.tq=S.tq||{give:[],get:[]};
+  const chips=side=>T[side].map(id=>`<button class="chip s on" data-fftq="${side}|${esc(id)}">${esc(nameOf(id))} <small>${posOf(id)} ✕</small></button>`).join("");
+  const res=T.give.length&&T.get.length?tradeQ(A,weeks,T.give,T.get):"";
+  return`<div class="ff-card"><h3>Build a trade</h3><p class="hint">Any players, as many as you like on each side. Results update as you change it.</p>
+    <div class="ff-sub">You give</div><div class="ff-chips">${chips("give")}</div>${search("tqg","Add a player you'd give")}
+    <div class="ff-sub">You receive</div><div class="ff-chips">${chips("get")}</div>${search("tqr","Add a player you'd receive")}
+    ${T.give.length||T.get.length?`<button class="addbtn" data-fftqclr="1">Clear</button>`:""}${(T.give.length||T.get.length)&&!res?`<p class="hint">Add at least one player to each side.</p>`:""}</div>${res}`}
+function tradeQ(A,weeks,give,get,asBreakdown){const val=id=>ros(A,id,weeks).wk;const rp=replacement(A,weeks[0],val);setTimeout(()=>ensureAge(give.concat(get)),0);
+  const G=give.map(id=>pVal(A,id,weeks,rp)),R=get.map(id=>pVal(A,id,weeks,rp));const sum=(a,k)=>a.reduce((s,x)=>s+x[k],0);
+  const gv=sum(G,"value"),rv=sum(R,"value"),gp=sum(G,"tot"),rpts=sum(R,"tot"),all=G.concat(R).sort((a,b)=>b.value-a.value),best=all[0];
+  const row=x=>{const a=x.age!=null?x.age:null,old=a!=null&&((x.pos==="RB"&&a>=29)||(x.pos!=="RB"&&x.pos!=="K"&&x.pos!=="DST"&&a>=32));
+    return`<tr data-ffprof="${esc(x.id)}"><td><b>${esc(nameOf(x.id))}</b>${injTag(x.id)}<small>${x.pos} · ${esc(tAb(teamIdOf(x.id)))}${a!=null?` · age ${a}`:""}</small></td><td>${f1(x.wk)}</td><td>${f1(x.vor)}</td><td><b>${f1(x.value)}</b></td>
+      <td><small>${x.cv<.45?"Steady":x.cv<.7?"Average":"Volatile"}${x.trend>=.15?" · usage up":x.trend<=-.15?" · usage down":""}${x.sched!=null?` · ${x.sched<=10?"easy":x.sched>=23?"hard":"average"} schedule`:""}${old?" · age: long-term risk (not priced)":""}</small></td></tr>`};
+  const table=`<div class="ff-tbl"><table><thead><tr><th>Player</th><th>Pts/wk</th><th>Above repl.</th><th>Value</th><th>Notes</th></tr></thead><tbody>
+    <tr class="ff-side"><td colspan="5">You give</td></tr>${G.map(row).join("")}<tr class="ff-side"><td colspan="5">You receive</td></tr>${R.map(row).join("")}</tbody></table></div>
+    <p class="hint">Pts/wk: projected per week, weeks ${weeks[0]} to ${weeks.at(-1)}, byes and injury report included. Above repl.: per week above the best player usually left on waivers at that position (${POS.filter(p=>rp.rep[p]).map(p=>`${p} ${f1(rp.rep[p])}`).join(", ")}). Value: that, over the ${weeks.length} weeks left, adjusted for consistency, injury report and workload trend (estimates). Tap a player for his profile.</p>`;
+  if(asBreakdown)return`<div class="ff-card"><h3>Player breakdown</h3><p class="ff-fmt">${esc(fmtName(A))}</p>${table}</div>`;
+  const diff=rv-gv,pct=diff/Math.max(gv,rv,8);const v=pct>=.25?["You win this trade","pos"]:pct>=.08?["Slightly favors you","pos"]:pct>-.08?["Fair trade","md"]:pct>-.25?["Slightly favors them","neg"]:["They win this trade","neg"];
+  const why=[];why.push(`You give ${f1(gv)} points of value above replacement and get ${f1(rv)} back over the rest of the season.`);
+  if(Math.sign(rpts-gp)!==Math.sign(diff)&&Math.abs(rpts-gp)>5)why.push(`Total projected points point the other way (${f1(gp)} given vs ${f1(rpts)} received): ${rpts>gp?"the extra points you'd get":"the extra points you'd give"} come mostly from players near replacement level, who are easy to find on waivers.`);
+  if(give.length!==get.length){const more=give.length>get.length?"you give":"you receive";why.push(`It's a ${Math.max(give.length,get.length)}-for-${Math.min(give.length,get.length)}: the side that gets the single best player usually wins these, because the extra player only counts for what he adds above a waiver pickup. The extra player is on the side ${more}.`)}
+  why.push(`Best player in the deal: ${esc(nameOf(best.id))} (${best.pos}, ${f1(best.wk)} projected per week, ${f1(best.value)} value).`);
+  const scarce=all.filter(x=>x.vor>0).sort((a,b)=>b.vor/(b.wk||1)-a.vor/(a.wk||1))[0];if(scarce&&scarce.pos==="RB"||scarce&&scarce.pos==="TE")why.push(`Position matters: ${esc(nameOf(scarce.id))} is ${f1(scarce.vor)} points a week better than a replacement ${scarce.pos}, a scarce position.`);
+  all.filter(x=>D.inj[x.id]).forEach(x=>why.push(`${esc(nameOf(x.id))}: ${esc(D.inj[x.id].st)}${D.inj[x.id].txt?" ("+esc(D.inj[x.id].txt)+")":""}.`));
+  why.push("This is a standardized value for a 12-team league. Switch to League Analysis for how the trade changes your own lineup.");
+  return`<div class="ff-card"><h3 class="${v[1]}">${v[0]}</h3><p class="ff-fmt">${esc(fmtName(A))}, weeks ${weeks[0]} to ${weeks.at(-1)}</p>
+    <div class="ff-kv"><span>Value you give up</span><b>${f1(gv)}</b><span>Value you receive</span><b>${f1(rv)}</b><span>Net</span><b class="${diff>=0?"pos":"neg"}">${diff>=0?"+":""}${f1(diff)}</b>
+    <span>More valuable side</span><b>${Math.abs(pct)<.08?"About even":diff>0?"What you receive":"What you give"}</b><span>Best player</span><b>${esc(nameOf(best.id))}</b><span>Projected points (raw)</span><b>${f1(gp)} given · ${f1(rpts)} received</b></div>
+    <div class="ff-why">${why.map(x=>`<p>${x}</p>`).join("")}</div>${table}</div>`}
+async function ensureAge(ids){const need=ids.filter(id=>!id.startsWith("D:")&&D.age[id]===undefined);if(!need.length)return;need.forEach(id=>D.age[id]=null);
+  await Promise.all(need.map(async id=>{const j=await NFL.getJSON(`https://site.api.espn.com/apis/common/v3/sports/football/nfl/athletes/${id}`,12000).catch(()=>null);const a=j&&j.athlete;if(a&&a.age!=null)D.age[id]=a.age}));
+  if(need.some(id=>D.age[id]!=null))render()}
+async function ensureNews(id){if(id.startsWith("D:")||D.news[id]!==undefined)return;D.news[id]=null;
+  const j=await NFL.getJSON(`https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players?playerId=${id}&limit=8`,12000).catch(()=>null);
+  const f=(j&&j.feed||[]).filter(x=>x.headline);const own=f.filter(x=>x.type==="Rotowire");D.news[id]=(own.length?own:f).slice(0,4).map(x=>({h:x.headline,t:x.published}));if(S.tab==="prof"&&S.prof===id)render()}
+
+/* ---------- player profile ---------- */
+function seasonRanks(A){const key=JSON.stringify(A.sc)+D.pool.length;if(D.sr[key])return D.sr[key];const tot={};
+  D.pool.forEach(id=>{const pos=posOf(id);let t=0,g=0;if(pos==="DST")((DEFG||{})[id.slice(2)]||[]).forEach(x=>{t+=dstPts(x,A.sc);g++});else(D.I.P[id]||[]).forEach(x=>{t+=fpGame(x.v,pos,A.sc);g++});tot[id]={t,g}});
+  const rk={};POS.forEach(p=>D.pool.filter(id=>posOf(id)===p).sort((a,b)=>tot[b].t-tot[a].t).forEach((id,i)=>rk[id]=i+1));return D.sr[key]={tot,rk}}
+function posRankBy(A,id,f){const pos=posOf(id);const a=D.pool.filter(x=>posOf(x)===pos).map(x=>({x,v:f(x)})).filter(z=>z.v!=null).sort((p,q)=>q.v-p.v);const i=a.findIndex(z=>z.x===id);return i<0?null:i+1}
+const ord=n=>n==null?"–":n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:n%10<4?n%10:0]);
+function profRows(A,id){const pos=posOf(id);if(pos==="DST")return((DEFG||{})[id.slice(2)]||[]).map(x=>({w:x.w,act:dstPts(x,A.sc),proj:null,opp:x.opp,dst:x}));
+  return pastProj(A,id,pos).map(r=>({w:r.w,act:r.act,proj:r.proj,opp:r.x.opp,x:r.x}))}
+function chartSVG(rows,sel){const H=110,bw=20,gap=7,W=Math.max(rows.length,1)*(bw+gap)+gap;const max=Math.max(8,...rows.map(r=>Math.max(r.act||0,r.proj||0)))*1.12;const y=v=>H-Math.max(0,v)/max*H;
+  return`<div class="ff-chw"><svg class="ff-ch" viewBox="0 0 ${W} ${H+18}" width="${W}" height="${H+18}" role="img" aria-label="Weekly fantasy points">${rows.map((r,i)=>{const x=gap+i*(bw+gap);
+    return`<g data-ffpw="${r.w}" class="${r.w===sel?"on":""}"><rect class="hit" x="${x-3}" y="0" width="${bw+6}" height="${H+18}"/>${r.act!=null?`<rect class="a" x="${x}" y="${y(r.act)}" width="${bw}" height="${Math.max(1,H-y(r.act))}" rx="3"/>`:""}${r.fut&&r.proj!=null?`<rect class="f" x="${x+.5}" y="${y(r.proj)}" width="${bw-1}" height="${Math.max(1,H-y(r.proj))}" rx="3"/>`:""}${!r.fut&&r.proj!=null?`<line class="p" x1="${x-3}" x2="${x+bw+3}" y1="${y(r.proj)}" y2="${y(r.proj)}"/>`:""}<text x="${x+bw/2}" y="${H+13}" text-anchor="middle">${r.w}</text></g>`}).join("")}</svg></div>
+    <div class="ff-leg"><span><i class="a"></i>Actual</span><span><i class="p"></i>Pregame projection</span><span><i class="f"></i>Upcoming projection</span></div>`}
+function statLine(v,pos){if(!v)return"";const a=[];if(pos==="QB"||v.att)a.push(`${v.cmp}/${v.att}, ${v.pYds} pass yds, ${v.pTD} TD, ${v.int} INT`);if(v.car)a.push(`${v.car} car, ${v.rYds} rush yds${v.rTD?`, ${v.rTD} TD`:""}`);
+  if(v.tgt||v.rec)a.push(`${v.rec}/${v.tgt} rec, ${v.recYds} yds${v.recTD?`, ${v.recTD} TD`:""}`);if(pos==="K")a.push(`${v.fgM}/${v.fgA} FG, ${v.xpM} XP`);if(v.fumL)a.push(`${v.fumL} fumble lost`);return a.join(" · ")}
+function tProf(A,w){const id=S.prof&&D.pool.includes(S.prof)?S.prof:null;
+  if(!id){const top=D.pool.map(x=>project(A,x,w)).filter(p=>!p.none&&!p.bye&&p.actual==null).sort((a,b)=>b.mean-a.mean).slice(0,10);
+    return`<div class="ff-card"><h3>Player profile</h3><p class="hint">Any QB, RB, WR, TE, kicker or defense: projections, weekly history, workload, schedule and news.</p>${search("pf","Search a player or D/ST")}
+      <div class="ff-sub">Top projected this week</div><div class="ff-chips">${top.map(p=>`<button class="chip s" data-ffprof="${esc(p.id)}">${esc(nameOf(p.id))} <small>${p.pos}</small></button>`).join("")}</div></div>`}
+  setTimeout(()=>{ensureNews(id);ensureAge([id].concat(S.pcmp?[S.pcmp]:[]))},0);
+  const pos=posOf(id),p=project(A,id,w),weeks=[];for(let i=D.cur;i<=lastWeek(A);i++)weeks.push(i);const sr=seasonRanks(A),st=sr.tot[id]||{t:0,g:0};
+  const wkRk=posRankBy(A,id,x=>{const q=project(A,x,w);return q.bye||q.none?null:q.mean}),rosRk=posRankBy(A,id,x=>ros(A,x,weeks).tot);
+  const rows=profRows(A,id).map(r=>({...r}));weeks.forEach(x=>{if(rows.some(r=>r.w===x))return;const q=project(A,id,x);if(q.bye||q.none)return;rows.push({w:x,fut:1,proj:q.actual!=null?null:q.mean,act:q.actual!=null?q.actual:null,q})});rows.sort((a,b)=>a.w-b.w);
+  const sel=S.pw!=null&&rows.some(r=>r.w===S.pw)?S.pw:(rows.filter(r=>!r.fut).at(-1)||rows[0]||{}).w;const R=rows.find(r=>r.w===sel);
+  const selHTML=!R?"":R.fut&&R.act==null?`<div class="ff-wsel"><b>Week ${R.w}: projected ${f1(R.proj)}</b> <small>${oppTxt(R.q)} · range ${f1(R.q.floor)} to ${f1(R.q.ceil)} (estimate)</small>${detail(A,id,R.w).replace(/<button class="addbtn" data-ffprof[^>]*>Full profile<\/button>/,"")}</div>`:
+    `<div class="ff-wsel"><b>Week ${R.w} ${R.opp?`vs ${esc(tAb(R.opp))}`:""}: ${f1(R.act)} actual</b>${R.proj!=null?` <small>pregame projection ${f1(R.proj)} (${R.act-R.proj>=0?"+":""}${f1(R.act-R.proj)})</small>`:""}
+      <div class="ff-stl"><span>Actual stats</span> ${R.dst?`${R.dst.sk} sacks · ${R.dst.int} INT · ${R.dst.fr} fum rec · ${R.dst.td} TD · ${R.dst.pa} pts allowed`:esc(statLine(R.x&&R.x.v,pos))||"No stats recorded"}</div>
+      ${R.x?`<div class="ff-stl"><span>Workload</span> ${[R.x.x&&R.x.x.snap!=null?Math.round(R.x.x.snap*100)+"% snaps":"",R.x.v.tgt?R.x.v.tgt+" targets":"",R.x.x&&R.x.x.ts!=null?Math.round(R.x.x.ts*100)+"% target share":"",R.x.v.car+R.x.v.rec?(R.x.v.car+R.x.v.rec)+" touches":""].filter(Boolean).join(" · ")||"–"}</div>`:""}</div>`;
+  const last=(D.I.P[id]||[]).slice(-6).reverse();const u3=usage(id,3),us=usage(id,99);
+  const tpg=n=>{const g=(D.I.P[id]||[]).slice(-n);return g.length?g.reduce((a,x)=>a+x.v.car+x.v.rec,0)/g.length:0};
+  const trend=u3&&us&&pos!=="K"&&pos!=="DST"?[u3.snap!=null&&us.snap!=null?`snaps ${Math.round(u3.snap*100)}% last 3 vs ${Math.round(us.snap*100)}% season`:"",`touches ${f1(tpg(3))}/g last 3 vs ${f1(tpg(99))}/g season`,pos!=="QB"?`targets ${f1(u3.tgt)}/g vs ${f1(us.tgt)}/g`:""].filter(Boolean).join(" · "):"";
+  const news=D.news[id];const inj=D.inj[id];
+  const cmp=S.pcmp&&S.pcmp!==id&&D.pool.includes(S.pcmp)?profCompare(A,id,S.pcmp,w,weeks):"";
+  return`<div class="ff-card"><div class="ff-ph"><div><h3>${esc(nameOf(id))}${injTag(id)}</h3><small>${pos} · ${esc(((N().stats.teams||{})[teamIdOf(id)]||[])[1]||tAb(teamIdOf(id)))}${D.age[id]!=null?` · age ${D.age[id]}`:""} · week ${w}: ${p.bye?"bye":oppTxt(p)||"no game found"}</small></div>
+      <div class="ff-phb"><button class="addbtn" data-ffpcmp="1">Compare</button><button class="addbtn" data-ffprof="">Change player</button></div></div>
+    <p class="ff-fmt">${esc(fmtName(A))}</p>
+    ${inj?`<p class="ff-warn">Injury report: ${esc(inj.st)}${inj.txt?" · "+esc(inj.txt):""}</p>`:`<p class="hint">Injury report: not listed.</p>`}
+    <div class="ff-stats"><div><span>Week ${w}${p.actual!=null?" actual":" projection"}</span><b>${p.bye?"Bye":p.none?"n/a":f1(p.mean)}</b><small>${p.bye||p.none||p.actual!=null?"":`${f1(p.floor)} to ${f1(p.ceil)}`}</small></div>
+      <div><span>Season points</span><b>${f1(st.t)}</b><small>${st.g} games, actual</small></div><div><span>Per game</span><b>${f1(st.g?st.t/st.g:0)}</b><small>actual</small></div>
+      <div><span>${pos} rank</span><b>${ord(sr.rk[id])}</b><small>season points</small></div><div><span>Week ${w} rank</span><b>${ord(wkRk)}</b><small>projected</small></div><div><span>Rest of season</span><b>${ord(rosRk)}</b><small>${f1(ros(A,id,weeks).tot)} pts, wk ${weeks[0]}–${weeks.at(-1)}</small></div></div>
+    ${S.pcmpOpen&&!cmp?`<div class="ff-sub">Compare with</div>${search("pc","Search another player")}`:""}</div>${cmp}
+    <div class="ff-card"><h3>Weekly fantasy points</h3><p class="hint">Tap a week for that game's stats. Actual points are real box scores; projections are Sharpline's (pregame ones recomputed from only the games before).</p>${chartSVG(rows,sel)}${selHTML}</div>
+    ${pos!=="DST"&&pos!=="K"?`<div class="ff-card"><h3>Workload</h3>${trend?`<p class="hint">Trend: ${trend}.</p>`:""}<div class="ff-tbl"><table><thead><tr><th>Wk</th><th>Opp</th><th>Snaps</th><th>Tgt</th><th>Car</th><th>Touches</th><th>Pts</th></tr></thead><tbody>
+      ${last.map(x=>`<tr><td>${x.w}</td><td>${esc(tAb(x.opp))}</td><td>${x.x&&x.x.snap!=null?Math.round(x.x.snap*100)+"%":"–"}</td><td>${x.v.tgt}</td><td>${x.v.car}</td><td>${x.v.car+x.v.rec}</td><td>${f1(fpGame(x.v,pos,A.sc))}</td></tr>`).join("")}</tbody></table></div>
+      <p class="hint">Red-zone opportunities aren't available: neither ESPN's free box scores nor the nflverse weekly data Sharpline uses report them.</p></div>`:""}
+    <div class="ff-card"><h3>Upcoming schedule</h3>${weeks.map(x=>{const q=project(A,id,x),m=mu(A,q);return`<div class="ff-wkr"><span>Week ${x}${x>=A.po.start?" <small>(fantasy playoffs)</small>":""}</span><span>${q.bye?"Bye":oppTxt(q)||"–"}${m?` · <small>${m.lbl} matchup</small>`:""}</span><b>${q.bye||q.none?"–":f1(q.mean)}</b></div>`}).join("")}<p class="hint">Projected points; later weeks have no betting lines yet, so they lean more on season averages.</p></div>
+    <div class="ff-card"><h3>Recent news</h3>${news===undefined||news===null?`<p class="hint">${id.startsWith("D:")?"No player news for team defenses.":"Loading ESPN news…"}</p>`:news.length?news.map(n=>`<div class="ff-news"><p>${esc(n.h)}</p><small>${esc(new Date(n.t).toLocaleDateString([], {month:"short",day:"numeric"}))} · ESPN</small></div>`).join(""):`<p class="hint">No recent news from ESPN.</p>`}</div>`}
+function profCompare(A,a,b,w,weeks){const sr=seasonRanks(A);const col=id=>{const p=project(A,id,w),st=sr.tot[id]||{t:0,g:0},u=usage(id,3);
+    return{p,st,u,ros:ros(A,id,weeks).tot,rk:sr.rk[id]}};const X=col(a),Y=col(b);
+  const line=(lbl,f,better)=>{const x=f(X),y=f(Y);const bx=better&&x[1]!=null&&y[1]!=null?(better>0?x[1]>y[1]:x[1]<y[1]):false,by=better&&x[1]!=null&&y[1]!=null?(better>0?y[1]>x[1]:y[1]<x[1]):false;return`<tr><td>${lbl}</td><td class="${bx?"pos":""}">${x[0]}</td><td class="${by?"pos":""}">${y[0]}</td></tr>`};
+  return`<div class="ff-card"><h3>${esc(nameOf(a))} vs ${esc(nameOf(b))}</h3><p class="ff-fmt">${esc(fmtName(A))}</p><div class="ff-tbl"><table><thead><tr><th></th><th>${esc(nameOf(a))}</th><th>${esc(nameOf(b))}</th></tr></thead><tbody>
+    ${line(`Week ${w} projection`,c=>[c.p.bye?"Bye":c.p.none?"n/a":f1(c.p.mean),c.p.bye||c.p.none?null:c.p.mean],1)}${line("Range (estimate)",c=>[c.p.bye||c.p.none?"–":`${f1(c.p.floor)}–${f1(c.p.ceil)}`,null])}
+    ${line("Opponent",c=>[c.p.bye?"Bye":oppTxt(c.p)||"–",null])}${line("Season points",c=>[f1(c.st.t),c.st.t],1)}${line("Per game",c=>[f1(c.st.g?c.st.t/c.st.g:0),c.st.g?c.st.t/c.st.g:null],1)}
+    ${line("Position rank",c=>[`${posOf(c.p.id)}${c.rk||"–"}`,null])}${line("Rest of season",c=>[f1(c.ros),c.ros],1)}${line("Snaps (last 3)",c=>[c.u&&c.u.snap!=null?Math.round(c.u.snap*100)+"%":"–",c.u&&c.u.snap],1)}
+    ${line("Targets/g (last 3)",c=>[c.u?f1(c.u.tgt):"–",c.u&&c.u.tgt],1)}${line("Carries/g (last 3)",c=>[c.u?f1(c.u.car):"–",c.u&&c.u.car],1)}${line("Injury",c=>[D.inj[c.p.id]?esc(D.inj[c.p.id].st):"Not listed",null])}
+    ${line("Confidence",c=>[c.p.bye||c.p.none?"–":confLbl(c.p.conf),c.p.conf],1)}</tbody></table></div>
+    <div class="ff-phb"><button class="addbtn" data-ffpss="1">Start / Sit these two</button><button class="addbtn" data-ffprof="${esc(b)}">Open ${esc(nameOf(b))}</button><button class="addbtn" data-ffpclr="1">Close comparison</button></div></div>`}
 let T_last=null;
 function savedTrades(L){const a=(S.trades||[]).filter(t=>t.lg===L.id);if(!a.length)return"";
   return`<div class="ff-card"><h3>Saved trades</h3><p class="hint">Compare scenarios. Numbers were computed when saved; reopen one to re-run it with today's projections.</p>
@@ -447,7 +577,7 @@ function tRank(L,w){const weeks=[];for(let i=D.cur;i<=lastWeek(L);i++)weeks.push
 
 /* ---------- events ---------- */
 const rer=()=>{save();render()};
-function onClick(e){const t=e.target.closest("[data-ffimp],[data-fftab],[data-ffnew],[data-ffpre],[data-ffdel],[data-ffaddt],[data-ffme],[data-ffrmt],[data-ffrm],[data-ffadd],[data-ffmode],[data-ffpp],[data-ffwp],[data-ffrp],[data-ffrt],[data-fftr],[data-fftclr],[data-fftsave],[data-fftload],[data-fftdel],[data-ffopen]");
+function onClick(e){const t=e.target.closest("[data-ffam],[data-ffqf],[data-ffssx],[data-fftq],[data-fftqclr],[data-ffprof],[data-ffpw],[data-ffpcmp],[data-ffpclr],[data-ffpss],[data-ffimp],[data-fftab],[data-ffnew],[data-ffpre],[data-ffdel],[data-ffaddt],[data-ffme],[data-ffrmt],[data-ffrm],[data-ffadd],[data-ffmode],[data-ffpp],[data-ffwp],[data-ffrp],[data-ffrt],[data-fftr],[data-fftclr],[data-fftsave],[data-fftload],[data-fftdel],[data-ffopen]");
   if(!t||!t.closest("#v-ff"))return;const d=t.dataset,L=lg();
   if(d.ffimp){const msg=$("ffImpMsg"),L0=lg();const link=d.ffimp==="refresh"&&L0&&L0.src?`leagueId=${L0.src.id}&seasonId=${L0.src.season}`:(($("ffLink")||{}).value||"");
     if(msg){msg.hidden=false;msg.textContent="Importing from ESPN…"}t.disabled=true;
@@ -456,14 +586,30 @@ function onClick(e){const t=e.target.closest("[data-ffimp],[data-fftab],[data-ff
       const m2=$("ffImpMsg");if(m2&&d.ffimp==="new"){m2.hidden=false;m2.textContent="Imported. Tap \u201cThis is me\u201d on your team."}}
     catch(err){const m2=$("ffImpMsg");if(m2){m2.hidden=false;m2.textContent=err.message}t.disabled=false}})();return}
   if(d.fftab){S.tab=d.fftab;S.open=null;return rer()}
+  if(d.ffam){S.mode=d.ffam==="league"&&lg()?"league":"quick";S.open=null;return rer()}
+  if(d.ffqf){S.qf=d.ffqf;S.open=null;return rer()}
+  if(d.ffssx){S.ssq=(S.ssq||[]).filter(x=>x!==d.ffssx);return rer()}
+  if(d.fftq){const[side,id]=d.fftq.split("|");S.tq[side]=S.tq[side].filter(x=>x!==id);return rer()}
+  if(d.fftqclr){S.tq={give:[],get:[]};return rer()}
+  if(d.ffprof!=null){S.prof=d.ffprof||null;S.pw=null;S.pcmp=null;S.pcmpOpen=0;S.tab="prof";S.open=null;rer();window.scrollTo({top:0});return}
+  if(d.ffpw){S.pw=+d.ffpw;return rer()}
+  if(d.ffpcmp){S.pcmpOpen=1;S.pcmp=null;return rer()}
+  if(d.ffpclr){S.pcmp=null;S.pcmpOpen=0;return rer()}
+  if(d.ffpss){S.ssq=[S.prof,S.pcmp];S.tab="start";rer();window.scrollTo({top:0});return}
   if(d.ffnew){const l=newLeague();l.name=`League ${S.lgs.length+1}`;if(!S.lgs.length)l.name="My league";S.lgs.push(l);S.cur=l.id;S.tab="league";return rer()}
-  if(!L)return;
+  if(!L&&(d.ffpre||d.ffdel||d.ffaddt||d.ffme||d.ffrmt||d.ffrm))return;
   if(d.ffpre){L.preset=d.ffpre;if(PRESET[d.ffpre])L.sc={...SC0,pa:L.sc.pa,fg:L.sc.fg,xp:L.sc.xp,dSack:L.sc.dSack,dInt:L.sc.dInt,dFR:L.sc.dFR,dTD:L.sc.dTD,...PRESET[d.ffpre]};D.cache={};D.rosCache={};return rer()}
   if(d.ffdel){if(!confirm(`Delete "${L.name}" and its rosters? This can't be undone.`))return;S.lgs=S.lgs.filter(x=>x!==L);S.cur=S.lgs[0]?S.lgs[0].id:null;return rer()}
   if(d.ffaddt){L.rosters.push({name:`Team ${L.rosters.length+1}`,ids:[]});return rer()}
   if(d.ffme){L.me=+d.ffme;return rer()}
   if(d.ffrmt){const i=+d.ffrmt;if(L.rosters[i].ids.length&&!confirm(`Remove ${L.rosters[i].name} and its roster?`))return;L.rosters.splice(i,1);if(L.me>i)L.me--;return rer()}
   if(d.ffrm){const[i,id]=d.ffrm.split("|");L.rosters[+i].ids=L.rosters[+i].ids.filter(x=>x!==id);return rer()}
+  if(d.ffadd&&!d.ffadd.startsWith("r")){const[ctx,id]=d.ffadd.split("|");
+    if(ctx==="ss"){const a=S.ssq=S.ssq||[];if(!a.includes(id)&&a.length<4)a.push(id)}
+    else if(ctx==="tqg"||ctx==="tqr"){const T=S.tq=S.tq||{give:[],get:[]};const side=ctx==="tqg"?"give":"get",o=side==="give"?"get":"give";T[o]=T[o].filter(x=>x!==id);if(!T[side].includes(id))T[side].push(id)}
+    else if(ctx==="pf"){S.prof=id;S.pw=null;S.pcmp=null;S.pcmpOpen=0}else if(ctx==="pc"){S.pcmp=id;S.pcmpOpen=0}
+    else if(ctx==="tget"){if(!S.tr.get.includes(id))S.tr.get.push(id)}return rer()}
+  if(!L)return;
   if(d.ffadd){const[ctx,id]=d.ffadd.split("|");if(ctx.startsWith("r")){const i=+ctx.slice(1);const o=teamOf(L,id);if(o!=null)return;L.rosters[i].ids.push(id)}else if(ctx==="tget"){if(!S.tr.get.includes(id))S.tr.get.push(id)}return rer()}
   if(d.ffmode){S.ss.mode=d.ffmode;return rer()}
   if(d.ffpp){S.pj.pos=d.ffpp;return rer()}if(d.ffwp){S.wv.pos=d.ffwp;return rer()}if(d.ffrp){S.rk.pos=d.ffrp;return rer()}if(d.ffrt){S.rk.type=d.ffrt;return rer()}
@@ -474,16 +620,16 @@ function onClick(e){const t=e.target.closest("[data-ffimp],[data-fftab],[data-ff
   if(d.fftdel){S.trades=(S.trades||[]).filter(z=>String(z.ts)!==d.fftdel);return rer()}
   if(d.ffopen){if(e.target.closest("input,button,select,label"))return;S.open=S.open===d.ffopen?null:d.ffopen;return rer()}}
 function onChange(e){const t=e.target;if(!t.closest||!t.closest("#v-ff"))return;const L=lg(),d=t.dataset;
-  if(d.fflg!=null){S.cur=t.value;S.open=null;return rer()}if(!L&&d.ffw==null)return;
+  if(d.fflg!=null){S.cur=t.value;S.open=null;return rer()}if(d.ffss!=null&&!L)return;if(!L&&d.ffw==null&&d.ffss==null)return;
   if(d.ffw!=null){S.w=+t.value;return rer()}
   if(d.ffset){const[o,k]=d.ffset.includes(".")?d.ffset.split("."):[null,d.ffset];let v=t.type==="number"?parseFloat(t.value):t.value;if(t.type==="number"&&isNaN(v))return;
     if(o==="lg"||!o){if(k==="teams")v=clamp(Math.round(v),2,32);L[k]=v}else if(o==="sc"){L.sc[k]=v;L.preset=presetOf(L.sc)}
     else if(o==="ro")L.ro[k]=clamp(Math.round(v),0,10);else if(o==="po")L.po[k]=clamp(Math.round(v),k==="start"?D.cur:1,k==="start"?18:16);
-    D.cache={};D.rosCache={};D.cal={};return rer()}
+    D.cache={};D.rosCache={};D.cal={};D.pp={};D.sr={};return rer()}
   if(d.fftn!=null){L.rosters[+d.fftn].name=t.value||"Team";return rer()}
   if(d.fftto!=null){S.tr.to=+t.value;S.tr.get=[];return rer()}
-  if(d.ffss!=null){const a=S.ss.sel=(S.ss.sel||[]);const id=d.ffss;t.checked?a.includes(id)||a.push(id):a.splice(a.indexOf(id),1);return rer()}}
-function onInput(e){const t=e.target;if(!t.closest||!t.closest("#v-ff"))return;const L=lg();if(!L)return;
+  if(d.ffss!=null){const a=S.ssq=(S.ssq||[]);const id=d.ffss;t.checked?a.includes(id)||a.push(id):a.splice(a.indexOf(id),1);return rer()}}
+function onInput(e){const t=e.target;if(!t.closest||!t.closest("#v-ff"))return;const L=(t.dataset.ffq||"").startsWith("r")?lg():AL();if(!L)return;
   if(t.dataset.ffq!=null){const box=$("ffres-"+t.dataset.ffq);if(box)box.innerHTML=searchRes(L,t.dataset.ffq,t.value)}
   if(t.dataset.ffpq!=null){S.pj.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{const pos=t.selectionStart;render().then(()=>{const n=document.querySelector("[data-ffpq]");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}})},250)}}
 document.addEventListener("click",onClick);document.addEventListener("change",onChange);document.addEventListener("input",onInput);
@@ -491,6 +637,6 @@ document.addEventListener("click",onClick);document.addEventListener("change",on
 let loading=null;
 async function show(){if(!$("ffBody"))return;if(!D.ready){render();if(!loading)loading=load().catch(e=>{D.err="Couldn't load NFL data: "+(e&&e.message||e)}).then(()=>{loading=null});await loading}
   else if(Date.now()-(show.ts||0)>10*60000){try{await NFL.loadInj()}catch(e){}D.inj=N().inj||{};D.cache={};D.rosCache={}}
-  show.ts=show.ts||Date.now();if(!S.cur&&S.lgs[0])S.cur=S.lgs[0].id;await render()}
-window.FF={show,render,_D:D,_S:()=>S,_project:project,_lineup:lineup,_fp:fpGame,_ros:ros,_replacement:replacement};
+  show.ts=show.ts||Date.now();if(!S.cur&&S.lgs[0])S.cur=S.lgs[0].id;if(!S.v2){S.v2=1;if(S.tab==="league")S.tab="start";if(S.lgs.length&&S.lgs.some(l=>l.rosters.some(r=>r.ids.length)))S.mode="league";save()}await render()}
+window.FF={show,render,_D:D,_S:()=>S,_AL:AL,_quick:quickL,_project:project,_lineup:lineup,_fp:fpGame,_ros:ros,_replacement:replacement};
 })();
